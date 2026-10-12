@@ -12,8 +12,8 @@
     <string name="welcome_plugin_acknowledge">Bu üçüncü taraf depolarının kendi sorumluluğumda yapılandırıldığını anlıyorum.</string>
     <string name="welcome_preferences_summary">Dilleri ve içerik türlerini seçin. Bunu daha sonra kaynak ayarlarından değiştirebilirsiniz.</string>
     <string name="welcome_spaces_title">Alanlarınızı ayırın</string>
-    <string name="welcome_spaces_summary">Alanlar; manga, roman ve animeye bağımsız gezinme, tarama tercihleri ile okuma veya oynatma bağlamı sağlar. Gelişmiş seçenekler ve özel alanlar daha sonra Ayarlar &gt; Kullanıcı &gt; Alanlar bölümünde kullanılabilir.</string>
-    <string name="welcome_ready_summary">Kurulum tamamlandı. Kototoro, seçtiğiniz dil ve biçimlerle eşleşen kaynakları etkinleştirecek. Bu sihirbazı Ayarlar &gt; İçerik kaynakları &gt; Kurulum sihirbazı bölümünden yeniden çalıştırabilirsiniz.</string>
+    <string name="welcome_spaces_summary">Alanlar; manga, roman ve animeye bağımsız gezinme, tarama tercihleri ile okuma veya oynatma bağlamı sağlar. Gelişmiş seçenekler ve özel alanlar daha sonra Ayarlar > Kullanıcı > Alanlar bölümünde kullanılabilir.</string>
+    <string name="welcome_ready_summary">Kurulum tamamlandı. Kototoro, seçtiğiniz dil ve biçimlerle eşleşen kaynakları etkinleştirecek. Bu sihirbazı Ayarlar > İçerik kaynakları > Kurulum sihirbazı bölümünden yeniden çalıştırabilirsiniz.</string>
     <string name="welcome_jar_install_success">Kototoro: Bulut ağından en son %1$d ayrıştırıcı motoru başarıyla alındı ve yüklendi!</string>
     <string name="welcome_jar_install_up_to_date">Kototoro: Bulut doğrulaması tamamlandı, yerel ayrıştırıcılar güncel! (Toplam %1$d kaynak yüklendi)</string>
     <string name="welcome_jar_install_failed">Kototoro: Ayrıştırıcı ağ yüklemesi başarısız oldu (%1$s). Lütfen tekrar deneyin veya proxy aynalarını değiştirmek için ayarlara gidin</string>
@@ -96,7 +96,7 @@
     <string name="browse_more_tracking_recommendations">Daha fazla takip sitesi önerisi göster</string>
     <string name="browse_more_tracking_recommendations_summary">Göz at sayfasında içerik kaynaklarının altında ek takip satırlarını gösterin. Devre dışıyken üst kart görünür kalır ve içerik kaynakları genişletilmiş kalır.</string>
     <string name="bangumi_recommendations_load_failed_hint">Bangumi önerileri yüklenemedi. VPN deneyin veya Ayarlar - Depolama ve ağ bölümünden başka bir ayna seçin.</string>
-    <string name="browse_display_options_summary">Bu seçenek, Göz at sayfası arama çubuğu &gt; Diğer &gt; Görüntü seçenekleri bölümüne taşındı.</string>
+    <string name="browse_display_options_summary">Bu seçenek, Göz at sayfası arama çubuğu > Diğer > Görüntü seçenekleri bölümüne taşındı.</string>
     <string name="show_extra_info_on_cards">Kartlarda ek bilgi göster</string>
     <string name="show_extra_info_on_cards_summary">İçerik kartlarında puanı, durumu, bölüm sayısını ve etiketleri gösterin</string>
     <string name="top_bar_style">Üst çubuk stili</string>

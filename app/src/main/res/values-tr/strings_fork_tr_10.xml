@@ -4,7 +4,7 @@
     <string name="reader_translation_task_diag_local_done">Yerel çeviri tamamlandı=%1$d/%2$d</string>
     <string name="reader_translation_task_diag_render_done">Oluşturma tamamlandı=%1$d</string>
     <string name="reader_translation_task_diag_panel">[Çeviri tanılamaları]</string>
-    <string name="reader_translation_task_diag_lang">Dil: %1$s -&gt; %2$s</string>
+    <string name="reader_translation_task_diag_lang">Dil: %1$s -> %2$s</string>
     <string name="reader_translation_task_diag_ocr_param">OCR yapılandırması: %1$s</string>
     <string name="reader_translation_task_diag_ocr_attempt">OCR denemesi: %1$s</string>
     <string name="reader_translation_task_diag_local_stat">Yerel çeviri: İstek %1$d, tamamlanan %2$d/%3$d</string>

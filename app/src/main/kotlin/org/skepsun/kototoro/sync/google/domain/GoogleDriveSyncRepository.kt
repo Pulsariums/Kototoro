@@ -91,6 +91,7 @@ class GoogleDriveSyncRepository @Inject constructor(
 ) {
 
     val isSyncing = MutableStateFlow(false)
+    val syncStage = MutableStateFlow<String?>(null)
     private val syncMutex = Mutex()
     private val json = Json {
         encodeDefaults = true
@@ -120,6 +121,7 @@ class GoogleDriveSyncRepository @Inject constructor(
             return GoogleDriveSyncResult.AuthorizationRequired(GoogleDriveSyncAuthorizationException())
         }
         if (!syncMutex.tryLock()) {
+            Log.d(TAG, "sync skipped: another sync is already running")
             return GoogleDriveSyncResult.Success
         }
         isSyncing.value = true
@@ -149,6 +151,7 @@ class GoogleDriveSyncRepository @Inject constructor(
             Log.e(TAG, "sync failed: ${settings.lastSyncError}", e)
             GoogleDriveSyncResult.Error(settings.lastSyncError)
         } finally {
+            syncStage.value = null
             isSyncing.value = false
             syncMutex.unlock()
         }
@@ -213,6 +216,7 @@ class GoogleDriveSyncRepository @Inject constructor(
             Log.e(TAG, "legacy sync import failed: ${settings.lastSyncError}", e)
             GoogleDriveSyncResult.Error(settings.lastSyncError)
         } finally {
+            syncStage.value = null
             isSyncing.value = false
             syncMutex.unlock()
         }
@@ -371,6 +375,7 @@ class GoogleDriveSyncRepository @Inject constructor(
     }
 
     private suspend fun <T> runSyncStep(name: String, block: suspend () -> T): T {
+        syncStage.value = name.substringBefore(' ')
         Log.d(TAG, "sync step start: $name")
         return try {
             block().also {

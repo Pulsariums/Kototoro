@@ -310,12 +310,18 @@ class UnifiedSourceCatalogRepository @Inject constructor(
         val jarPackages = combine(
             GlobalExtensionManager.mangaSources,
             GlobalExtensionManager.contentSources,
-        ) { mangaSources, contentSources ->
+            GlobalExtensionManager.shadowedSources,
+        ) { mangaSources, contentSources, shadowedSources ->
             val versionPrefs = appContext.getSharedPreferences("jar_plugin_versions", Context.MODE_PRIVATE)
-            (mangaSources.map { it.jarName to it.name } + contentSources.map { it.jarName to it.name })
+            val activeNamesByJar = (mangaSources.map { it.jarName to it.name } + contentSources.map { it.jarName to it.name })
                 .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-                .map { (jarName, sourceNames) ->
+            val shadowedNamesByJar = shadowedSources.mapValues { (_, bySource) -> bySource.keys.toList() }
+            (activeNamesByJar.keys + shadowedNamesByJar.keys)
+                .map { jarName ->
                     val packageName = jarName.removeSuffix(".jar")
+                    val activeNames = activeNamesByJar[jarName].orEmpty()
+                    val hiddenNames = shadowedNamesByJar[jarName].orEmpty()
+                    val allNames = (activeNames + hiddenNames).distinct().sorted()
                     UnifiedSourcePackageItem(
                         id = packageId(UnifiedSourceKind.JAR, packageName),
                         kind = UnifiedSourceKind.JAR,
@@ -329,8 +335,9 @@ class UnifiedSourceCatalogRepository @Inject constructor(
                         language = null,
                         isInstalled = true,
                         isNsfw = false,
-                        sourceCount = sourceNames.size,
-                        sourceNames = sourceNames.sorted(),
+                        sourceCount = allNames.size,
+                        sourceNames = allNames,
+                        shadowedSourceCount = hiddenNames.distinct().size,
                     )
                 }
         }
@@ -431,7 +438,8 @@ class UnifiedSourceCatalogRepository @Inject constructor(
         val jarChanges = combine(
             GlobalExtensionManager.mangaSources,
             GlobalExtensionManager.contentSources,
-        ) { _, _ -> Unit }
+            GlobalExtensionManager.shadowedSources,
+        ) { _, _, _ -> Unit }
         val cloudstreamChanges = cloudstreamRuntimeManager.sources.map { Unit }
         return combine(apkChanges, jarChanges, cloudstreamChanges) { _, _, _ -> Unit }
             .onStart { emit(Unit) }

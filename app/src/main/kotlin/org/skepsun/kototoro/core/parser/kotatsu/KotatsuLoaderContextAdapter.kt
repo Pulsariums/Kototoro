@@ -70,15 +70,15 @@ internal class KotatsuLoaderContextAdapter(
     override fun redrawImageResponse(
         response: Response,
         redraw: (image: KTBitmap) -> KTBitmap,
-    ): Response = response
-
-    override fun createBitmap(width: Int, height: Int): KTBitmap {
-        return object : KTBitmap {
-            override val width: Int = width
-            override val height: Int = height
-            override fun drawBitmap(sourceBitmap: KTBitmap, src: org.koitharu.kotatsu.parsers.bitmap.Rect, dst: org.koitharu.kotatsu.parsers.bitmap.Rect) = Unit
+    ): Response = delegate.redrawImageResponse(response) { bitmap ->
+        val result = redraw(KotatsuBitmapAdapter(bitmap))
+        requireNotNull((result as? KotatsuBitmapAdapter)?.delegate) {
+            "Kotatsu image redraw must return a bitmap created by the host context"
         }
     }
+
+    override fun createBitmap(width: Int, height: Int): KTBitmap =
+        KotatsuBitmapAdapter(delegate.createBitmap(width, height))
 
     override suspend fun interceptWebViewRequests(
         url: String,
@@ -97,3 +97,23 @@ internal class KotatsuLoaderContextAdapter(
         return impl?.webViewRequestInterceptorExecutor?.captureWebViewUrls(pageUrl, urlPattern, timeout) ?: emptyList()
     }
 }
+
+/** Kotatsu parser Bitmap -> host Bitmap köprüsü; karıştırılmış (scrambled) görsellerin çözülmesi buna bağlı. */
+private class KotatsuBitmapAdapter(
+    val delegate: org.skepsun.kototoro.parsers.bitmap.Bitmap,
+) : KTBitmap {
+    override val width: Int get() = delegate.width
+    override val height: Int get() = delegate.height
+
+    override fun drawBitmap(
+        sourceBitmap: KTBitmap,
+        src: org.koitharu.kotatsu.parsers.bitmap.Rect,
+        dst: org.koitharu.kotatsu.parsers.bitmap.Rect,
+    ) {
+        val source = requireNotNull((sourceBitmap as? KotatsuBitmapAdapter)?.delegate)
+        delegate.drawBitmap(source, src.toKototoro(), dst.toKototoro())
+    }
+}
+
+private fun org.koitharu.kotatsu.parsers.bitmap.Rect.toKototoro() =
+    org.skepsun.kototoro.parsers.bitmap.Rect(left, top, right, bottom)

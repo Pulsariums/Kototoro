@@ -87,6 +87,7 @@ import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabl
 import org.skepsun.kototoro.ireader.model.IReaderMangaSource
 import org.skepsun.kototoro.mihon.model.MihonMangaSource
 import org.skepsun.kototoro.settings.compose.SettingsContentHorizontalPadding
+import org.skepsun.kototoro.settings.sources.test.SourceTestDialog
 
 private object PackageIconMemoryCache {
     private val cache = ConcurrentHashMap<String, Drawable>()
@@ -189,6 +190,7 @@ internal fun UnifiedSourceList(
     // Keep the first action chip aligned with the global content margin; the actions
     // row itself is still horizontally scrollable towards the screen edge.
     val actionsStartPadding = (SettingsContentHorizontalPadding - horizontalPadding).coerceAtLeast(0.dp)
+    var showSourceTest by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         LazyColumn(
             state = listState,
@@ -248,6 +250,14 @@ internal fun UnifiedSourceList(
                                 )
                             },
                             label = { Text(stringResource(R.string.unified_sources_expand_all)) },
+                        )
+                    }
+                    item(key = "test_all_sources") {
+                        CompactActionChip(
+                            onClick = { showSourceTest = true },
+                            enabled = sources.any { it.isEnabled },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_play), null, Modifier.size(16.dp)) },
+                            label = { Text(stringResource(R.string.source_test_all)) },
                         )
                     }
                     item(key = "collapse_all_groups") {
@@ -344,6 +354,9 @@ internal fun UnifiedSourceList(
             alwaysVisible = true,
             contentPadding = PaddingValues(vertical = 4.dp),
         )
+        if (showSourceTest) {
+            SourceTestDialog(sources = sources.filter { it.isEnabled }.map { it.source }, onDismiss = { showSourceTest = false })
+        }
     }
 }
 

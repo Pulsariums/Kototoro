@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +38,7 @@ data class GoogleDriveSyncUiState(
     val lastError: String? = null,
     val isDirty: Boolean = false,
     val isSyncing: Boolean = false,
+    val syncStage: String? = null,
 )
 
 @HiltViewModel
@@ -56,8 +58,9 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.isSyncing.collect { syncing ->
-                _uiState.value = readState().copy(isSyncing = syncing)
+            // Also fires refresh() on every isSyncing true->false transition, so worker-driven runs update lastError/lastSync.
+            combine(repository.isSyncing, repository.syncStage) { syncing, stage -> syncing to stage }.collect { (syncing, stage) ->
+                _uiState.value = readState().copy(isSyncing = syncing, syncStage = stage)
             }
         }
         viewModelScope.launch {
@@ -81,10 +84,9 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
             requestSignIn()
             return
         }
-        viewModelScope.launch(Dispatchers.Default) {
-            handleSyncResult(repository.sync())
-            refresh()
-        }
+        // Runs in WorkManager so it survives leaving the screen; state comes back through isSyncing/syncStage.
+        scheduler.enqueueManual()
+        refresh()
     }
 
     fun deleteRemoteData() {
@@ -261,5 +263,6 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
         lastError = settings.lastSyncError,
         isDirty = settings.isDirty,
         isSyncing = repository.isSyncing.value,
+        syncStage = repository.syncStage.value,
     )
 }

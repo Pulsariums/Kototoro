@@ -66,6 +66,7 @@ fun SyncSettingsRoute(
             },
             googleDriveErrorSummary = googleDriveState.lastError,
             isGoogleDriveSyncing = googleDriveState.isSyncing,
+            googleDriveSyncStage = googleDriveState.syncStage,
         ),
         snackbarHostState = snackbarHostState,
         onGoogleDriveSignInClick = { googleDriveSyncViewModel.requestSignIn() },

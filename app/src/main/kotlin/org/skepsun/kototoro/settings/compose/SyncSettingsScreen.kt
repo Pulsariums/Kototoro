@@ -35,6 +35,7 @@ data class SyncSettingsUiState(
     val googleDriveLastSyncSummary: String?,
     val googleDriveErrorSummary: String?,
     val isGoogleDriveSyncing: Boolean,
+    val googleDriveSyncStage: String? = null,
 )
 
 @Composable
@@ -108,7 +109,8 @@ fun SyncSettingsScreen(
                                 title = stringResource(R.string.sync_now),
                                 iconRes = R.drawable.ic_cloud_upload,
                                 summary = when {
-                                    state.isGoogleDriveSyncing -> stringResource(R.string.sync_syncing)
+                                    state.isGoogleDriveSyncing -> stringResource(R.string.sync_syncing) +
+                                        (state.googleDriveSyncStage?.let { " – $it" } ?: "")
                                     state.googleDriveErrorSummary != null -> state.googleDriveErrorSummary
                                     state.googleDriveLastSyncSummary != null -> stringResource(
                                         R.string.sync_last,

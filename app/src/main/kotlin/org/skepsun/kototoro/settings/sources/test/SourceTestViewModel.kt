@@ -13,9 +13,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.json.JSONArray
+import org.json.JSONObject
 import org.skepsun.kototoro.explore.data.ContentSourcesRepository
 import org.skepsun.kototoro.parsers.model.ContentSource
 import org.skepsun.kototoro.parsers.util.runCatchingCancellable
+import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,6 +70,26 @@ class SourceTestViewModel @Inject constructor(
 
 	fun cancel() {
 		job?.cancel()
+	}
+
+	fun exportJson(): String {
+		val sources = JSONArray()
+		_progress.value.results.forEach { result ->
+			val steps = JSONObject()
+			result.steps.forEach { (step, stepResult) ->
+				steps.put(step.name, stepResult.status.name.lowercase())
+			}
+			sources.put(
+				JSONObject()
+					.put("name", result.sourceKey)
+					.put("status", result.overall.name.lowercase())
+					.put("steps", steps),
+			)
+		}
+		return JSONObject()
+			.put("generated", Instant.now().toString())
+			.put("sources", sources)
+			.toString()
 	}
 
 	/** Disables every source of the current run whose overall verdict is FAIL. */

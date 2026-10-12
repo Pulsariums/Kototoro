@@ -49,6 +49,9 @@
     <string name="source_test_status_pass">Başarılı</string>
     <string name="source_test_status_fail">Başarısız</string>
     <string name="source_test_status_skip">Atlandı</string>
+    <string name="source_test_status_cloudflare">Cloudflare: elle doğrulama</string>
+    <string name="source_test_msg_cloudflare">Cloudflare engeli, elle doğrulama gerekir</string>
+    <string name="source_test_export">Sonuçları dışa aktar</string>
     <string name="source_test_step_list">Ana liste</string>
     <string name="source_test_step_covers">Kapak görselleri</string>
     <string name="source_test_step_details">Ayrıntılar</string>

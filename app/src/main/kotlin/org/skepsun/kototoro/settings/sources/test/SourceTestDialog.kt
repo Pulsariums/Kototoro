@@ -1,5 +1,6 @@
 package org.skepsun.kototoro.settings.sources.test
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +50,7 @@ internal fun SourceTestDialog(
 	viewModel: SourceTestViewModel = hiltViewModel(),
 ) {
 	LaunchedEffect(Unit) { viewModel.testAll(sources) }
+	val context = LocalContext.current
 	val progress by viewModel.progress.collectAsStateWithLifecycle()
 	var expandedKeys by remember { mutableStateOf(emptySet<String>()) }
 	val failedCount = progress.results.count {
@@ -128,6 +131,21 @@ internal fun SourceTestDialog(
 							},
 						)
 						HorizontalDivider()
+					}
+				}
+				if (progress.finished) {
+					TextButton(
+						onClick = {
+							val intent = Intent(Intent.ACTION_SEND).apply {
+								type = "text/plain"
+								putExtra(Intent.EXTRA_TEXT, viewModel.exportJson())
+							}
+							val title = context.getString(R.string.source_test_export)
+							context.startActivity(Intent.createChooser(intent, title))
+						},
+						modifier = Modifier.align(Alignment.End),
+					) {
+						Text(stringResource(R.string.source_test_export))
 					}
 				}
 			}
@@ -219,6 +237,7 @@ private fun statusColor(status: StepStatus): Color {
 		StepStatus.PASS -> colors.primary
 		StepStatus.FAIL -> colors.error
 		StepStatus.SKIP -> colors.onSurfaceVariant
+		StepStatus.CLOUDFLARE -> colors.tertiary
 	}
 }
 
@@ -226,6 +245,7 @@ private fun statusLabelRes(status: StepStatus): Int = when (status) {
 	StepStatus.PASS -> R.string.source_test_status_pass
 	StepStatus.FAIL -> R.string.source_test_status_fail
 	StepStatus.SKIP -> R.string.source_test_status_skip
+	StepStatus.CLOUDFLARE -> R.string.source_test_status_cloudflare
 }
 
 private fun stepLabelRes(step: SourceTestStep): Int = when (step) {

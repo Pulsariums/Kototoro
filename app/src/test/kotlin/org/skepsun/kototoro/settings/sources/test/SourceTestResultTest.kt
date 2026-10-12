@@ -43,4 +43,24 @@ class SourceTestResultTest {
 	fun `empty step map passes`() {
 		overallStatusOf(emptyMap()) shouldBe StepStatus.PASS
 	}
+
+	@Test
+	fun `cloudflare block without failures gives cloudflare overall`() {
+		val cloudflare = StepResult(StepStatus.CLOUDFLARE, "engel")
+		val steps = mapOf(
+			SourceTestStep.LIST to pass,
+			SourceTestStep.CHAPTERS to cloudflare,
+		)
+		overallStatusOf(steps) shouldBe StepStatus.CLOUDFLARE
+	}
+
+	@Test
+	fun `failure takes precedence over cloudflare block`() {
+		val cloudflare = StepResult(StepStatus.CLOUDFLARE, "engel")
+		val steps = mapOf(
+			SourceTestStep.LIST to fail,
+			SourceTestStep.CHAPTERS to cloudflare,
+		)
+		overallStatusOf(steps) shouldBe StepStatus.FAIL
+	}
 }

@@ -20,6 +20,7 @@ enum class StepStatus {
 	PASS,
 	FAIL,
 	SKIP,
+	CLOUDFLARE,
 }
 
 data class StepResult(
@@ -33,7 +34,11 @@ data class StepResult(
  * while PASS and SKIP steps together pass it.
  */
 internal fun overallStatusOf(steps: Map<SourceTestStep, StepResult>): StepStatus =
-	if (steps.values.any { it.status == StepStatus.FAIL }) StepStatus.FAIL else StepStatus.PASS
+	when {
+		steps.values.any { it.status == StepStatus.FAIL } -> StepStatus.FAIL
+		steps.values.any { it.status == StepStatus.CLOUDFLARE } -> StepStatus.CLOUDFLARE
+		else -> StepStatus.PASS
+	}
 
 data class SourceTestResult(
 	val sourceKey: String,

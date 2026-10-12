@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.LocalizedAppContext
+import org.skepsun.kototoro.core.exceptions.CloudFlareProtectedException
 import org.skepsun.kototoro.core.model.getTitle
 import org.skepsun.kototoro.core.network.ContentHttpClient
 import org.skepsun.kototoro.core.parser.ContentRepository
@@ -168,7 +169,11 @@ class SourceTester @Inject constructor(
 		val startedAt = System.nanoTime()
 		val result = withTimeoutOrNull(SOURCE_TEST_STEP_TIMEOUT_MS) {
 			runCatchingCancellable { block() }.getOrElse { e ->
-				StepResult(StepStatus.FAIL, describe(e))
+				if (isCloudflareBlocked(e)) {
+					StepResult(StepStatus.CLOUDFLARE, text(R.string.source_test_msg_cloudflare))
+				} else {
+					StepResult(StepStatus.FAIL, describe(e))
+				}
 			}
 		} ?: failed(R.string.source_test_msg_timeout, SOURCE_TEST_STEP_TIMEOUT_MS / 1000)
 		val timed = result.copy(durationMs = elapsedMs(startedAt))
@@ -203,6 +208,17 @@ class SourceTester @Inject constructor(
 		} else {
 			"Content-Type: ${contentType.ifEmpty { "-" }}"
 		}
+	}
+
+	private fun isCloudflareBlocked(e: Throwable): Boolean {
+		var current: Throwable? = e
+		var depth = 0
+		while (current != null && depth < 5) {
+			if (current is CloudFlareProtectedException) return true
+			current = current.cause
+			depth++
+		}
+		return false
 	}
 
 	private fun describe(e: Throwable): String {

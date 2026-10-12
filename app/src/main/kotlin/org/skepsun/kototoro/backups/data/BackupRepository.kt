@@ -371,8 +371,13 @@ class BackupRepository @Inject constructor(
 
                 BackupSection.SOURCES -> output.writeJsonArray(
                     section = BackupSection.SOURCES,
-                    data = database.getSourcesDao().dumpEnabled()
-                        .filter { format != ExportFormat.KOTATSU || it.source in kotatsuSourceNames }
+                    data = (
+                        if (format == ExportFormat.KOTATSU) {
+                            database.getSourcesDao().dumpEnabled()
+                        } else {
+                            database.getSourcesDao().findAll().asFlow()
+                        }
+                    ).filter { format != ExportFormat.KOTATSU || it.source in kotatsuSourceNames }
                         .map { SourceBackup(it) },
                     serializer = serializer(),
                 )

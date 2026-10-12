@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -321,15 +324,18 @@ fun HomeQuickActionsGrid(
             val columns = homeBalancedGridColumns(actions.size, maxColumns)
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
                 actions.withIndex().chunked(columns).forEach { row ->
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                        horizontalArrangement = Arrangement.spacedBy(spacing),
+                    ) {
                         row.forEach { (index, action) ->
                             val shape = RoundedCornerShape(if (expressive) 20.dp else 16.dp)
                             val colors = homeQuickActionColors(action.enabled, index, expressive, isIosStyle)
-                            container(Modifier.weight(1f).height(tileHeight), shape, index) {
+                            container(Modifier.weight(1f).fillMaxHeight().heightIn(min = tileHeight), shape, index) {
                                 Column(
                                     modifier = Modifier.fillMaxSize().then(tileModifier(index, shape))
                                         .clickable(enabled = action.enabled, onClick = action.onClick)
-                                        .padding(6.dp),
+                                        .padding(horizontal = 4.dp, vertical = 8.dp),
                                     verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {

@@ -29,6 +29,7 @@ import org.skepsun.kototoro.core.extensions.resolveJarPriorityOrder
 import org.skepsun.kototoro.core.prefs.AppSettings
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.ui.BaseViewModel
+import org.skepsun.kototoro.core.util.ext.call
 import org.skepsun.kototoro.explore.data.ContentSourcesRepository
 import javax.inject.Inject
 

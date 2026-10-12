@@ -1448,19 +1448,18 @@ class SettingsActivity :
                         readyState = readyState,
                         onSearchClick = { updateUnifiedSourcesSearchActive(true) },
                         onFilterClick = openFilter,
-                        onReorderClick = if (loadingOrder || readyState == null || readyState.filters.query.isNotBlank()) null else {
-                            {
-                                loadingOrder = true
-                                coroutineScope.launch {
-                                    try {
-                                        sourceOrder = unifiedSourcesViewModel.loadSourceOrder()
-                                    } catch (e: kotlinx.coroutines.CancellationException) {
-                                        throw e
-                                    } catch (e: Exception) {
-                                        // ignore
-                                    } finally {
-                                        loadingOrder = false
-                                    }
+                        reorderEnabled = !(loadingOrder || readyState == null || readyState.filters.query.isNotBlank()),
+                        onReorderClick = {
+                            loadingOrder = true
+                            coroutineScope.launch {
+                                try {
+                                    sourceOrder = unifiedSourcesViewModel.loadSourceOrder()
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    // ignore
+                                } finally {
+                                    loadingOrder = false
                                 }
                             }
                         },

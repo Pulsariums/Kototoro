@@ -355,7 +355,7 @@ private fun UnifiedSourcesContextualFilterTabs(
                     )
                 }
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().keepHorizontalSwipes(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
                 ) {
@@ -389,7 +389,7 @@ private fun UnifiedSourcesContextualFilterTabs(
                     }
                 }
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().keepHorizontalSwipes(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
                 ) {
@@ -425,7 +425,7 @@ private fun UnifiedSourcesContextualFilterTabs(
             }
             UNIFIED_SOURCES_TAB_REPOSITORIES -> {
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().keepHorizontalSwipes(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
                 ) {
@@ -468,7 +468,7 @@ private fun UnifiedSourcesContextualFilterTabs(
                     )
                 }
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().keepHorizontalSwipes(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
                 ) {
@@ -549,7 +549,7 @@ private fun UnifiedSourcesContextualFilterTabs(
                     }
                 }
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().keepHorizontalSwipes(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
                 ) {
@@ -595,7 +595,7 @@ private fun UnifiedRepositoryFilterRow(
     modifier: Modifier = Modifier,
 ) {
     LazyRow(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().keepHorizontalSwipes(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
     ) {
@@ -645,6 +645,7 @@ internal fun FilterSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         LazyRow(
+            modifier = Modifier.keepHorizontalSwipes(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = SettingsContentHorizontalPadding, vertical = 2.dp),
             content = content,
@@ -715,7 +716,7 @@ private fun UnifiedSourceSelectionBar(
 ) {
     LazyRow(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().keepHorizontalSwipes()
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),

@@ -216,6 +216,7 @@ fun UnifiedSourcesActionCapsule(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
     onReorderClick: (() -> Unit)? = null,
+    reorderEnabled: Boolean = true,
     onGroupsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -245,7 +246,11 @@ fun UnifiedSourcesActionCapsule(
             horizontalArrangement = Arrangement.Center,
         ) {
             onReorderClick?.let { action ->
-                IconButton(onClick = action, modifier = Modifier.size(tokens.topBarButtonSize - 4.dp)) {
+                IconButton(
+                    onClick = action,
+                    enabled = reorderEnabled,
+                    modifier = Modifier.size(tokens.topBarButtonSize - 4.dp),
+                ) {
                     Icon(
                         painter = rememberSafePainter(R.drawable.ic_reorder_handle),
                         contentDescription = stringResource(R.string.reorder),

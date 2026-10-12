@@ -175,19 +175,18 @@ class UnifiedSourcesActivity : BaseComposeActivity() {
                     onSearchClick = { searchActive = true },
                     onFilterClick = openFilter,
                     onGroupsClick = { showSourceGroups = true },
-                    onReorderClick = if (loadingOrder || readyState == null || readyState.filters.query.isNotBlank()) null else {
-                        {
-                            loadingOrder = true
-                            coroutineScope.launch {
-                                try {
-                                    sourceOrder = viewModel.loadSourceOrder()
-                                } catch (e: kotlinx.coroutines.CancellationException) {
-                                    throw e
-                                } catch (e: Exception) {
-                                    Toast.makeText(this@UnifiedSourcesActivity, e.localizedMessage, Toast.LENGTH_SHORT).show()
-                                } finally {
-                                    loadingOrder = false
-                                }
+                    reorderEnabled = !(loadingOrder || readyState == null || readyState.filters.query.isNotBlank()),
+                    onReorderClick = {
+                        loadingOrder = true
+                        coroutineScope.launch {
+                            try {
+                                sourceOrder = viewModel.loadSourceOrder()
+                            } catch (e: kotlinx.coroutines.CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Toast.makeText(this@UnifiedSourcesActivity, e.localizedMessage, Toast.LENGTH_SHORT).show()
+                            } finally {
+                                loadingOrder = false
                             }
                         }
                     },

@@ -205,7 +205,7 @@ internal fun UnifiedSourceList(
             item(key = "source_actions") {
                 LazyRow(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth().keepHorizontalSwipes()
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(start = actionsStartPadding),
@@ -1132,7 +1132,7 @@ internal fun UnifiedPackageList(
             item(key = "package_actions") {
                 LazyRow(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth().keepHorizontalSwipes()
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {

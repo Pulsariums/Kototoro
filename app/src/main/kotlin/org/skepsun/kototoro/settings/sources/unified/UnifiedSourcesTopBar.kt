@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Icon
@@ -215,6 +216,7 @@ fun UnifiedSourcesActionCapsule(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
     onReorderClick: (() -> Unit)? = null,
+    onGroupsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val tokens = LocalInterfaceStyleTokens.current
@@ -247,6 +249,16 @@ fun UnifiedSourcesActionCapsule(
                     Icon(
                         painter = rememberSafePainter(R.drawable.ic_reorder_handle),
                         contentDescription = stringResource(R.string.reorder),
+                    )
+                }
+            }
+            onGroupsClick?.let { action ->
+                IconButton(onClick = action, modifier = Modifier.size(tokens.topBarButtonSize - 4.dp)) {
+                    Icon(
+                        imageVector = Icons.Outlined.Folder,
+                        contentDescription = stringResource(R.string.source_groups_title),
+                        modifier = Modifier.size(tokens.topBarIconSize),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

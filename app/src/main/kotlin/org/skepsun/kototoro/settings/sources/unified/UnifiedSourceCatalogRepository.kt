@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -61,6 +63,12 @@ import org.skepsun.kototoro.settings.sources.extensions.selectExtensionLanguageC
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Bursts of runtime/DB/settings signals (one install touches packages, sources and jar state at
+ * once) are coalesced into a single catalog rebuild.
+ */
+private const val CATALOG_COALESCE_MS = 150L
+
 @Singleton
 class UnifiedSourceCatalogRepository @Inject constructor(
     @ApplicationContext private val appContext: Context,
@@ -94,6 +102,8 @@ class UnifiedSourceCatalogRepository @Inject constructor(
             Log.e("UnifiedSourceCatalog", "Error in observeState flow", e)
             emit(UnifiedSourceCatalogState())
         }
+            .debounce(CATALOG_COALESCE_MS)
+            .distinctUntilChanged()
     }
 
     fun observeRepositories(): Flow<List<UnifiedSourceRepositoryItem>> {
@@ -350,13 +360,19 @@ class UnifiedSourceCatalogRepository @Inject constructor(
                 .groupBy { it.pluginPackageName }
                 .mapValues { (_, sources) -> sources.map { it.displayName }.distinct().sorted() }
             val pluginsDir = java.io.File(java.io.File(appContext.filesDir, "cloudstream"), "plugins")
+            // Index file name -> package once per emission (first match wins, as before); the old
+            // per-file scan copied the whole prefs map for every plugin file.
+            val packageByFileName = HashMap<String, String>()
+            versionPrefs.all.forEach { (key, value) ->
+                if (value is String && value !in packageByFileName) {
+                    packageByFileName[value] = key.substringBefore(":archive")
+                }
+            }
             pluginsDir.listFiles()
                 ?.filter { it.isFile && (it.extension.equals("cs3", ignoreCase = true) || it.extension.equals("zip", ignoreCase = true)) }
                 .orEmpty()
                 .map { file ->
-                    val packageName = versionPrefs.all.entries.firstOrNull { (_, value) ->
-                        value is String && value == file.name
-                    }?.key?.substringBefore(":archive")
+                    val packageName = packageByFileName[file.name]
                         ?: file.nameWithoutExtension
                     val storedVersion = versionPrefs.getLong(packageName, 1L)
                     UnifiedSourcePackageItem(
@@ -386,7 +402,7 @@ class UnifiedSourceCatalogRepository @Inject constructor(
 
         return combine(apkPackages, jarPackages, cloudstreamPackages, jsonPackages) { apk, jar, cloudstream, json ->
             (apk + jar + cloudstream + json).sortedWith(compareBy({ it.kind.ordinal }, { it.name.lowercase() }))
-        }.flowOn(Dispatchers.Default).catch { e ->
+        }.flowOn(Dispatchers.Default).distinctUntilChanged().catch { e ->
             Log.e("UnifiedSourceCatalog", "Error in observePackages flow", e)
             emit(emptyList())
         }
@@ -404,12 +420,14 @@ class UnifiedSourceCatalogRepository @Inject constructor(
             settings.observeAsFlow(AppSettings.KEY_SOURCE_SFW_OVERRIDES) { sourceSfwOverrides },
         ) { _, _ -> Unit }
         return combine(dbChanges, runtimeChanges, settingsChanges, nsfwOverrideChanges) { _, _, _, _ -> Unit }
+            .debounce(CATALOG_COALESCE_MS)
             .mapLatest {
                 runCatching { buildSourceItems() }.getOrElse { e ->
                     Log.e("UnifiedSourceCatalog", "Failed to buildSourceItems", e)
                     emptyList()
                 }
             }
+            .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
             .combine(sourceAvailabilityRepository.observeAvailability()) { sources, availability ->
                 sources.map { source ->

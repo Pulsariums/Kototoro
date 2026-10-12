@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.skepsun.kototoro.R
+import org.skepsun.kototoro.settings.sources.groups.SourceGroupsDialog
 import org.skepsun.kototoro.core.nav.router
 import org.skepsun.kototoro.core.ui.BaseComposeActivity
 import org.skepsun.kototoro.settings.compose.SettingsSectionScaffold
@@ -114,12 +115,16 @@ class UnifiedSourcesActivity : BaseComposeActivity() {
         val coroutineScope = rememberCoroutineScope()
         var sourceOrder by remember { mutableStateOf<List<org.skepsun.kototoro.core.ui.compose.ReorderItem>?>(null) }
         var loadingOrder by remember { mutableStateOf(false) }
+        var showSourceGroups by remember { mutableStateOf(false) }
         sourceOrder?.let { items ->
             org.skepsun.kototoro.core.ui.compose.ReorderDialog(
                 items = items,
                 onDismissRequest = { sourceOrder = null },
                 onSave = viewModel::saveSourceOrder,
             )
+        }
+        if (showSourceGroups) {
+            SourceGroupsDialog(onDismissRequest = { showSourceGroups = false })
         }
         var tabReselectTrigger by remember { mutableStateOf<Pair<Int, Long>?>(null) }
         val closeSearch = {
@@ -169,6 +174,7 @@ class UnifiedSourcesActivity : BaseComposeActivity() {
                     readyState = readyState,
                     onSearchClick = { searchActive = true },
                     onFilterClick = openFilter,
+                    onGroupsClick = { showSourceGroups = true },
                     onReorderClick = if (loadingOrder || readyState == null || readyState.filters.query.isNotBlank()) null else {
                         {
                             loadingOrder = true

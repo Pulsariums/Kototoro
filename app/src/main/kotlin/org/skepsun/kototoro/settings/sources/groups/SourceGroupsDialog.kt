@@ -6,11 +6,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -33,6 +43,7 @@ import org.skepsun.kototoro.settings.compose.SettingsDialogActionButton
 
 private val IMPORT_MIME_TYPES = arrayOf("application/json", "text/plain")
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SourceGroupsDialog(
 	onDismissRequest: () -> Unit,
@@ -79,16 +90,26 @@ fun SourceGroupsDialog(
 					.heightIn(max = 480.dp)
 					.verticalScroll(rememberScrollState()),
 			) {
-				Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-					SettingsDialogActionButton(
+				Button(
+					onClick = { showNameDialog = true },
+					enabled = !applyState.running,
+					modifier = Modifier.fillMaxWidth(),
+				) {
+					Text(
 						text = stringResource(R.string.source_groups_save_current),
-						onClick = { showNameDialog = true },
-						enabled = !applyState.running,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
 					)
-					SettingsDialogActionButton(
+				}
+				OutlinedButton(
+					onClick = { importLauncher.launch(IMPORT_MIME_TYPES) },
+					enabled = !applyState.running,
+					modifier = Modifier.fillMaxWidth(),
+				) {
+					Text(
 						text = stringResource(R.string.source_groups_import),
-						onClick = { importLauncher.launch(IMPORT_MIME_TYPES) },
-						enabled = !applyState.running,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
 					)
 				}
 
@@ -105,40 +126,60 @@ fun SourceGroupsDialog(
 				}
 
 				groups.forEach { group ->
-					Column {
-						Text(
-							text = group.name,
-							style = MaterialTheme.typography.titleSmall,
-						)
-						Text(
-							text = stringResource(
-								R.string.source_groups_meta,
-								group.repos.size,
-								group.packages.size,
-								group.sourceStates.size,
-							),
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant,
-						)
-						Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-							SettingsDialogActionButton(
-								text = stringResource(R.string.source_groups_apply),
-								onClick = { viewModel.applyGroup(group.id) },
-								enabled = !applyState.running,
+					Surface(
+						shape = RoundedCornerShape(16.dp),
+						color = MaterialTheme.colorScheme.surfaceContainerHigh,
+						modifier = Modifier.fillMaxWidth(),
+					) {
+						Column(
+							modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+							verticalArrangement = Arrangement.spacedBy(2.dp),
+						) {
+							Text(
+								text = group.name,
+								style = MaterialTheme.typography.titleSmall,
+								maxLines = 2,
+								overflow = TextOverflow.Ellipsis,
 							)
-							SettingsDialogActionButton(
-								text = stringResource(R.string.source_groups_export),
-								onClick = {
-									pendingExportId = group.id
-									exportLauncher.launch("${group.name}.json")
-								},
-								enabled = !applyState.running,
+							Text(
+								text = stringResource(
+									R.string.source_groups_meta,
+									group.repos.size,
+									group.packages.size,
+									group.sourceStates.size,
+								),
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.onSurfaceVariant,
 							)
-							SettingsDialogActionButton(
-								text = stringResource(R.string.source_groups_delete),
-								onClick = { viewModel.delete(group.id) },
-								enabled = !applyState.running,
-							)
+							FlowRow(
+								horizontalArrangement = Arrangement.spacedBy(8.dp),
+								modifier = Modifier.padding(top = 8.dp),
+							) {
+								FilledTonalButton(
+									onClick = { viewModel.applyGroup(group.id) },
+									enabled = !applyState.running,
+								) {
+									Text(text = stringResource(R.string.source_groups_apply), maxLines = 1)
+								}
+								OutlinedButton(
+									onClick = {
+										pendingExportId = group.id
+										exportLauncher.launch("${group.name}.json")
+									},
+									enabled = !applyState.running,
+								) {
+									Text(text = stringResource(R.string.source_groups_export), maxLines = 1)
+								}
+								TextButton(
+									onClick = { viewModel.delete(group.id) },
+									enabled = !applyState.running,
+									colors = ButtonDefaults.textButtonColors(
+										contentColor = MaterialTheme.colorScheme.error,
+									),
+								) {
+									Text(text = stringResource(R.string.source_groups_delete), maxLines = 1)
+								}
+							}
 						}
 					}
 				}

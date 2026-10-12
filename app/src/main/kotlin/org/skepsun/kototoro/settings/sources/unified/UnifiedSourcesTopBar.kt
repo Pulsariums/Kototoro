@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -63,6 +64,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.skepsun.kototoro.R
@@ -245,27 +247,27 @@ fun UnifiedSourcesActionCapsule(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
-            onReorderClick?.let { action ->
-                IconButton(
-                    onClick = action,
-                    enabled = reorderEnabled,
-                    modifier = Modifier.size(tokens.topBarButtonSize - 4.dp),
-                ) {
-                    Icon(
-                        painter = rememberSafePainter(R.drawable.ic_reorder_handle),
-                        contentDescription = stringResource(R.string.reorder),
-                    )
-                }
+            IconButton(
+                onClick = { onReorderClick?.invoke() },
+                enabled = onReorderClick != null && reorderEnabled,
+                modifier = Modifier.size(tokens.topBarButtonSize - 4.dp),
+            ) {
+                Icon(
+                    painter = rememberSafePainter(R.drawable.ic_reorder_handle),
+                    contentDescription = stringResource(R.string.reorder),
+                )
             }
-            onGroupsClick?.let { action ->
-                IconButton(onClick = action, modifier = Modifier.size(tokens.topBarButtonSize - 4.dp)) {
-                    Icon(
-                        imageVector = Icons.Outlined.Folder,
-                        contentDescription = stringResource(R.string.source_groups_title),
-                        modifier = Modifier.size(tokens.topBarIconSize),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            IconButton(
+                onClick = { onGroupsClick?.invoke() },
+                enabled = onGroupsClick != null,
+                modifier = Modifier.size(tokens.topBarButtonSize - 4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Folder,
+                    contentDescription = stringResource(R.string.source_groups_title),
+                    modifier = Modifier.size(tokens.topBarIconSize),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             // Search button
             Box(
@@ -569,7 +571,10 @@ fun UnifiedSourcesTopBarTabs(
                                     text = tab.badgeCount.toString(),
                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.5.dp),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .defaultMinSize(minWidth = 16.dp)
+                                        .padding(horizontal = 4.dp, vertical = 0.5.dp),
                                 )
                             }
                         }

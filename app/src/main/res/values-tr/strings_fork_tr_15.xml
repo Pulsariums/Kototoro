@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="sync_remote_delete_incomplete">%1$d uzak dosya silinemedi. Yerel senkronizasyon durumu korundu; tekrar deneyin.</string>
+    <string name="sync_enable_required">Önce Google Drive senkronizasyonunu açın.</string>
+    <string name="extension_file_delete_failed">%1$s silinemedi.</string>
+</resources>

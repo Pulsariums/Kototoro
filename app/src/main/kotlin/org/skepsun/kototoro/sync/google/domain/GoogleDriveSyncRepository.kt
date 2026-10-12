@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -162,21 +163,33 @@ class GoogleDriveSyncRepository @Inject constructor(
         if (!settings.isSyncEnabled) {
             return GoogleDriveSyncResult.Disabled
         }
-        return try {
-            val token = auth.requireAccessToken()
-            api.findCurrentSyncFiles(token).ifEmpty { api.findWorkV2SyncFiles(token) }.forEach { file ->
-                deleteRemoteFileBestEffort(token, file.id)
+        return syncMutex.withLock {
+            try {
+                val token = auth.requireAccessToken()
+                var failedCount = 0
+                api.findCurrentSyncFiles(token).ifEmpty { api.findWorkV2SyncFiles(token) }.forEach { file ->
+                    if (!deleteRemoteFileReporting(token, file.id)) {
+                        failedCount++
+                    }
+                }
+                if (failedCount > 0) {
+                    GoogleDriveSyncResult.Error(
+                        context.getString(R.string.sync_remote_delete_incomplete, failedCount),
+                        retryable = true,
+                    )
+                } else {
+                    settings.lastSyncTimestamp = 0L
+                    settings.lastSyncError = null
+                    settings.isDirty = false
+                    GoogleDriveSyncResult.Success
+                }
+            } catch (e: GoogleDriveSyncAuthorizationException) {
+                GoogleDriveSyncResult.AuthorizationRequired(e)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                GoogleDriveSyncResult.Error(e.message)
             }
-            settings.lastSyncTimestamp = 0L
-            settings.lastSyncError = null
-            settings.isDirty = false
-            GoogleDriveSyncResult.Success
-        } catch (e: GoogleDriveSyncAuthorizationException) {
-            GoogleDriveSyncResult.AuthorizationRequired(e)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            GoogleDriveSyncResult.Error(e.message)
         }
     }
 
@@ -409,6 +422,19 @@ class GoogleDriveSyncRepository @Inject constructor(
             throw e
         } catch (_: Exception) {
             // Preserve best-effort cleanup, while allowing the owning sync job to be cancelled.
+        }
+    }
+
+    /** Like [deleteRemoteFileBestEffort], but reports failure so the caller can surface it. */
+    private suspend fun deleteRemoteFileReporting(token: String, fileId: String): Boolean {
+        return try {
+            api.delete(token, fileId)
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "remote delete failed for $fileId: ${e.message}", e)
+            false
         }
     }
 

@@ -1,5 +1,6 @@
 package org.skepsun.kototoro.settings.sources.groups
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -18,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,7 +42,8 @@ fun SourceGroupsDialog(
 	val applyState by viewModel.progress.collectAsStateWithLifecycle()
 	val message by viewModel.message.collectAsStateWithLifecycle()
 	var showNameDialog by remember { mutableStateOf(false) }
-	var pendingExportId by remember { mutableStateOf<String?>(null) }
+	var pendingExportId by rememberSaveable { mutableStateOf<String?>(null) }
+	val context = LocalContext.current
 
 	val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
 		if (uri != null) viewModel.importGroup(uri)
@@ -49,7 +53,13 @@ fun SourceGroupsDialog(
 	) { uri ->
 		val id = pendingExportId
 		pendingExportId = null
-		if (uri != null && id != null) viewModel.exportGroup(id, uri)
+		if (id == null) {
+			if (uri != null) {
+				Toast.makeText(context, context.getString(R.string.source_groups_export_lost), Toast.LENGTH_LONG).show()
+			}
+		} else if (uri != null) {
+			viewModel.exportGroup(id, uri)
+		}
 	}
 
 	SettingsAlertDialog(
@@ -186,6 +196,8 @@ private fun ApplyProgressSection(state: ApplyProgress) {
 		}
 		if (state.running) {
 			LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+		} else {
+			LinearProgressIndicator(progress = { 1f }, modifier = Modifier.fillMaxWidth())
 		}
 		Text(
 			text = stringResource(

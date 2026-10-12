@@ -57,4 +57,5 @@ data class TestProgress(
 	val disabledKeys: Set<String> = emptySet(),
 	val finished: Boolean = false,
 	val cancelled: Boolean = false,
+	val errorMessage: String? = null,
 )

@@ -104,7 +104,9 @@ class SourceTestViewModel @Inject constructor(
 			runCatchingCancellable {
 				contentSourcesRepository.setSourcesEnabled(targets, false)
 			}.onSuccess {
-				_progress.update { it.copy(disabledKeys = it.disabledKeys + keys) }
+				_progress.update { it.copy(disabledKeys = it.disabledKeys + keys, errorMessage = null) }
+			}.onFailure { e ->
+				_progress.update { it.copy(errorMessage = e.message ?: e.javaClass.simpleName) }
 			}
 		}
 	}

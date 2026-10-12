@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -56,9 +57,12 @@ internal fun SourceTestDialog(
 	val failedCount = progress.results.count {
 		it.overall == StepStatus.FAIL && it.sourceKey !in progress.disabledKeys
 	}
-	val showClose = progress.finished && failedCount > 0
 	val closeButton: @Composable () -> Unit = {
-		TextButton(onClick = onDismiss) {
+		TextButton(
+			onClick = onDismiss,
+			enabled = progress.finished && failedCount > 0,
+			modifier = Modifier.alpha(if (progress.finished && failedCount == 0) 0f else 1f),
+		) {
 			Text(stringResource(R.string.source_test_close))
 		}
 	}
@@ -81,7 +85,7 @@ internal fun SourceTestDialog(
 				}
 			}
 		},
-		dismissButton = if (showClose) closeButton else null,
+		dismissButton = closeButton,
 		text = {
 			Column(modifier = Modifier.fillMaxWidth()) {
 				val fraction = if (progress.total == 0) 1f else progress.done.toFloat() / progress.total
@@ -91,29 +95,35 @@ internal fun SourceTestDialog(
 					text = stringResource(R.string.source_test_progress, progress.done, progress.total),
 					style = MaterialTheme.typography.bodyMedium,
 				)
-				if (!progress.finished && progress.running.isNotEmpty()) {
+				Text(
+					text = if (!progress.finished && progress.running.isNotEmpty()) {
+						stringResource(R.string.source_test_running, progress.running.joinToString())
+					} else {
+						""
+					},
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					minLines = 2,
+					maxLines = 2,
+					overflow = TextOverflow.Ellipsis,
+				)
+				val passedCount = progress.results.count { it.overall == StepStatus.PASS }
+				Text(
+					text = if (progress.finished) {
+						stringResource(R.string.source_test_summary, passedCount, failedCount)
+					} else {
+						""
+					},
+					style = MaterialTheme.typography.bodyMedium,
+					fontWeight = FontWeight.SemiBold,
+					minLines = 1,
+				)
+				if (progress.finished && progress.cancelled) {
 					Text(
-						text = stringResource(R.string.source_test_running, progress.running.joinToString()),
+						text = stringResource(R.string.source_test_cancelled_note),
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
-						maxLines = 2,
-						overflow = TextOverflow.Ellipsis,
 					)
-				}
-				if (progress.finished) {
-					val passedCount = progress.results.count { it.overall == StepStatus.PASS }
-					Text(
-						text = stringResource(R.string.source_test_summary, passedCount, failedCount),
-						style = MaterialTheme.typography.bodyMedium,
-						fontWeight = FontWeight.SemiBold,
-					)
-					if (progress.cancelled) {
-						Text(
-							text = stringResource(R.string.source_test_cancelled_note),
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant,
-						)
-					}
 				}
 				Spacer(modifier = Modifier.height(8.dp))
 				LazyColumn(modifier = Modifier.fillMaxWidth().height(360.dp)) {
@@ -133,20 +143,19 @@ internal fun SourceTestDialog(
 						HorizontalDivider()
 					}
 				}
-				if (progress.finished) {
-					TextButton(
-						onClick = {
-							val intent = Intent(Intent.ACTION_SEND).apply {
-								type = "text/plain"
-								putExtra(Intent.EXTRA_TEXT, viewModel.exportJson())
-							}
-							val title = context.getString(R.string.source_test_export)
-							context.startActivity(Intent.createChooser(intent, title))
-						},
-						modifier = Modifier.align(Alignment.End),
-					) {
-						Text(stringResource(R.string.source_test_export))
-					}
+				TextButton(
+					onClick = {
+						val intent = Intent(Intent.ACTION_SEND).apply {
+							type = "text/plain"
+							putExtra(Intent.EXTRA_TEXT, viewModel.exportJson())
+						}
+						val title = context.getString(R.string.source_test_export)
+						context.startActivity(Intent.createChooser(intent, title))
+					},
+					enabled = progress.finished,
+					modifier = Modifier.align(Alignment.End),
+				) {
+					Text(stringResource(R.string.source_test_export))
 				}
 			}
 		},

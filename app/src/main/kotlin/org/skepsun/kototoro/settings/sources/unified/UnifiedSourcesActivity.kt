@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -107,15 +108,15 @@ class UnifiedSourcesActivity : BaseComposeActivity() {
         initialAddRepositoryUrl: String? = null,
         modifier: Modifier = Modifier,
     ) {
-        var searchActive by remember { mutableStateOf(false) }
-        var activePanel by remember { mutableStateOf<UnifiedToolbarFilterPanel?>(null) }
+        var searchActive by rememberSaveable { mutableStateOf(false) }
+        var activePanel by rememberSaveable { mutableStateOf<UnifiedToolbarFilterPanel?>(null) }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         val readyState = state as? UnifiedSourcesUiState.Ready
         val pagerState = rememberPagerState(pageCount = { UNIFIED_SOURCES_TAB_COUNT })
         val coroutineScope = rememberCoroutineScope()
         var sourceOrder by remember { mutableStateOf<List<org.skepsun.kototoro.core.ui.compose.ReorderItem>?>(null) }
         var loadingOrder by remember { mutableStateOf(false) }
-        var showSourceGroups by remember { mutableStateOf(false) }
+        var showSourceGroups by rememberSaveable { mutableStateOf(false) }
         sourceOrder?.let { items ->
             org.skepsun.kototoro.core.ui.compose.ReorderDialog(
                 items = items,

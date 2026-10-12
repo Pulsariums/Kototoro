@@ -1006,21 +1006,32 @@ class UnifiedSourcesViewModel @Inject constructor(
         // Optimistic, instant feedback: the switch stops depending on the full catalog
         // rebuild. The authoritative DB write happens in the background and overrides are
         // retired as soon as the rebuild reports the same value.
+        val changedIds = sourceItems.mapTo(HashSet()) { it.id }
+        val previousOverrides = _enabledOverrides.value.filterKeys { it in changedIds }
         _enabledOverrides.update { overrides ->
             overrides + sourceItems.associate { it.id to enabled }
         }
         viewModelScope.launch(Dispatchers.Default) {
-            if (!enabled && settings.isAllSourcesEnabled) {
-                // Materialize the sources that stay enabled WITHOUT resurrecting the one
-                // being disabled, then drop the global flag.
-                val rest = ready.allSources.filter { it.id !in sourceIds }
-                if (rest.isNotEmpty()) {
-                    contentSourcesRepository.setSourcesEnabled(rest.map { it.source }, true)
-                }
-                settings.isAllSourcesEnabled = false
-            }
+            val clearsAllEnabledFlag = !enabled && settings.isAllSourcesEnabled
             runCatching {
+                if (clearsAllEnabledFlag) {
+                    // Materialize the sources that stay enabled WITHOUT resurrecting the one
+                    // being disabled, then drop the global flag.
+                    val rest = ready.allSources.filter { it.id !in sourceIds }
+                    if (rest.isNotEmpty()) {
+                        contentSourcesRepository.setSourcesEnabled(rest.map { it.source }, true)
+                    }
+                    settings.isAllSourcesEnabled = false
+                }
                 contentSourcesRepository.setSourcesEnabled(sourceItems.map { it.source }, enabled)
+            }.onFailure { e ->
+                if (e is CancellationException) throw e
+                // Roll back the optimistic override and restore the global flag, then report the error.
+                _enabledOverrides.update { overrides -> (overrides - changedIds) + previousOverrides }
+                if (clearsAllEnabledFlag) {
+                    settings.isAllSourcesEnabled = true
+                }
+                emitMessage(e.getDisplayMessage(appContext.resources))
             }
             // Overrides are retired by [pruneAgreedEnabledOverrides] once the authoritative
             // rebuild agrees with them; never remove them here based on the merged state.
@@ -1676,10 +1687,24 @@ class UnifiedSourcesViewModel @Inject constructor(
 
     private suspend fun refreshAvailableJsonPackages() {
         val legadoPackages = settings.legadoRepoUrls.mapNotNull { repoUrl ->
-            runCatching { fetchAvailableLegadoPackage(repoUrl) }.getOrNull()
+            try {
+                fetchAvailableLegadoPackage(repoUrl)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to load Legado repository $repoUrl", e)
+                null
+            }
         }
         val tvBoxPackages = settings.tvBoxRepoUrls.mapNotNull { repoUrl ->
-            runCatching { fetchAvailableTvBoxPackage(repoUrl) }.getOrNull()
+            try {
+                fetchAvailableTvBoxPackage(repoUrl)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to load TVBox repository $repoUrl", e)
+                null
+            }
         }
         availableJsonPackages.value = (legadoPackages + tvBoxPackages).sortedBy { it.name.lowercase() }
     }

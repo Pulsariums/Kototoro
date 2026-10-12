@@ -203,8 +203,10 @@ fun UnifiedSourcesScreen(
                 },
             ) {
                 Spacer(modifier = Modifier.height(settingsContentTopInset()))
-                if (isLoading || state == UnifiedSourcesUiState.Loading) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Box(modifier = Modifier.fillMaxWidth().height(4.dp)) {
+                    if (isLoading || state == UnifiedSourcesUiState.Loading) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
                 }
                 if (readyState != null) {
                     UnifiedSourcesContextualFilterTabs(
@@ -347,7 +349,11 @@ private fun UnifiedSourcesContextualFilterTabs(
     ) {
         when (tab) {
             UNIFIED_SOURCES_TAB_SOURCES -> {
-                if (repositoryOptions.isNotEmpty()) {
+                AnimatedVisibility(
+                    visible = repositoryOptions.isNotEmpty(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
                     UnifiedRepositoryFilterRow(
                         repositories = repositoryOptions,
                         selectedRepositoryId = state.filters.repositoryId,
@@ -460,7 +466,11 @@ private fun UnifiedSourcesContextualFilterTabs(
                 }
             }
             UNIFIED_SOURCES_TAB_PACKAGES -> {
-                if (repositoryOptions.isNotEmpty()) {
+                AnimatedVisibility(
+                    visible = repositoryOptions.isNotEmpty(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
                     UnifiedRepositoryFilterRow(
                         repositories = repositoryOptions,
                         selectedRepositoryId = state.filters.repositoryId,
@@ -776,7 +786,7 @@ private fun UnifiedSourceSelectionBar(
         item(key = "clear_selection") {
             IconButton(
                 onClick = onClearSelection,
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(40.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Close,

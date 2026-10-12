@@ -24,6 +24,7 @@ import org.skepsun.kototoro.sync.google.domain.GoogleDriveSyncRepository
 import org.skepsun.kototoro.sync.google.domain.GoogleDriveSyncResult
 import org.skepsun.kototoro.sync.google.work.GoogleDriveSyncWorker
 import org.skepsun.kototoro.core.prefs.AppSettings
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 data class GoogleDriveSyncUiState(
@@ -56,6 +57,8 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
     val uiState: StateFlow<GoogleDriveSyncUiState> = _uiState.asStateFlow()
     private val _authorizationRequests = MutableSharedFlow<PendingIntent>(extraBufferCapacity = 1)
     val authorizationRequests: SharedFlow<PendingIntent> = _authorizationRequests.asSharedFlow()
+    private val isDeletingRemoteData = AtomicBoolean(false)
+    private val isImportingLegacyData = AtomicBoolean(false)
 
     init {
         viewModelScope.launch {
@@ -79,6 +82,7 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
 
     fun syncNow() {
         if (!settings.isSyncEnabled) {
+            settings.lastSyncError = context.getString(R.string.sync_enable_required)
             refresh()
             return
         }
@@ -93,6 +97,7 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
 
     fun deleteRemoteData() {
         if (!settings.isSyncEnabled) {
+            settings.lastSyncError = context.getString(R.string.sync_enable_required)
             refresh()
             return
         }
@@ -100,14 +105,20 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
             requestSignIn()
             return
         }
+        if (!isDeletingRemoteData.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.Default) {
-            handleSyncResult(repository.deleteRemoteData())
-            refresh()
+            try {
+                handleSyncResult(repository.deleteRemoteData())
+            } finally {
+                isDeletingRemoteData.set(false)
+                refresh()
+            }
         }
     }
 
     fun importLegacyRemoteData() {
         if (!settings.isSyncEnabled) {
+            settings.lastSyncError = context.getString(R.string.sync_enable_required)
             refresh()
             return
         }
@@ -115,9 +126,14 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
             requestSignIn()
             return
         }
+        if (!isImportingLegacyData.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.Default) {
-            handleSyncResult(repository.importLegacyRemoteData())
-            refresh()
+            try {
+                handleSyncResult(repository.importLegacyRemoteData())
+            } finally {
+                isImportingLegacyData.set(false)
+                refresh()
+            }
         }
     }
 

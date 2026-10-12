@@ -166,9 +166,12 @@ fun SourceSettingsRoute(
         viewModel.onResume()
     }
 
-    controller.sourcePrefs.observeChanges().map { Any() }.collectAsStateWithLifecycle(initialValue = Any()).value
-    controller.legadoSourcePrefs.observeChanges().map { Any() }.collectAsStateWithLifecycle(initialValue = Any()).value
-    controller.legadoBookPrefs.observeChanges().map { Any() }.collectAsStateWithLifecycle(initialValue = Any()).value
+    val sourcePrefChanges = remember(controller) { controller.sourcePrefs.observeChanges().map { Any() } }
+    val legadoSourcePrefChanges = remember(controller) { controller.legadoSourcePrefs.observeChanges().map { Any() } }
+    val legadoBookPrefChanges = remember(controller) { controller.legadoBookPrefs.observeChanges().map { Any() } }
+    sourcePrefChanges.collectAsStateWithLifecycle(initialValue = Any()).value
+    legadoSourcePrefChanges.collectAsStateWithLifecycle(initialValue = Any()).value
+    legadoBookPrefChanges.collectAsStateWithLifecycle(initialValue = Any()).value
 
     val configKeys = configKeysFlow.asStateFlow().collectAsStateWithLifecycle().value
     val jsSettingsSchema = jsSettingsSchemaFlow.asStateFlow().collectAsStateWithLifecycle().value

@@ -34,6 +34,7 @@ data class GoogleDriveSyncUiState(
     val intervalMinutes: Int = GoogleDriveSyncSettings.DEFAULT_INTERVAL_MINUTES,
     val isWifiOnly: Boolean = false,
     val isSyncOnStart: Boolean = true,
+    val isSettingsSyncEnabled: Boolean = true,
     val lastSyncTimestamp: Long = 0L,
     val lastError: String? = null,
     val isDirty: Boolean = false,
@@ -69,6 +70,7 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
                 GoogleDriveSyncSettings.KEY_INTERVAL_MINUTES,
                 GoogleDriveSyncSettings.KEY_WIFI_ONLY,
                 GoogleDriveSyncSettings.KEY_SYNC_ON_START,
+                GoogleDriveSyncSettings.KEY_SETTINGS_SYNC_ENABLED,
             ).collect {
                 refresh()
             }
@@ -201,6 +203,11 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
         refresh()
     }
 
+    fun setSettingsSyncEnabled(value: Boolean) {
+        settings.isSettingsSyncEnabled = value
+        refresh()
+    }
+
     fun setEnabled(value: Boolean) {
         settings.isSyncEnabled = value
         viewModelScope.launch(Dispatchers.Default) {
@@ -259,6 +266,7 @@ class GoogleDriveSyncSettingsViewModel @Inject constructor(
         intervalMinutes = settings.intervalMinutes,
         isWifiOnly = settings.isWifiOnly,
         isSyncOnStart = settings.isSyncOnStart,
+        isSettingsSyncEnabled = settings.isSettingsSyncEnabled,
         lastSyncTimestamp = settings.lastSyncTimestamp,
         lastError = settings.lastSyncError,
         isDirty = settings.isDirty,

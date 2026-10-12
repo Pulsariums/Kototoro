@@ -67,6 +67,7 @@ fun SyncSettingsRoute(
             googleDriveErrorSummary = googleDriveState.lastError,
             isGoogleDriveSyncing = googleDriveState.isSyncing,
             googleDriveSyncStage = googleDriveState.syncStage,
+            isGoogleDriveSettingsSyncEnabled = googleDriveState.isSettingsSyncEnabled,
         ),
         snackbarHostState = snackbarHostState,
         onGoogleDriveSignInClick = { googleDriveSyncViewModel.requestSignIn() },
@@ -78,6 +79,7 @@ fun SyncSettingsRoute(
         onGoogleDriveIntervalChange = { googleDriveSyncViewModel.setIntervalMinutes(it) },
         onGoogleDriveWifiOnlyChange = { googleDriveSyncViewModel.setWifiOnly(it) },
         onGoogleDriveSyncOnStartChange = { googleDriveSyncViewModel.setSyncOnStart(it) },
+        onGoogleDriveSettingsSyncEnabledChange = { googleDriveSyncViewModel.setSettingsSyncEnabled(it) },
         modifier = modifier,
     )
 }

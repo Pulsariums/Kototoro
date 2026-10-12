@@ -88,6 +88,7 @@ class GoogleDriveSyncRepository @Inject constructor(
     private val ireaderExtensionManager: Lazy<IReaderExtensionManager>,
     private val tsundokuExtensionManager: Lazy<TsundokuExtensionManager>,
     private val cloudstreamRuntimeManager: Lazy<CloudstreamRuntimeManager>,
+    private val settingsStore: SettingsSyncStore,
 ) {
 
     val isSyncing = MutableStateFlow(false)
@@ -314,7 +315,44 @@ class GoogleDriveSyncRepository @Inject constructor(
             files.filter { it.id != fileId && it.id in decodedIds }.forEach { duplicate ->
                 deleteRemoteFileBestEffort(token, duplicate.id)
             }
+            syncSettings(token)
             return unrestoredExtensions
+        }
+    }
+
+    private suspend fun syncSettings(token: String) {
+        if (!settings.isSettingsSyncEnabled) return
+        try {
+            val files = api.findSettingsSyncFiles(token)
+            var remoteStores: Map<String, Map<String, SettingEntry>> = emptyMap()
+            for (file in files) {
+                val bytes = api.download(token, file.id)
+                val snapshot = runCatching {
+                    json.decodeFromString(SettingsSnapshot.serializer(), bytes.decodeToString())
+                }.getOrNull()
+                if (snapshot == null) {
+                    Log.w(TAG, "skipped unreadable settings snapshot ${file.id}")
+                    continue
+                }
+                remoteStores = SettingsSyncMerger.mergeStores(remoteStores, snapshot.stores)
+            }
+            val now = System.currentTimeMillis()
+            val local = settingsStore.buildLocal(now)
+            val merged = SettingsSyncMerger.mergeStores(local, remoteStores)
+            val applied = settingsStore.apply(merged)
+            Log.d(TAG, "settings sync applied=$applied files=${files.size}")
+            val payload = json.encodeToString(
+                SettingsSnapshot.serializer(),
+                SettingsSnapshot(deviceId = settings.deviceId, syncedAt = now, stores = merged),
+            ).encodeToByteArray()
+            val fileId = api.upload(token, payload, files.firstOrNull()?.id, SETTINGS_FILE_NAME)
+            files.filter { it.id != fileId }.forEach { duplicate ->
+                deleteRemoteFileBestEffort(token, duplicate.id)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "settings sync failed: ${e.message}", e)
         }
     }
 
@@ -1056,6 +1094,7 @@ class GoogleDriveSyncRepository @Inject constructor(
     private companion object {
         const val MAX_CONFLICT_RETRIES = 3
         const val TAG = "GoogleDriveSync"
+        const val SETTINGS_FILE_NAME = "kototoro_sync_settings_v1.json"
         private const val SqliteBindParameterChunkSize = 500
         private const val GOOGLE_ACCOUNT_TYPE = "com.google"
     }

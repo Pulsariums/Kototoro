@@ -45,6 +45,7 @@ class GoogleDriveSyncPackageRestoreTest {
         ireaderExtensionManager = mockk(),
         tsundokuExtensionManager = mockk(),
         cloudstreamRuntimeManager = mockk(),
+        settingsStore = mockk(),
     )
 
     @Test

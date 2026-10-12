@@ -38,6 +38,7 @@ class GoogleDriveSyncCancellationTest {
         ireaderExtensionManager = mockk(),
         tsundokuExtensionManager = mockk(),
         cloudstreamRuntimeManager = mockk(),
+        settingsStore = mockk(),
     )
 
     private suspend fun expectCancellation(action: suspend () -> Unit) {

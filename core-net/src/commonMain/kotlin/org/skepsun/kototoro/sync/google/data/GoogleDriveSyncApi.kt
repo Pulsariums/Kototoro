@@ -61,6 +61,8 @@ class GoogleDriveSyncApi(private val httpClient: HttpClient) {
 
     suspend fun findLegacySyncFiles(token: String): List<DriveFile> = findSyncFiles(token, LEGACY_FILE_NAME)
 
+    suspend fun findSettingsSyncFiles(token: String): List<DriveFile> = findSyncFiles(token, SETTINGS_FILE_NAME)
+
     private suspend fun findSyncFiles(token: String, fileName: String): List<DriveFile> {
         val request = request(token, "$DRIVE_BASE/files").apply {
             url.parameters.append("spaces", "appDataFolder")
@@ -89,8 +91,8 @@ class GoogleDriveSyncApi(private val httpClient: HttpClient) {
         }
     }
 
-    suspend fun upload(token: String, content: ByteArray, fileId: String?): String {
-        val targetId = fileId ?: createEmptyFile(token)
+    suspend fun upload(token: String, content: ByteArray, fileId: String?, fileName: String = CURRENT_FILE_NAME): String {
+        val targetId = fileId ?: createEmptyFile(token, fileName)
         val request = request(token, "$UPLOAD_BASE/files/$targetId", HttpMethod.Patch).apply {
             url.parameters.append("uploadType", "media")
             url.parameters.append("fields", "id")
@@ -107,8 +109,8 @@ class GoogleDriveSyncApi(private val httpClient: HttpClient) {
             }
     }
 
-    private suspend fun createEmptyFile(token: String): String {
-        val metadata = """{"name":"$CURRENT_FILE_NAME","parents":["appDataFolder"]}"""
+    private suspend fun createEmptyFile(token: String, fileName: String = CURRENT_FILE_NAME): String {
+        val metadata = """{"name":"$fileName","parents":["appDataFolder"]}"""
         val request = request(token, "$DRIVE_BASE/files", HttpMethod.Post).apply {
             url.parameters.append("fields", "id")
             contentType(JSON_MEDIA_TYPE)
@@ -177,6 +179,7 @@ class GoogleDriveSyncApi(private val httpClient: HttpClient) {
         const val CURRENT_FILE_NAME = "kototoro_sync_content_v3.json"
         const val WORK_V2_FILE_NAME = "kototoro_sync_work_v2.json"
         const val LEGACY_FILE_NAME = "kototoro_sync.json"
+        const val SETTINGS_FILE_NAME = "kototoro_sync_settings_v1.json"
         const val DRIVE_BASE = "https://www.googleapis.com/drive/v3"
         const val UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3"
         const val MAX_NETWORK_ATTEMPTS = 2

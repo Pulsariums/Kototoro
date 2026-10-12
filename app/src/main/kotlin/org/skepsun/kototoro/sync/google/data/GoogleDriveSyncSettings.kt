@@ -56,6 +56,10 @@ class GoogleDriveSyncSettings @Inject constructor(
         get() = prefs.getBoolean(KEY_SYNC_ON_START, true)
         set(value) = prefs.edit { putBoolean(KEY_SYNC_ON_START, value) }
 
+    var isSettingsSyncEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SETTINGS_SYNC_ENABLED, true)
+        set(value) = prefs.edit { putBoolean(KEY_SETTINGS_SYNC_ENABLED, value) }
+
     var lastSyncTimestamp: Long
         get() = prefs.getLong(KEY_LAST_SYNC_TIMESTAMP, 0L)
         set(value) = prefs.edit { putLong(KEY_LAST_SYNC_TIMESTAMP, value) }
@@ -108,6 +112,7 @@ class GoogleDriveSyncSettings @Inject constructor(
         const val KEY_INTERVAL_MINUTES = "interval_minutes"
         const val KEY_WIFI_ONLY = "wifi_only"
         const val KEY_SYNC_ON_START = "sync_on_start"
+        const val KEY_SETTINGS_SYNC_ENABLED = "settings_sync_enabled"
         private const val KEY_LAST_SYNC_TIMESTAMP = "last_sync_timestamp"
         private const val KEY_LAST_SYNC_ATTEMPT_TIMESTAMP = "last_sync_attempt_timestamp"
         private const val KEY_LAST_SYNC_ERROR = "last_sync_error"

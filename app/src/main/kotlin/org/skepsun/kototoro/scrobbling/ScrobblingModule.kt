@@ -87,8 +87,11 @@ object ScrobblingModule {
         @ScrobblerType(ScrobblerService.KITSU) storage: ScrobblerStorage,
         database: MangaDatabase,
         authenticator: KitsuAuthenticator,
+        @BaseHttpClient baseHttpClient: OkHttpClient,
     ): KitsuRepository {
-        val okHttp = OkHttpClient.Builder().apply {
+        // newBuilder() paylasilan SSL fabrikasini kullanir; sifirdan Builder().build() ana is parcaciginda
+        // her seferinde yeni SSLContext olusturup acilisi yavaslatiyordu.
+        val okHttp = baseHttpClient.newBuilder().apply {
             authenticator(authenticator)
             addInterceptor(KitsuInterceptor(storage))
             if (BuildConfig.DEBUG) {
@@ -137,9 +140,10 @@ object ScrobblingModule {
     @Singleton
     @ScrobblerType(ScrobblerService.BANGUMI)
     fun provideBangumiHttpClient(
+        @BaseHttpClient baseHttpClient: OkHttpClient,
         authenticator: BangumiAuthenticator,
         @ScrobblerType(ScrobblerService.BANGUMI) storage: ScrobblerStorage,
-    ): OkHttpClient = OkHttpClient.Builder().apply {
+    ): OkHttpClient = baseHttpClient.newBuilder().apply {
         authenticator(authenticator)
         addInterceptor(BangumiInterceptor(storage))
         if (BuildConfig.DEBUG) {

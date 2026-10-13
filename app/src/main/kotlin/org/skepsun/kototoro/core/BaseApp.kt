@@ -93,30 +93,34 @@ open class BaseApp : App(), Configuration.Provider, SingletonImageLoader.Factory
                 entryPoint.localStorageChanges().collect(entryPoint.localContentIndexProvider().get())
             }
         }
-        try {
-            entryPoint.workScheduleManager().init()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-        try {
-            entryPoint.mihonExtensionManager().initialize()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-        try {
-            entryPoint.aniyomiExtensionManager().initialize()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-        try {
-            entryPoint.ireaderExtensionManager().initialize()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-        try {
-            entryPoint.tsundokuExtensionManager().initialize()
-        } catch (e: Throwable) {
-            e.printStackTrace()
+        // Dagger grafigi (zamanlayicilar, scrobbler depolari, eklenti yoneticileri) ana is parcaciginda
+        // kurulunca acilis ve arayuz yavasliyordu; hepsi arka planda baslatilir.
+        processLifecycleScope.launch(Dispatchers.Default) {
+            try {
+                entryPoint.workScheduleManager().init()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+            try {
+                entryPoint.mihonExtensionManager().initialize()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+            try {
+                entryPoint.aniyomiExtensionManager().initialize()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+            try {
+                entryPoint.ireaderExtensionManager().initialize()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+            try {
+                entryPoint.tsundokuExtensionManager().initialize()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
         }
         processLifecycleScope.launch(Dispatchers.IO) {
             try {

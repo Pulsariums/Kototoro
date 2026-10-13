@@ -142,7 +142,7 @@
     <string name="novel_ai_ask_not_configured">Önce YZ ayarlarında bir YZ çeviri API’si yapılandırın</string>
     <string name="novel_ai_ask_failed">YZ isteği başarısız oldu: %s</string>
     <string name="novel_ai_ask_selected_label">Seçili metin</string>
-    <string name="novel_ai_ask_context_label">Yakın bağlam yanıtı iyileştirmek için kullanılır ancak gösterilmez</string>
+    <string name="novel_ai_ask_context_label">Yakındaki bağlam yalnızca yanıtı iyileştirmek için kullanılır, gösterilmez</string>
     <string name="novel_ai_ask_suggestions">Şunları sormayı deneyin</string>
     <string name="novel_ai_question_summary">Bu pasajın ana fikri nedir?</string>
     <string name="novel_ai_question_character_motivation">Karakterlerin burada duyguları ve motivasyonları nelerdir?</string>

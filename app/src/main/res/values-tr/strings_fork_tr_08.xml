@@ -78,8 +78,8 @@
     <string name="extension_source_count">%d kaynak</string>
     <string name="unified_sources_package_effective_count">%1$d/%2$d etkin</string>
     <string name="unified_sources_package_group_count">%1$d kaynak</string>
-    <string name="unified_sources_shadowed_count">%1$d gölgelenmiş</string>
-    <string name="unified_sources_shadowed_notice">Burada yalnızca şu anda etkin olan kaynak uygulamaları gösterilir. Daha yüksek öncelikli bir paket tarafından geçersiz kılındığı için %1$d aynı adlı uygulama gizlendi.</string>
+    <string name="unified_sources_shadowed_count">%1$d gizli</string>
+    <string name="unified_sources_shadowed_notice">Burada yalnızca şu anda etkin olan kaynaklar gösterilir. Aynı adlı %1$d kaynak, öncelikli bir paket onların yerine geçtiği için gizlendi.</string>
     <string name="installed_section">Kurulu</string>
     <string name="configured_repositories">Yapılandırılmış depolar</string>
     <string name="preset_repositories">Önerilen ve önayarlı depolar</string>
@@ -186,7 +186,7 @@
     <string name="welcome_install_nsfw_title">Yetişkin içeriği dahil et</string>
     <string name="welcome_install_nsfw_summary">Varsayılan olarak kapalı — yalnızca yetişkinlere yönelik paketler kurulum listesinden çıkarılır.</string>
     <string name="welcome_intro_app_title">Kototoro · Açık kaynaklı okuyucu</string>
-    <string name="welcome_intro_body">Kototoro, açık kaynaklı çok ortamlı bir okuyucu / oynatıcıdır. Geniş bir topluluk eklentisi ekosistemini destekler, ancak kendi içerik kaynaklarını paketlemez.</string>
+    <string name="welcome_intro_body">Kototoro, açık kaynaklı çoklu medya okuyucu ve oynatıcıdır. Geniş bir topluluk eklenti ekosistemini destekler ancak kendi içerik kaynaklarını içermez.</string>
     <string name="welcome_intro_concepts_title">30 saniyede üç kavram</string>
     <string name="welcome_intro_repo_label">Depo</string>
     <string name="welcome_intro_repo_body">Bağımsız bir topluluk tarafından yönetilen, üçüncü taraf eklenti koleksiyonunun URL’si (örneğin Mihon depoları, TVBox listeleri veya LNReader eklenti depoları).</string>
@@ -240,7 +240,7 @@
     <string name="welcome_permissions_notifications_title">Bildirimler</string>
     <string name="welcome_permissions_notifications_summary">İndirme, güncelleme ve oynatıcı bildirimlerini gösterir.</string>
     <string name="welcome_permissions_packages_title">Yüklü uygulamalar</string>
-    <string name="welcome_permissions_packages_summary">Kototoro’nun zaten kurulu eklentileri ve ana uygulamaları (Mihon, Aniyomi, …) algılamasını sağlar. Manifestte tanımlanır ve otomatik olarak verilir.</string>
+    <string name="welcome_permissions_packages_summary">Kototoro’nun zaten kurulu eklentileri ve ana uygulamaları (Mihon, Aniyomi, …) algılamasını sağlar. Uygulama tanımında yer alır ve otomatik olarak verilir.</string>
     <string name="welcome_permissions_battery_title">Arka plan çalışması</string>
     <string name="welcome_permissions_battery_summary">Ekran kapalıyken veya cihaz boştayken arka plan indirmelerinin ve güncellemelerin çalışmasını sürdürür.</string>
     <string name="welcome_permissions_battery_action">İzin ver</string>

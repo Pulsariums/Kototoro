@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="novel_excerpt_background_tea">Çay kahvesi</string>
+    <string name="novel_excerpt_background_tea">Çay kahverengisi</string>
     <string name="novel_excerpt_background_ink">Mürekkep siyahı</string>
     <string name="novel_excerpt_background_dusk">Alacakaranlık mavisi</string>
     <string name="novel_excerpt_label_excerpted_on">%1$s tarihinde alındı</string>

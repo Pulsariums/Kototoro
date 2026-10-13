@@ -2240,6 +2240,7 @@ class UnifiedSourcesViewModel @Inject constructor(
                     UnifiedTestAvailabilityFilter.UNTESTED -> it.testAvailability == ContentSourceAvailability.UNKNOWN
                     UnifiedTestAvailabilityFilter.AVAILABLE -> it.testAvailability == ContentSourceAvailability.AVAILABLE
                     UnifiedTestAvailabilityFilter.UNAVAILABLE -> it.testAvailability == ContentSourceAvailability.EMPTY
+                    UnifiedTestAvailabilityFilter.CLOUDFLARE -> it.testAvailability == ContentSourceAvailability.CLOUDFLARE
                 }
             }
             .filter {

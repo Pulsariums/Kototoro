@@ -222,6 +222,7 @@ internal enum class CompactTagTone {
     Warning,
     TestedAvailable,
     TestedUnavailable,
+    TestedCloudflare,
 }
 
 @Composable
@@ -241,6 +242,8 @@ internal fun CompactTag(
             MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
         CompactTagTone.TestedUnavailable ->
             MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        CompactTagTone.TestedCloudflare ->
+            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
     }
     Surface(
         modifier = modifier,
@@ -370,6 +373,7 @@ internal fun UnifiedTestAvailabilityFilter.displayLabel(): String {
         UnifiedTestAvailabilityFilter.UNTESTED -> stringResource(R.string.source_untested)
         UnifiedTestAvailabilityFilter.AVAILABLE -> stringResource(R.string.available)
         UnifiedTestAvailabilityFilter.UNAVAILABLE -> stringResource(R.string.unavailable)
+        UnifiedTestAvailabilityFilter.CLOUDFLARE -> stringResource(R.string.source_test_cloudflare)
     }
 }
 

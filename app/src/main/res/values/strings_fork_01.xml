@@ -70,6 +70,7 @@
     <string name="source_test_msg_search_empty">No results for: %1$s</string>
     <string name="source_test_msg_search_hit">"%1$s" gave %2$d results</string>
     <string name="source_test_status_cloudflare">Cloudflare: manual check</string>
+    <string name="source_test_cloudflare">Cloudflare</string>
     <string name="source_test_msg_cloudflare">Blocked by Cloudflare, needs manual verification</string>
     <string name="source_test_export">Export results</string>
 </resources>

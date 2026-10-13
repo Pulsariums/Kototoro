@@ -133,7 +133,7 @@
     <string name="font_preset_kai_gen_gothic_tw_s2t">KaiGen Gothic TW (basitleştirilmiş → geleneksel)</string>
     <string name="font_downloading">%1$s yazı tipi indiriliyor…</string>
     <string name="font_download_ready">%1$s yazı tipi hazır</string>
-    <string name="font_download_failed">%1$s indirilemiyor. Sistem yazı tipi kullanılıyor.</string>
+    <string name="font_download_failed">%1$s yazı tipi indirilemedi. Sistem yazı tipi kullanılıyor.</string>
     <string name="font_downloads">Yazı tipi indirmeleri</string>
     <string name="pref_reduce_visual_effects">Görsel efektleri azalt</string>
     <string name="pref_reduce_visual_effects_summary">Düşük donanımlı cihazlar için önerilir. Bireysel ayarlarını değiştirmeden Backdrop camını, Hero geçişlerini ve panorama arka plan hareketini devre dışı bırakır</string>

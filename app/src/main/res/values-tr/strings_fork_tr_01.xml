@@ -118,9 +118,9 @@
     <string name="reader_more_tab_translation">Çeviri</string>
     <string name="reader_more_tab_tools">Araçlar</string>
     <string name="double_page_mode">İki sayfa modu</string>
-    <string name="double_page_landscape">Yatayda iki sayfa</string>
+    <string name="double_page_landscape">Yatay modda iki sayfa</string>
     <string name="double_page_foldable">Katlanabilir cihazlarda iki sayfa</string>
-    <string name="double_page_cover_page">İlk sayfa kapak olarak (tek)</string>
+    <string name="double_page_cover_page">İlk sayfayı tek kapak olarak göster</string>
     <string name="miscellaneous">Diğer</string>
     <string name="grid_size_columns_hint">Satır başına yaklaşık %1$d sütun</string>
     <string name="home_rail_rows_per_page">Sayfa başına satır</string>

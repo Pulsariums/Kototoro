@@ -721,6 +721,10 @@ private fun UnifiedSourceRow(
                         text = stringResource(R.string.source_test_unavailable),
                         tone = CompactTagTone.TestedUnavailable,
                     )
+                    ContentSourceAvailability.CLOUDFLARE -> CompactTag(
+                        text = stringResource(R.string.source_test_cloudflare),
+                        tone = CompactTagTone.TestedCloudflare,
+                    )
                     ContentSourceAvailability.UNKNOWN -> Unit
                 }
             }

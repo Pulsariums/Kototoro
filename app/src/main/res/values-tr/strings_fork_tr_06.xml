@@ -55,7 +55,7 @@
     <string name="stats_hour_range">%1$02d:00–%2$02d:00</string>
     <string name="stats_time_midnight">Gece yarısı</string>
     <string name="stats_time_noon">Öğle</string>
-    <string name="stats_time_late_night">Gece geç saatler</string>
+    <string name="stats_time_late_night">Geç gece</string>
     <string name="stats_duration_hours_minutes">%1$d sa %2$d dk</string>
     <string name="stats_duration_hours">%1$d sa</string>
     <string name="stats_duration_minutes">%1$d dk</string>
@@ -101,7 +101,7 @@
     <string name="details_metadata_source_label">Meta veri kaynağı: %1$s</string>
     <string name="details_remove_metadata_binding">Meta veri bağlantısını kaldır</string>
     <string name="details_chapter_number_label">Bölüm: %1$s</string>
-    <string name="details_search_result_latest_chapter">Son: %1$s. bölüm</string>
+    <string name="details_search_result_latest_chapter">Son bölüm: %1$s</string>
     <string name="details_search_result_latest_title">Son: %1$s</string>
     <string name="details_source_search_no_results_group">Sonuç yok</string>
     <string name="details_source_search_no_visible_results">Görünür sonuç yok. Kullanılamayan veya boş kaynakları incelemek için “Boş kaynakları gizle” seçeneğini kapatın.</string>
@@ -156,7 +156,7 @@
     <string name="google_drive_sync">Google Drive senkronizasyonu</string>
     <string name="sync_extensions_restore_incomplete">Kütüphane senkronize edildi. Şu eklentiler geri yüklenemedi: %1$s. Bunları depolarından yeniden kurun; bulut kayıtları korundu.</string>
     <string name="sync_google_drive_enable">Google Drive senkronizasyonunu etkinleştir</string>
-    <string name="sync_google_drive_enable_summary">Google Drive’ı etkin senkronizasyon arka ucu olarak kullanın. Açmak, uzak anlık görüntülerin karışmasını önlemek için WebDAV senkronizasyon işlemlerini devre dışı bırakır. Bu kapalıyken Google oturum açmanız korunur.</string>
+    <string name="sync_google_drive_enable_summary">Google Drive’ı etkin senkronizasyon kaynağı olarak kullanın. Açmak, uzak anlık görüntülerin karışmasını önlemek için WebDAV senkronizasyon işlemlerini devre dışı bırakır. Bu kapalıyken Google oturum açmanız korunur.</string>
     <string name="sync_backend_switch_google_drive_title">Google Drive senkronizasyonuna geçilsin mi?</string>
     <string name="sync_backend_switch_google_drive_confirm">WebDAV yedeklemesi şu anda etkin. Google Drive senkronizasyonunu açmak WebDAV yedeklemesini, otomatik yedeklemeyi ve otomatik geri yüklemeyi kapatır; böylece uygulama iki uzak anlık görüntüyü karıştırmaz.</string>
     <string name="sync_backend_switch_webdav_title">WebDAV yedeklemesine geçilsin mi?</string>
@@ -174,7 +174,7 @@
     <string name="sync_delete_remote_data_confirm">Geçerli uzak Google Drive senkronizasyon anlık görüntüsü silinsin mi? Yerel veriler ve eski anlık görüntüler değişmeden kalır. Temiz bir yedek geri yüklendikten sonra, yeni geçerli anlık görüntüyü yüklemek için “Şimdi senkronize et”i çalıştırın.</string>
     <string name="sync_import_legacy_remote_data">Eski Google Drive senkronizasyonunu içe aktar</string>
     <string name="sync_import_legacy_remote_data_summary">Eski senkronizasyon anlık görüntüsünü bir kez okuyun, geçerli biçime dönüştürün, ardından geçerli bir anlık görüntü yükleyin.</string>
-    <string name="sync_import_legacy_remote_data_confirm">Yalnızca eski senkronizasyon anlık görüntüsünün daha eski bir uygulama sürümü tarafından bozulmadığından eminseniz devam edin. Bozulmuşsa geçmiş kayıtları favori veya bayat projeksiyon olarak içe aktarılabilir. Geçerli senkronizasyon, burada içe aktarmadığınız sürece eski anlık görüntüleri yok sayar.</string>
+    <string name="sync_import_legacy_remote_data_confirm">Yalnızca eski senkronizasyon anlık görüntüsünün daha eski bir uygulama sürümü tarafından bozulmadığından eminseniz devam edin. Bozulmuşsa geçmiş kayıtları favori veya eski görünüm verisi olarak içe aktarılabilir. Geçerli senkronizasyon, burada içe aktarmadığınız sürece eski anlık görüntüleri yok sayar.</string>
     <string name="import_legacy_sync">Eski senkronizasyonu içe aktar</string>
     <string name="sync_frequency">Senkronizasyon sıklığı</string>
     <string name="sync_wifi_only">Yalnızca Wi-Fi üzerinden senkronize et</string>
@@ -199,7 +199,7 @@
     <string name="webdav_upload_now">Yedeği şimdi yükle</string>
     <string name="webdav_restore_now">En son yedeği geri yükle</string>
     <string name="webdav_restore_mode_title">Geri yükleme modunu seçin</string>
-    <string name="webdav_restore_mode_summary">Değiştir, eşleşen yerel geri yükleme hedeflerini önce temizler. Birleştir, yerel durumu korur ve daha yeni uyumlu WebDAV durumunu birleştirir.</string>
+    <string name="webdav_restore_mode_summary">Paketi değiştir, eşleşen yerel geri yükleme hedeflerini önce temizler. Birleştirerek geri yükle, yerel durumu korur ve daha yeni uyumlu WebDAV durumunu ekler.</string>
     <string name="webdav_restore_mode_replace">Paketi değiştir</string>
     <string name="webdav_restore_mode_merge">Birleştirerek geri yükle</string>
     <string name="webdav_connection_check_in_progress">WebDAV bağlantısı kontrol ediliyor…</string>

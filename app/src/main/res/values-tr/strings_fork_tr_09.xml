@@ -25,7 +25,7 @@
     <string name="filter_all">Tümü</string>
     <string name="filter_invalid">Geçersiz</string>
     <string name="group_by">Grupla</string>
-    <string name="group_by_origin">Kökene göre grupla</string>
+    <string name="group_by_origin">Kaynağa göre grupla</string>
     <string name="group_by_type">Türe göre grupla</string>
     <string name="manage_groups">Grup yönetimi</string>
     <string name="filter_need_login">Oturum gerektirir</string>
@@ -64,7 +64,7 @@
     <string name="panorama_settings_restore_default">Dengeli efekti geri yükle</string>
     <string name="panorama_settings_entry_summary">%1$s · %2$s efekt · %3$s</string>
     <string name="panorama_settings_disabled">Devre dışı</string>
-    <string name="panorama_preset_clear">Temiz</string>
+    <string name="panorama_preset_clear">Sade</string>
     <string name="panorama_preset_balanced">Dengeli</string>
     <string name="panorama_preset_soft">Yumuşak</string>
     <string name="panorama_preset_custom">Özel</string>
@@ -239,7 +239,7 @@
     <string name="novel_mode_paged">Sayfalı</string>
     <string name="novel_mode_scroll">Kaydırma</string>
     <string name="novel_page_turn_animation">Sayfa çevirme animasyonu</string>
-    <string name="novel_page_turn_slide">Kaydırma</string>
+    <string name="novel_page_turn_slide">Kayarak</string>
     <string name="novel_page_turn_simulation">Simülasyon</string>
     <string name="fetching_video_quality">Video kaliteleri getiriliyor…</string>
     <string name="reader_translation_task_diag_baseline">[Bölüm çeviri taban çizgisi dışa aktarımı]</string>

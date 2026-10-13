@@ -15,6 +15,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.json.JSONArray
 import org.json.JSONObject
+import org.skepsun.kototoro.core.model.ContentSourceAvailability
+import org.skepsun.kototoro.explore.data.SourceAvailabilityRepository
 import org.skepsun.kototoro.explore.data.ContentSourcesRepository
 import org.skepsun.kototoro.parsers.model.ContentSource
 import org.skepsun.kototoro.parsers.util.runCatchingCancellable
@@ -25,6 +27,7 @@ import javax.inject.Inject
 class SourceTestViewModel @Inject constructor(
 	private val tester: SourceTester,
 	private val contentSourcesRepository: ContentSourcesRepository,
+	private val sourceAvailabilityRepository: SourceAvailabilityRepository,
 ) : ViewModel() {
 
 	private val _progress = MutableStateFlow(TestProgress())
@@ -50,6 +53,7 @@ class SourceTestViewModel @Inject constructor(
 							semaphore.withPermit {
 								_progress.update { it.copy(running = it.running + source.name) }
 								val result = tester.test(source)
+								recordAvailability(source, result)
 								_progress.update {
 									it.copy(
 										done = it.done + 1,
@@ -66,6 +70,16 @@ class SourceTestViewModel @Inject constructor(
 				_progress.update { it.copy(running = emptySet(), finished = true, cancelled = !completed) }
 			}
 		}
+	}
+
+	/** Persists the verdict so the sources list shows the tested state of every source. */
+	private fun recordAvailability(source: ContentSource, result: SourceTestResult) {
+		val availability = when (result.overall) {
+			StepStatus.PASS, StepStatus.SKIP -> ContentSourceAvailability.AVAILABLE
+			StepStatus.FAIL -> ContentSourceAvailability.EMPTY
+			StepStatus.CLOUDFLARE -> ContentSourceAvailability.CLOUDFLARE
+		}
+		runCatching { sourceAvailabilityRepository.setAvailability(source, availability) }
 	}
 
 	fun cancel() {

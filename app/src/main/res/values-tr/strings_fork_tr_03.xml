@@ -22,7 +22,7 @@
     <string name="novel_line_spacing">Satır yüksekliği</string>
     <string name="novel_paragraph_spacing">Paragraf aralığı</string>
     <string name="novel_paragraph_spacing_value">%1$d satır</string>
-    <string name="novel_paragraph_spacing_follow_line">Satır yüksekliğini izle</string>
+    <string name="novel_paragraph_spacing_follow_line">Satır yüksekliğiyle eşitle</string>
     <string name="novel_margins">Sayfa kenar boşlukları</string>
     <string name="novel_margin_horizontal">Yatay kenar boşlukları</string>
     <string name="novel_margin_vertical">Dikey kenar boşlukları</string>
@@ -58,7 +58,7 @@
     <string name="novel_bookmark_removed">Yer imi kaldırıldı</string>
     <string name="novel_bookmark_added">Yer imi eklendi</string>
     <string name="novel_bookmark_failed">Yer imi işlemi başarısız oldu: %s</string>
-    <string name="novel_bookmark_position_unavailable">Yer imi konulan metin değişmiş veya bulunamıyor</string>
+    <string name="novel_bookmark_position_unavailable">Yer imi eklenen metin değişmiş veya bulunamıyor</string>
     <string name="novel_loading_online_chapter">Bölüm ağdan yükleniyor…</string>
     <string name="novel_chapter_not_downloaded">Bu bölüm henüz indirilmedi</string>
     <string name="novel_loading_epub_chapter">EPUB bölümü yükleniyor…</string>
@@ -129,7 +129,7 @@
     <string name="anime_offline_database_summary_installed_unknown">Yerel olarak yüklendi</string>
     <string name="anime_offline_database_summary_not_installed">Henüz indirilmedi</string>
     <string name="anime_offline_database_summary_not_installed_checked">İndirilmedi • son kontrol: %1$s</string>
-    <string name="anime_offline_database_update_started">Anime çevrimdışı veritabanı güncellemeleri kontrol edilmeye başlandı</string>
+    <string name="anime_offline_database_update_started">Anime çevrimdışı veritabanı güncelleme kontrolü başlatıldı</string>
     <string name="manage_language_presets">Dil önayarlarını yönet</string>
     <string name="anime_offline_database_update_title">Anime çevrimdışı veritabanı güncelleniyor</string>
     <string name="anime_offline_database_update_checking">Daha yeni bir siteler arası anime dizini aranıyor</string>
@@ -192,7 +192,7 @@
     <string name="reader_info_bar_layout_centered">Ortalanmış</string>
     <string name="reader_info_bar_layout_split">Kenarlara ayrılmış</string>
     <string name="reader_info_bar_cutout_avoidance">Ekran çentiğinden kaçın (deneysel)</string>
-    <string name="reader_info_bar_cutout_avoidance_summary">Deneysel: Okuyucu bilgilerini kamera çentiklerinden ve çentiklerden uzak tutar</string>
+    <string name="reader_info_bar_cutout_avoidance_summary">Deneysel: Okuyucu bilgilerini kamera deliklerinden ve çentiklerden uzak tutar</string>
     <string name="import_content_type">İçerik türü</string>
     <string name="import_content_type_auto">Otomatik algıla</string>
     <string name="import_completed_with_count">%1$d çizgi roman içe aktarıldı</string>
@@ -218,7 +218,7 @@
     <string name="interface_style_material3_expressive">md3 expressive</string>
     <string name="interface_style_material3_expressive_summary">Daha büyük uyarlanabilir kontroller, vurgulu şekiller ve daha belirgin yazı hiyerarşisi</string>
     <string name="interface_style_ios">ios (modern)</string>
-    <string name="interface_style_ios_summary">Daha yuvarlak kontroller, sakin yüzeyler, Backdrop camı ve daha yumuşak menüler</string>
+    <string name="interface_style_ios_summary">Daha yuvarlak kontroller, sakin yüzeyler, Backdrop cam efekti ve daha yumuşak menüler</string>
     <string name="appearance_style_override_note">Geçerli %1$s stilinde etkin: %2$s</string>
     <string name="appearance_style_default_value">Geçerli %1$s stili varsayılanı: %2$s</string>
     <string name="appearance_recommended_for_style">%1$s için önerilen</string>
@@ -248,6 +248,6 @@
     <string name="import_file">Dosya içe aktar</string>
     <string name="import_file_description">İçe aktarılacak bir veya daha fazla dosya seçin. Her dosya ayrı bir öğe olarak tanınır.</string>
     <string name="import_folder_single">Klasör (tek öğe)</string>
-    <string name="import_folder_single_description">Tek bir seri içeren bir klasör seçin. İçindeki dosyalar bölüm veya bölüm olarak değerlendirilir.</string>
+    <string name="import_folder_single_description">Tek bir seri içeren bir klasör seçin. İçindeki dosyalar bölüm olarak değerlendirilir.</string>
     <string name="import_folder_multiple">Klasör (birden çok öğe)</string>
 </resources>

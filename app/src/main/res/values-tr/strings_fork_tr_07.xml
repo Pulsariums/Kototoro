@@ -4,7 +4,7 @@
     <string name="epub_error_read_failed">EPUB dosyası okunamadı: %s</string>
     <string name="epub_error_write_failed">EPUB dosyası yazılamadı: %s</string>
     <string name="epub_error_invalid_chapter_id">Geçersiz bölüm kimliği: %d</string>
-    <string name="epub_error_chapter_not_found">Bölüm yok: %d</string>
+    <string name="epub_error_chapter_not_found">Bölüm bulunamadı: %d</string>
     <string name="epub_error_index_out_of_bounds">Bölüm dizini aralık dışında: %1$d (toplam %2$d bölüm)</string>
     <string name="epub_error_invalid_url">Geçersiz bölüm URL biçimi: %s</string>
     <string name="epub_error_load_failed">Bölüm yüklenemedi: %d</string>

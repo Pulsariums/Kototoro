@@ -86,7 +86,7 @@
     <string name="search_on_s">%s üzerinde ara</string>
     <string name="internal_storage">Dahili depolama</string>
     <string name="notifications">Bildirimler</string>
-    <string name="switch_pages">Sayfalarda ilerleme</string>
+    <string name="switch_pages">Sayfa değiştirme</string>
     <string name="download">İndir</string>
     <string name="manga_save_location">İndirilenler klasörü</string>
     <string name="external_storage">Harici depolama</string>
@@ -273,15 +273,15 @@
     <string name="account_already_exists">Hesap zaten var</string>
     <string name="back">Geri</string>
     <string name="sync">Eşitleme</string>
-    <string name="sync_title">Verinizi eşitleyin</string>
+    <string name="sync_title">Verilerinizi eşitleyin</string>
     <string name="email_enter_hint">Devam etmek için E-Postanızı girin</string>
-    <string name="clear_all_history">Tüm gecmişi temizle</string>
+    <string name="clear_all_history">Tüm geçmişi temizle</string>
     <string name="last_2_hours">Son 2 saat</string>
     <string name="history_cleared">Geçmiş temizlendi</string>
     <string name="manage">Yönet</string>
-    <string name="no_bookmarks_yet">Yer işareti yok</string>
+    <string name="no_bookmarks_yet">Yer imi yok</string>
     <string name="no_bookmarks_summary">Manga okurken yer imi oluşturabilirsiniz</string>
-    <string name="bookmarks_removed">Yer işaretleri kaldırıldı</string>
+    <string name="bookmarks_removed">Yer imleri kaldırıldı</string>
     <string name="no_manga_sources">Manga kaynağı yok</string>
     <string name="no_manga_sources_text">Çevrim içi manga okumak için manga kaynaklarını aktif edin</string>
     <string name="random">Rastgele</string>
@@ -292,7 +292,7 @@
     <string name="removed_from_favourites">Favorilerden kaldırıldı</string>
     <string name="exit_confirmation">Çıkış doğrulaması</string>
     <string name="comics_archive">Çizgi roman arşivi</string>
-    <string name="manga_error_description_pattern">Hata ayrıntıları:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Kaynağında bulunduğundan emin olmak için &lt;a href=%2$s&gt;mangayı bir web tarayıcısında açmayı&lt;/a&gt; deneyin&lt;br&gt;2. &lt;a href=kototoro://about&gt;Kototoro\'nun en son sürümünü&lt;/a&gt;&lt;br&gt;3 kullandığınızdan emin olun. Varsa, geliştiricilere bir hata raporu gönderin.</string>
+    <string name="manga_error_description_pattern">Hata ayrıntıları:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Kaynağında bulunduğundan emin olmak için &lt;a href="%2$s"&gt;mangayı bir web tarayıcısında açmayı&lt;/a&gt; deneyin&lt;br&gt;2. &lt;a href="kototoro://about"&gt;Kototoro\'nun en son sürümünü&lt;/a&gt; kullandığınızdan emin olun.&lt;br&gt;3. Varsa, geliştiricilere bir hata raporu gönderin.</string>
     <string name="categories_delete_confirm">Seçilen favori kategorileri silmek istediğinizden emin misiniz? \nİçindeki tüm mangalar kaybolur ve bu işlem geri alınamaz.</string>
     <string name="reorder">Yeniden sırala</string>
     <string name="pages_cache">Sayfa önbelleği</string>
@@ -341,7 +341,7 @@
     <string name="show_suspicious_content">Şüpheli içeriği göster</string>
     <string name="services">Hizmetler</string>
     <string name="scrobbling_empty_hint">Okuma ilerlemesini izlemek için manga ayrıntıları ekranında Menü → İzle\'yi seçin.</string>
-    <string name="nothing_here">burada hiçbir şey yok</string>
+    <string name="nothing_here">Burada hiçbir şey yok</string>
     <string name="theme_name_dynamic">Dinamik</string>
     <string name="color_theme">Renk teması</string>
     <string name="show_in_grid_view">Izgara görünümünde göster</string>
@@ -382,7 +382,7 @@
     <string name="resume">Devam et</string>
     <string name="paused">Durduruldu</string>
     <string name="suggestion_manga">Öneri:%s</string>
-    <string name="suggestions_notifications_summary">Bazen manga öneri bildirimlerilerini göster</string>
+    <string name="suggestions_notifications_summary">Bazen manga öneri bildirimlerini göster</string>
     <string name="more">Daha fazla</string>
     <string name="cancel_all_downloads_confirm">Tüm aktif indirmeler iptal edilecek, kısmen indirilen veriler kaybolacak</string>
     <string name="remove_completed_downloads_confirm">İndirme geçmişiniz tamamen silinecek. İndirilen dosyalar etkilenmeyecektir</string>
@@ -401,7 +401,7 @@
     <string name="invalid_port_number">Geçersiz port numarası</string>
     <string name="invert_colors">Renkleri ters çevir</string>
     <string name="images_proxy_title">Görüntü iyileştirme vekil sunucusu</string>
-    <string name="password">Şifre</string>
+    <string name="password">Parola</string>
     <string name="authorization_optional">Doğrulama (isteğe bağlı)</string>
     <string name="downloaded">İndirildi</string>
     <string name="images_procy_description">Trafik kullanımını azaltmak ve mümkünse resim yüklemeyi hızlandırmak için wsrv.nl hizmetini kullanın</string>
@@ -434,7 +434,7 @@
     <string name="download_option_manual_selection">Bölümleri elle seç</string>
     <string name="enhanced_colors_summary">Çizgileşmeyi azaltır, ancak performansı etkileyebilir</string>
     <string name="items_limit_exceeded">Daha fazla öğe eklenemez</string>
-    <string name="data_not_restored">Veri geri yüklemedi</string>
+    <string name="data_not_restored">Veriler geri yüklenemedi</string>
     <string name="directories">Konumlar</string>
     <string name="local_manga_directories">Yerel manga konumları</string>
     <string name="manage_categories">Kategorileri yönet</string>
@@ -471,15 +471,15 @@
     <string name="categories">Kategoriler</string>
     <string name="list_options">Seçenekleri listele</string>
     <string name="online_variant">Çevrim içi türü</string>
-    <string name="by_relevance">İlgi düzeyine göre</string>
+    <string name="by_relevance">Alakaya göre</string>
     <string name="frequency_every_day">Her gün</string>
     <string name="backup_frequency">Yedek oluşturma sıklığı</string>
     <string name="periodic_backups_enable">Zamanlı yedeklemeleri etkinleştirin</string>
     <string name="frequency_every_2_days">2 günde 1</string>
     <string name="frequency_once_per_week">Haftada 1 kez</string>
     <string name="periodic_backups">Zamanlı yedekleme</string>
-    <string name="frequency_twice_per_month">Ayda 2 kere</string>
-    <string name="frequency_once_per_month">Ayda 1 kere</string>
+    <string name="frequency_twice_per_month">Ayda 2 kez</string>
+    <string name="frequency_once_per_month">Ayda 1 kez</string>
     <string name="backups_output_directory">Yedekleme konumu</string>
     <string name="speed_value">x%.1f</string>
     <string name="last_successful_backup">Son başarılı yedekleme: %s</string>
@@ -497,7 +497,7 @@
     <string name="content_type_other">Diğer</string>
     <string name="error_multiple_states_not_supported">Birden fazla duruma göre filtreleme bu manga kaynağı tarafından desteklenmemektedir</string>
     <string name="source_summary_pattern">%1$s,%2$s</string>
-    <string name="content_type_comics">Karikatür</string>
+    <string name="content_type_comics">Çizgi roman</string>
     <string name="no_manga_sources_found">Sorgunuza göre mevcut manga kaynağı bulunamadı</string>
     <string name="error_multiple_genres_not_supported">Birden fazla türe göre filtreleme bu manga kaynağı tarafından desteklenmemektedir</string>
     <string name="lock_screen_rotation">Ekran döndürmeyi kilitle</string>
@@ -524,7 +524,7 @@
     <string name="state_upcoming">Yakında</string>
     <string name="by_name_reverse">Tersten ad</string>
     <string name="content_rating">İçerik oylaması</string>
-    <string name="genres_exclude">Türleri hariç bırak</string>
+    <string name="genres_exclude">Türleri hariç tut</string>
     <string name="rating_safe">Herkese uygun</string>
     <string name="rating_adult">Yetişkin</string>
     <string name="rating_suggestive">Uygunsuz</string>
@@ -589,7 +589,7 @@
     <string name="clear_stats_confirm">Gerçekten tüm okuma istatistiklerini temizlemek istiyor musunuz? Bu işlem geri alınamaz.</string>
     <string name="alternatives">Alternatifler</string>
     <string name="migrate">Taşı</string>
-    <string name="migrate_confirmation">\"%1$s\" mangası (\"%2$s\"den), geçmişinizde ve favorilerinizde (varsa) \"%3$s\" ile (\"%4$s \"den) değiştirilecektir</string>
+    <string name="migrate_confirmation">\"%1$s\" mangası (\"%2$s\"den), geçmişinizde ve favorilerinizde (varsa) \"%3$s\" (\"%4$s\"den) ile değiştirilecektir</string>
     <string name="manga_migration">Manga taşıması</string>
     <string name="migration_completed">Taşıma işlemi tamamlandı</string>
     <string name="delete_read_chapters">Okunan bölümleri sil</string>
@@ -699,7 +699,7 @@
     <string name="popular_in_week">Bu hafta popüler</string>
     <string name="popular_in_month">Bu ay popüler</string>
     <string name="popular_in_year">Bu yıl popüler</string>
-    <string name="original_language">Orijinal dili</string>
+    <string name="original_language">Orijinal dil</string>
     <string name="year">Yıl</string>
     <string name="popular_today">Bugün popüler</string>
     <string name="content_type_novel">Roman</string>
@@ -730,7 +730,7 @@
     <string name="download_added">İndirme eklendi</string>
     <string name="more_options">Daha fazla seçenek</string>
     <string name="destination_directory">Hedef konum</string>
-    <string name="chapter_selection_hint">Bölüm listesindeki bir ögeye uzun tıklayarak indirilecek bölümleri seçebilirsiniz.</string>
+    <string name="chapter_selection_hint">Bölüm listesindeki bir öğeye uzun dokunarak indirilecek bölümleri seçebilirsiniz.</string>
     <string name="chapters_all">Tümü</string>
     <string name="download_over_cellular">Hücresel ağ üzerinden indirme</string>
     <string name="dont_allow">İzin verilmesin</string>
@@ -762,7 +762,7 @@
     <string name="backup_tg_echo">Mesaj testi</string>
     <string name="telegram_chat_id">Telegram sohbet ID\'si</string>
     <string name="open_telegram_bot">Telegram botunu aç</string>
-    <string name="clear_database">Veri tabanını temizle</string>
+    <string name="clear_database">Veritabanını temizle</string>
     <string name="clear_database_summary">Kullanılmayan mangalar ile ilgili bilgileri silin</string>
     <string name="backup_tg_check">API durumunu kontrol et</string>
     <string name="backup_tg_id_not_set">Sohbet ID\'si ayarlanmadı</string>
@@ -805,7 +805,7 @@
     <string name="nsfw_16">16+</string>
     <string name="include_disabled_sources">Devre dışı bırakılmış kaynakları dahil et</string>
     <string name="tags_warnings">Riskli türleri işaretle</string>
-    <string name="tags_warnings_summary">Çoğu kullanıcılar için uygunsuz olabilecek türleri işaretle</string>
+    <string name="tags_warnings_summary">Çoğu kullanıcı için uygunsuz olabilecek türleri işaretle</string>
     <string name="error_non_file_uri">Seçilen yol herhangi bir dosyaya ya da konuma ulaşmadığı için kullanılamıyor</string>
     <string name="use_default_cover">Varsayılan kapağı kullan</string>
     <string name="pick_custom_file">Özel dosya seç</string>

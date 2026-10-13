@@ -50,7 +50,7 @@
     <string name="import_backup_supported_apps_summary">Mihon, Komikku, Aniyomi, Anikku, Animiru, Venera</string>
     <string name="import_backup_scope_summary">Bu sürüm favorileri, geçmişi ve içe aktarılan okuma ilerlemesi üst verilerini geri yükler.</string>
     <string name="import_backup_started_background">Harici yedek arka planda içe aktarılacak</string>
-    <string name="username_password_enter_hint">Devam etmek için kullanıcı adınızı ve parolanızı girin</string>
+    <string name="username_password_enter_hint">Devam etmek için kullanıcı adınızı ve şifrenizi girin</string>
     <string name="restore_kototoro_backup">Yedeği geri yükle</string>
     <string name="restore_kototoro_backup_summary">Herhangi bir sürümden Kototoro yedeğini veya Kotatsu yedeğini geri yükleyin. Biçim otomatik algılanır.</string>
     <string name="restore_mode_replace_existing">Mevcut verilerin yerine koy</string>
@@ -76,7 +76,7 @@
     <string name="eink_mode">E-Mürekkep modu</string>
     <string name="eink_mode_summary">Kaydedilmiş animasyon ayarınızı değiştirmeden sayfalı okumayı E-Mürekkep ekranlar için optimize eder</string>
     <string name="eink_refresh">Tam ekran yenileme</string>
-    <string name="eink_refresh_summary">Hayaletlenmeyi azaltmak için sayfa değişikliklerinden sonra sayfayı kısa süreliğine düz bir renkle değiştirir</string>
+    <string name="eink_refresh_summary">Ekran hayaleti (ghosting) etkisini azaltmak için sayfa değişikliklerinden sonra sayfayı kısa süreliğine düz bir renkle değiştirir</string>
     <string name="eink_refresh_duration">Yenileme süresi</string>
     <string name="eink_refresh_every">Yenileme aralığı</string>
     <string name="eink_refresh_color">Yenileme rengi</string>
@@ -111,7 +111,7 @@
     <string name="reader_super_resolution_noise_1">Orta (1)</string>
     <string name="reader_super_resolution_noise_2">Yüksek (2)</string>
     <string name="reader_super_resolution_noise_3">Çok yüksek (3)</string>
-    <string name="reader_super_resolution_cache_limit">Önbellek arabellek sınırı</string>
+    <string name="reader_super_resolution_cache_limit">Önbellek boyutu sınırı</string>
     <string name="reader_super_resolution_cache_limit_summary">Büyütülmüş görseller için alanı sınırlar (Geçerli ayar: %1$s)</string>
     <string name="reader_super_resolution_cache_limit_256">256 MB</string>
     <string name="reader_super_resolution_cache_limit_512">512 MB</string>
@@ -213,7 +213,7 @@
     <string name="content_type_hentai_video">Yetişkin video</string>
     <string name="content_type_video">Video</string>
     <string name="adult_content_filtering">Yetişkin içerik filtresi</string>
-    <string name="disable_sources_and_browse_nsfw">Kaynaklardan ve göz at içeriğinden gizle</string>
+    <string name="disable_sources_and_browse_nsfw">Kaynaklardan ve Göz at sayfasından gizle</string>
     <string name="disable_history_nsfw">Geçmişten gizle</string>
     <string name="disable_history_nsfw_summary">Yetişkin içeriği Geçmişten gizle</string>
     <string name="disable_favourites_nsfw">Favorilerden gizle</string>
@@ -229,7 +229,7 @@
     <string name="reader_reduce_page_preloading">Sayfa ön yüklemesini azalt (beta)</string>
     <string name="reader_reduce_page_preloading_summary">Görünüm alanının dışında daha az sayfa tutun. Bu, görünen görsel kalitesini düşürmez, ancak yan sayfaların görünmesi daha uzun sürebilir</string>
     <string name="reader_experimental_scene_engine">Modern webtoon oluşturucu (ADR 0002)</string>
-    <string name="reader_experimental_scene_engine_summary">Sürekli webtoon okuma için sıfır CLS düzenli ve karolu oluşturma içeren yüksek performanslı Scene motorunu kullanın</string>
+    <string name="reader_experimental_scene_engine_summary">Sürekli webtoon okuma için sıfır CLS düzeni ve karolu oluşturma içeren yüksek performanslı Scene motorunu kullanın</string>
     <string name="reader_experimental_paged_scene_engine">Modern sayfalı/çift sayfa oluşturucu (deneysel)</string>
     <string name="reader_experimental_paged_scene_engine_summary">Sayfalı ve çift sayfa modları için karolu çok LOD oluşturma içeren yüksek performanslı Paged Scene motorunu kullanın</string>
     <string name="reader_scene_renderer_webtoon">Webtoon sahne oluşturucu</string>

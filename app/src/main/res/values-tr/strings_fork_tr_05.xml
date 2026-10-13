@@ -12,7 +12,7 @@
     <string name="reader_translation_paddle_model_version">Yerel OCR model sürümü</string>
     <string name="reader_translation_paddle_model_version_summary">Yerel önbellek için kullanılan sürüm etiketi, örn. ppocrv4-20260306</string>
     <string name="reader_translation_paddle_model_sha256">Model paketi SHA256</string>
-    <string name="reader_translation_paddle_model_sha256_summary">İsteğe bağlı ama önerilir; karma doğrulamasını atlamak için boş bırakın</string>
+    <string name="reader_translation_paddle_model_sha256_summary">İsteğe bağlı ama önerilir. Doğrulamayı atlamak için boş bırakın</string>
     <string name="reader_translation_paddle_det_model_url">Algılama modeli URL’si</string>
     <string name="reader_translation_paddle_det_model_version">Algılama modeli sürümü</string>
     <string name="reader_translation_paddle_det_model_sha256">Algılama modeli SHA256</string>
@@ -70,7 +70,7 @@
     <string name="reader_translation_ocr_mode_basic">Temel</string>
     <string name="reader_translation_ocr_mode_basic_summary">Elle model kurulumu gerektirmeden ML Kit cihaz içi tanımayı kullanır</string>
     <string name="reader_translation_ocr_mode_advanced">Gelişmiş</string>
-    <string name="reader_translation_ocr_mode_advanced_summary">24-12-2024 tarihli algılayıcıyı ve dile özgü otomatik tanımayı kullanır</string>
+    <string name="reader_translation_ocr_mode_advanced_summary">25.12.2024 tarihli algılayıcıyı ve dile özgü otomatik tanımayı kullanır</string>
     <string name="reader_translation_ocr_advanced_settings">Gelişmiş OCR ayarları</string>
     <string name="reader_translation_ocr_advanced_settings_summary">Metin algılama ve tanıma modellerini seçin</string>
     <string name="reader_translation_ocr_pack_title">Gelişmiş OCR modelleri indirilsin mi?</string>
@@ -159,7 +159,7 @@
     <string name="reader_translation_section_ocr">Metin algılama ve tanıma</string>
     <string name="reader_translation_section_translation">Yerel çeviri</string>
     <string name="reader_translation_section_local_models">OCR ve yerel modeller</string>
-    <string name="reader_translation_section_bubble">Balon algılama ve katman</string>
+    <string name="reader_translation_section_bubble">Balon algılama ve kaplama</string>
     <string name="reader_translation_section_api">Çevrimiçi çeviri (API)</string>
     <string name="reader_translation_open_api_settings">Çevrimiçi çeviri hizmeti</string>
     <string name="reader_translation_open_api_settings_summary">Uç nokta, API anahtarı, sağlayıcı önayarı ve uzak çeviri modelini yapılandırın</string>

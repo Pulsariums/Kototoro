@@ -2,7 +2,7 @@ package org.skepsun.kototoro.settings.sources.test
 
 internal const val SOURCE_TEST_STEP_TIMEOUT_MS = 20_000L
 internal const val SOURCE_TEST_SOURCE_TIMEOUT_MS = 90_000L
-internal const val SOURCE_TEST_MAX_PARALLELISM = 3
+internal const val SOURCE_TEST_MAX_PARALLELISM = 10
 internal const val SOURCE_TEST_COVER_SAMPLE = 3
 internal const val SOURCE_TEST_DETAILS_SAMPLE = 3
 internal val SOURCE_TEST_SEARCH_QUERIES = listOf("a", "one")

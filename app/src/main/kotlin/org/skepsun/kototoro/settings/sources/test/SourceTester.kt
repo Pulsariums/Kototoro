@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.LocalizedAppContext
-import org.skepsun.kototoro.core.exceptions.CloudFlareProtectedException
+import org.skepsun.kototoro.core.exceptions.CloudFlareException
 import org.skepsun.kototoro.core.model.getTitle
 import org.skepsun.kototoro.core.network.ContentHttpClient
 import org.skepsun.kototoro.core.parser.ContentRepository
@@ -214,7 +214,7 @@ class SourceTester @Inject constructor(
 		var current: Throwable? = e
 		var depth = 0
 		while (current != null && depth < 5) {
-			if (current is CloudFlareProtectedException) return true
+			if (current is CloudFlareException) return true
 			current = current.cause
 			depth++
 		}

@@ -436,6 +436,19 @@ class UnifiedSourceCatalogRepository @Inject constructor(
                     )
                 }
             }
+            .combine(
+                runCatching { org.skepsun.kototoro.settings.sources.lock.SourceLockStore.get(appContext).locks }
+                    .getOrElse { kotlinx.coroutines.flow.flowOf(emptyMap()) },
+            ) { sources, locks ->
+                if (locks.isEmpty()) {
+                    sources
+                } else {
+                    sources.map { item ->
+                        val lock = locks[item.source.name]
+                        if (lock == null) item else item.copy(lock = lock, isEnabled = lock)
+                    }
+                }
+            }
             .catch { e ->
                 Log.e("UnifiedSourceCatalog", "Error in observeSources flow", e)
                 emit(emptyList())

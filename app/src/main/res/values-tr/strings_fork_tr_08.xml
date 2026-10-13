@@ -19,7 +19,7 @@
     <string name="no_aniyomi_extensions_text">Animeleri çevrimiçi izlemek için Aniyomi eklentilerini yükleyin</string>
     <string name="loading_mihon_extensions">Mihon eklentileri yükleniyor…</string>
     <string name="mihon_extension_error">Eklenti yüklenemedi: %s</string>
-    <string name="browse_available_extensions">Kullanılabilir eklentilere göz atın</string>
+    <string name="browse_available_extensions">Kullanılabilir eklentilere göz at</string>
     <string name="manage_extension_repositories">Depoları yönet</string>
     <string name="mihon_available_extensions">Kullanılabilir Mihon eklentileri</string>
     <string name="aniyomi_available_extensions">Kullanılabilir Aniyomi eklentileri</string>

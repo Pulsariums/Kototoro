@@ -695,6 +695,14 @@ private fun UnifiedSourceRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (item.lock != null) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_lock),
+                        contentDescription = stringResource(R.string.source_lock_locked),
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
                 if (item.isPinned) {
                     Icon(
                         painter = painterResource(R.drawable.ic_pin_small),
@@ -776,6 +784,7 @@ private fun UnifiedSourceRow(
         }
         Switch(
             checked = localEnabled,
+            enabled = item.lock == null,
             onCheckedChange = { newValue ->
                 localEnabled = newValue
                 onSourceEnabledChange(item.id, newValue)

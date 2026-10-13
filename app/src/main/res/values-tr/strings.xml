@@ -219,8 +219,8 @@
     <string name="text_delete_local_manga_batch">Seçilen ögeler aygıttan kalıcı olarak silinsin mi\?</string>
     <string name="removal_completed">Kaldırma tamamlandı</string>
     <string name="chapters_will_removed_background">Bölümler arka planda kaldırılacak</string>
-    <string name="download_slowdown">İndirme yavaşlatma</string>
-    <string name="download_slowdown_summary">IP adresinizin engellenmesinden kaçınmanıza yardımcı olur</string>
+    <string name="download_slowdown">İndirmeyi yavaşlat</string>
+    <string name="download_slowdown_summary">IP adresinizin engellenmesini önlemeye yardımcı olur</string>
     <string name="local_manga_processing">Kaydedilen manga işleme</string>
     <string name="hide">Gizle</string>
     <string name="new_sources_text">Yeni manga kaynakları var</string>
@@ -347,7 +347,7 @@
     <string name="show_in_grid_view">Izgara görünümünde göster</string>
     <string name="theme_name_mamimi">Mamimi</string>
     <string name="theme_name_kanade">Kanade</string>
-    <string name="user_agent">UserAgent başlığı</string>
+    <string name="user_agent">User-Agent başlığı</string>
     <string name="allow_unstable_updates_summary">Kararsız versiyonlar hakkında bildirim alın</string>
     <string name="allow_unstable_updates">Kararsız güncellemelere izin ver</string>
     <string name="download_started">İndirme başladı</string>
@@ -785,8 +785,8 @@
     <string name="global_search">Genel arama</string>
     <string name="search_everywhere">Her yerde ara</string>
     <string name="badges_in_lists">Listelerde rozetler</string>
-    <string name="disable_captcha_notifications">Captcha bildirimlerini kapat</string>
-    <string name="disable_captcha_notifications_summary">Bu kaynak için CAPTCHA doğrulaması bildirimleri almayacaksınız ancak bu, arka plan işlemlerinin çalışmamasına neden olabilir (yeni bölümleri kontrol etme, önerileri alma vb.)</string>
+    <string name="disable_captcha_notifications">CAPTCHA bildirimlerini kapat</string>
+    <string name="disable_captcha_notifications_summary">Bu kaynak için CAPTCHA bildirimi gelmez. Bu durumda yeni bölüm kontrolü ve öneri alma gibi arka plan işleri takılır.</string>
     <string name="chapter_volume_number">Cilt %1$s Bölüm %2$s</string>
     <string name="chapter_number">Bölüm %s</string>
     <string name="unnamed_chapter">İsimsiz bölüm</string>

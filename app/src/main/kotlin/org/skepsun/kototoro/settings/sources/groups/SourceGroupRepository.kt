@@ -97,6 +97,7 @@ class SourceGroupRepository @Inject constructor(
 						enabled = it.isEnabled,
 						pinned = it.isPinned,
 						sortKey = it.sortKey,
+						locked = contentSources.lockState(it.source),
 					)
 				},
 				jarPriority = settings.jarPriorityOrder.split(',').map { it.trim() }.filter { it.isNotEmpty() },
@@ -246,6 +247,9 @@ class SourceGroupRepository @Inject constructor(
 		val source = contentSources.resolveSource(state.source)
 		contentSources.setSourcesEnabled(listOf(source), state.enabled)
 		contentSources.setIsPinned(listOf(source), state.pinned)
+		if (state.locked != null) {
+			contentSources.setSourceLock(source, state.locked)
+		}
 		if (!isJson) {
 			dao.setSortKey(state.source, state.sortKey)
 		}

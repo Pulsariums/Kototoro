@@ -187,4 +187,6 @@
     <string name="video_subtitle_color_red">Kırmızı</string>
     <string name="video_subtitle_color_green">Yeşil</string>
     <string name="video_subtitle_color_blue">Mavi</string>
+    <string name="source_lock_locked">Kilitli, açmak için dokun</string>
+    <string name="source_lock_unlocked">Mevcut durumu kilitle</string>
 </resources>

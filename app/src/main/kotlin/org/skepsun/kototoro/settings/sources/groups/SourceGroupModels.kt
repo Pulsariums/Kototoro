@@ -42,6 +42,8 @@ data class SourceGroupSourceState(
 	val enabled: Boolean,
 	val pinned: Boolean,
 	val sortKey: Int,
+	/** Locked enabled state (true = locked on, false = locked off); null when not locked. */
+	val locked: Boolean? = null,
 )
 
 object SourceGroupJson {

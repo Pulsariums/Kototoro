@@ -101,11 +101,23 @@ class SourceTester @Inject constructor(
 		}
 
 		var details: Content? = null
-		val first = items.firstOrNull()
 		runOrSkip(SourceTestStep.DETAILS, record, listOk) {
-			val item = first ?: return@runOrSkip failed(R.string.source_test_msg_no_items)
-			val loaded = repo.getDetails(item)
-			details = loaded
+			// The first list entry can legitimately have no chapters (announcements, empty series),
+			// so try a few entries before declaring the details/chapters steps failed.
+			val sample = items.take(SOURCE_TEST_DETAILS_SAMPLE)
+			if (sample.isEmpty()) return@runOrSkip failed(R.string.source_test_msg_no_items)
+			var firstError: Throwable? = null
+			for (item in sample) {
+				val attempt = runCatchingCancellable { repo.getDetails(item) }
+				val loaded = attempt.getOrNull()
+				if (loaded == null) {
+					if (firstError == null) firstError = attempt.exceptionOrNull()
+					continue
+				}
+				details = loaded
+				if (loaded.chapters.orEmpty().isNotEmpty()) break
+			}
+			val loaded = details ?: throw (firstError ?: IllegalStateException("details"))
 			passed(R.string.source_test_msg_details, loaded.title)
 		}
 

@@ -108,9 +108,11 @@ internal fun SourceTestDialog(
 					overflow = TextOverflow.Ellipsis,
 				)
 				val passedCount = progress.results.count { it.overall == StepStatus.PASS }
+				val unavailableCount = progress.results.count { it.overall == StepStatus.FAIL }
+				val cloudflareCount = progress.results.count { it.overall == StepStatus.CLOUDFLARE }
 				Text(
 					text = if (progress.finished) {
-						stringResource(R.string.source_test_summary, passedCount, failedCount)
+						stringResource(R.string.source_test_summary, passedCount, unavailableCount, cloudflareCount)
 					} else {
 						""
 					},

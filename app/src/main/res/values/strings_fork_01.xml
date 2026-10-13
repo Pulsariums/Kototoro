@@ -31,7 +31,7 @@
     <string name="source_test_title">Test sources</string>
     <string name="source_test_progress">%1$d / %2$d checked</string>
     <string name="source_test_running">Running: %1$s</string>
-    <string name="source_test_summary">Passed: %1$d, failed: %2$d</string>
+    <string name="source_test_summary">Available: %1$d, unavailable: %2$d, Cloudflare: %3$d</string>
     <string name="source_test_cancelled_note">Test was cancelled. Only finished sources are listed.</string>
     <string name="source_test_cancel">Cancel</string>
     <string name="source_test_close">Close</string>

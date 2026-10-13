@@ -40,7 +40,7 @@
     <string name="source_test_title">Kaynakları test et</string>
     <string name="source_test_progress">%1$d / %2$d denetlendi</string>
     <string name="source_test_running">Çalışıyor: %1$s</string>
-    <string name="source_test_summary">Başarılı: %1$d, başarısız: %2$d</string>
+    <string name="source_test_summary">Çalışan: %1$d, çalışmayan: %2$d, Cloudflare: %3$d</string>
     <string name="source_test_cancelled_note">Test iptal edildi. Yalnızca tamamlanan kaynaklar listelenir.</string>
     <string name="source_test_cancel">İptal</string>
     <string name="source_test_close">Kapat</string>

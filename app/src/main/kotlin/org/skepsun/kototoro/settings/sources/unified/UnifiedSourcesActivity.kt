@@ -125,7 +125,10 @@ class UnifiedSourcesActivity : BaseComposeActivity() {
             )
         }
         if (showSourceGroups) {
-            SourceGroupsDialog(onDismissRequest = { showSourceGroups = false })
+            SourceGroupsDialog(
+                onDismissRequest = { showSourceGroups = false },
+                onApplied = viewModel::refreshPackages,
+            )
         }
         var tabReselectTrigger by remember { mutableStateOf<Pair<Int, Long>?>(null) }
         val closeSearch = {

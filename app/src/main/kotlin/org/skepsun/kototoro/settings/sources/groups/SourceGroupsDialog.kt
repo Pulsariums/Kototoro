@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ private val IMPORT_MIME_TYPES = arrayOf("application/json", "text/plain")
 @Composable
 fun SourceGroupsDialog(
 	onDismissRequest: () -> Unit,
+	onApplied: () -> Unit = {},
 	viewModel: SourceGroupsViewModel = hiltViewModel(),
 ) {
 	val groups by viewModel.groups.collectAsStateWithLifecycle()
@@ -55,6 +57,11 @@ fun SourceGroupsDialog(
 	var showNameDialog by remember { mutableStateOf(false) }
 	var pendingExportId by rememberSaveable { mutableStateOf<String?>(null) }
 	val context = LocalContext.current
+	var wasRunning by remember { mutableStateOf(false) }
+	LaunchedEffect(applyState.running) {
+		if (wasRunning && !applyState.running) onApplied()
+		wasRunning = applyState.running
+	}
 
 	val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
 		if (uri != null) viewModel.importGroup(uri)
@@ -254,6 +261,15 @@ private fun ApplyProgressSection(state: ApplyProgress) {
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.error,
 			)
+		}
+		if (state.manualInstall.isNotEmpty()) {
+			Text(
+				text = stringResource(R.string.source_groups_manual_install, state.manualInstall.size),
+				style = MaterialTheme.typography.labelMedium,
+			)
+			state.manualInstall.take(10).forEach { pkg ->
+				Text(text = pkg, style = MaterialTheme.typography.bodySmall)
+			}
 		}
 	}
 }

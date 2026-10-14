@@ -382,6 +382,7 @@ fun UnifiedSourcesRoute(
             onAvailabilityFilterChange = viewModel::setAvailabilityFilter,
             onTestAvailabilityFilterChange = viewModel::setTestAvailabilityFilter,
             onNsfwFilterChange = viewModel::setNsfwFilter,
+            onLockFilterChange = viewModel::setLockFilter,
             onLocationTypeToggle = viewModel::toggleLocationType,
         )
     }

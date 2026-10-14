@@ -33,6 +33,7 @@ data class UnifiedSourcesFilterState(
     val availabilityFilter: UnifiedAvailabilityFilter = UnifiedAvailabilityFilter.AVAILABLE,
     val testAvailabilityFilter: UnifiedTestAvailabilityFilter = UnifiedTestAvailabilityFilter.ALL,
     val nsfwFilter: UnifiedNsfwFilter = UnifiedNsfwFilter.ALL,
+    val lockFilter: UnifiedLockFilter = UnifiedLockFilter.ALL,
     val packageStatusFilter: UnifiedPackageStatusFilter = UnifiedPackageStatusFilter.ALL,
 )
 
@@ -67,6 +68,12 @@ enum class UnifiedNsfwFilter {
     ALL,
     SFW,
     NSFW,
+}
+
+enum class UnifiedLockFilter {
+    ALL,
+    LOCKED,
+    UNLOCKED,
 }
 
 sealed interface UnifiedSourcesUiState {

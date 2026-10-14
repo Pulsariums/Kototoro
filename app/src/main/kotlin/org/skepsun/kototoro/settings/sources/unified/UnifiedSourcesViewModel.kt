@@ -449,6 +449,10 @@ class UnifiedSourcesViewModel @Inject constructor(
         filterState.update { it.copy(nsfwFilter = filter) }
     }
 
+    fun setLockFilter(filter: UnifiedLockFilter) {
+        filterState.update { it.copy(lockFilter = filter) }
+    }
+
     fun clearLanguages() {
         filterState.update { it.copy(languages = emptySet()) }
     }
@@ -2251,6 +2255,13 @@ class UnifiedSourcesViewModel @Inject constructor(
                     UnifiedNsfwFilter.ALL -> true
                     UnifiedNsfwFilter.SFW -> !it.isNsfw
                     UnifiedNsfwFilter.NSFW -> it.isNsfw
+                }
+            }
+            .filter {
+                when (filters.lockFilter) {
+                    UnifiedLockFilter.ALL -> true
+                    UnifiedLockFilter.LOCKED -> it.lock != null
+                    UnifiedLockFilter.UNLOCKED -> it.lock == null
                 }
             }
             .filter { filters.locationTypes.isEmpty() || it.repositoryLocationType(repositoriesById, packagesById) in filters.locationTypes }

@@ -15,6 +15,7 @@
     <string name="source_groups_exported">Group exported</string>
     <string name="source_groups_applied">Group applied</string>
     <string name="source_groups_apply_errors">%1$d step(s) failed while applying the group</string>
+    <string name="source_groups_manual_install">Install these %1$d normal-APK packages by hand from the Packages tab:</string>
     <string name="source_groups_invalid_file">Invalid group file</string>
     <string name="source_groups_file_too_large">Group file is too large (max 2 MB)</string>
     <string name="source_groups_error_generic">Error: %1$s</string>

@@ -386,12 +386,22 @@ internal fun UnifiedNsfwFilter.displayLabel(): String {
     }
 }
 
+@Composable
+internal fun UnifiedLockFilter.displayLabel(): String {
+    return when (this) {
+        UnifiedLockFilter.ALL -> stringResource(R.string.all)
+        UnifiedLockFilter.LOCKED -> stringResource(R.string.source_lock_filter_locked)
+        UnifiedLockFilter.UNLOCKED -> stringResource(R.string.source_lock_filter_unlocked)
+    }
+}
+
 internal fun UnifiedSourcesFilterState.otherFilterCount(): Int {
     return locationTypes.size +
         (if (enabledFilter == UnifiedEnabledFilter.ALL) 0 else 1) +
         (if (availabilityFilter == UnifiedAvailabilityFilter.ALL) 0 else 1) +
         (if (testAvailabilityFilter == UnifiedTestAvailabilityFilter.ALL) 0 else 1) +
-        (if (nsfwFilter == UnifiedNsfwFilter.ALL) 0 else 1)
+        (if (nsfwFilter == UnifiedNsfwFilter.ALL) 0 else 1) +
+        (if (lockFilter == UnifiedLockFilter.ALL) 0 else 1)
 }
 
 private val topBarContentTypes = linkedSetOf(

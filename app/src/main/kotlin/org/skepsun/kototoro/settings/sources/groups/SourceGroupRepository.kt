@@ -1,6 +1,7 @@
 package org.skepsun.kototoro.settings.sources.groups
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
@@ -49,6 +50,8 @@ data class ApplyProgress(
 	val total: Int = 0,
 	val groupName: String? = null,
 	val errors: List<String> = emptyList(),
+	/** Normal-APK packages that must be installed by hand through the system installer. */
+	val manualInstall: List<String> = emptyList(),
 )
 
 @Singleton
@@ -151,11 +154,17 @@ class SourceGroupRepository @Inject constructor(
 	 * Applies the group to this device. Every step is isolated: a failing step is recorded in
 	 * the returned list and the remaining steps still run. Progress is published to [progress].
 	 */
-	suspend fun apply(id: String): List<String> {
+	suspend fun apply(id: String): List<String> = withContext(Dispatchers.IO) { applyGroup(id) }
+
+	private suspend fun applyGroup(id: String): List<String> {
 		check(!_progress.value.running) { "Another source group is being applied" }
 		val group = list().firstOrNull { it.id == id }
 			?: throw IllegalArgumentException("Source group not found")
-		val missing = group.packages.filterNot { isPackageInstalled(it) }
+		val notInstalled = group.packages.filterNot { isPackageInstalled(it) }
+		// Normal APK installs need Android's own confirmation per package, so they are listed, not installed.
+		val (manualPackages, autoPackages) = notInstalled.partition { it.installMode == SOURCE_GROUP_INSTALL_MODE_SYSTEM }
+		// JARs first: they install without the system installer.
+		val missing = autoPackages.sortedBy { if (it.kind.equals("jar", ignoreCase = true)) 0 else 1 }
 		val total = group.repos.size + missing.size + group.sourceStates.size + 1
 		val errors = mutableListOf<String>()
 		var step = 0
@@ -163,7 +172,12 @@ class SourceGroupRepository @Inject constructor(
 			step++
 			_progress.update { it.copy(step = step, errors = errors.toList()) }
 		}
-		_progress.value = ApplyProgress(running = true, total = total, groupName = group.name)
+		_progress.value = ApplyProgress(
+			running = true,
+			total = total,
+			groupName = group.name,
+			manualInstall = manualPackages.map { it.pkg },
+		)
 		try {
 			for (repo in group.repos) {
 				runGuarded(errors, context.getString(R.string.source_groups_error_repo, repo.url)) {
@@ -330,7 +344,31 @@ class SourceGroupRepository @Inject constructor(
 				)
 			}
 		}
+
+		// Normal (system-installed) APK extensions are recorded too so an import can list them.
+		for (info in ExternalExtensionLoaderSupport.getInstalledPackages(context.packageManager)) {
+			val kind = info.systemEcosystem() ?: continue
+			val pkg: String = info.packageName ?: continue
+			result += SourceGroupPackage(
+				pkg = pkg,
+				kind = kind,
+				versionName = info.versionName,
+				versionCode = PackageInfoCompat.getLongVersionCode(info),
+				repoUrl = repoByPackage[pkg],
+				installMode = SOURCE_GROUP_INSTALL_MODE_SYSTEM,
+			)
+		}
 		return result.distinctBy { it.kind to it.pkg }
+	}
+
+	private fun PackageInfo.systemEcosystem(): String? {
+		val features = reqFeatures?.mapNotNull { it.name }.orEmpty()
+		return when {
+			"tachiyomi.animeextension" in features -> "aniyomi"
+			"tachiyomi.extension" in features -> "mihon"
+			"ireader" in features -> "ireader"
+			else -> null
+		}
 	}
 
 	private fun isPackageInstalled(pkg: SourceGroupPackage): Boolean {

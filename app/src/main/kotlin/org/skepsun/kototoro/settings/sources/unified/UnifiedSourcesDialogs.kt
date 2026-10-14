@@ -586,6 +586,7 @@ internal fun UnifiedCombinedFilterDialog(
     onAvailabilityFilterChange: (UnifiedAvailabilityFilter) -> Unit,
     onTestAvailabilityFilterChange: (UnifiedTestAvailabilityFilter) -> Unit,
     onNsfwFilterChange: (UnifiedNsfwFilter) -> Unit,
+    onLockFilterChange: (UnifiedLockFilter) -> Unit,
     onLocationTypeToggle: (UnifiedRepositoryLocationType) -> Unit,
     initialTab: Int = 0,
 ) {
@@ -794,6 +795,15 @@ internal fun UnifiedCombinedFilterDialog(
                                 CompactFilterChip(
                                     selected = readyState.filters.nsfwFilter == filter,
                                     onClick = { onNsfwFilterChange(filter) },
+                                    text = filter.displayLabel(),
+                                )
+                            }
+                        }
+                        FilterSection(title = stringResource(R.string.source_lock_filter_title)) {
+                            items(UnifiedLockFilter.entries) { filter ->
+                                CompactFilterChip(
+                                    selected = readyState.filters.lockFilter == filter,
+                                    onClick = { onLockFilterChange(filter) },
                                     text = filter.displayLabel(),
                                 )
                             }

@@ -6,6 +6,9 @@ import kotlinx.serialization.json.Json
 const val SOURCE_GROUP_SCHEMA_VERSION = 1
 const val SOURCE_GROUP_MAX_BYTES = 2L * 1024L * 1024L
 
+/** [SourceGroupPackage.installMode] for packages installed through the Android package installer. */
+const val SOURCE_GROUP_INSTALL_MODE_SYSTEM = "system"
+
 internal val SOURCE_GROUP_ID_REGEX = Regex("^[A-Za-z0-9_-]{1,64}$")
 
 @Serializable
@@ -34,6 +37,8 @@ data class SourceGroupPackage(
 	val versionName: String? = null,
 	val versionCode: Long = 0L,
 	val repoUrl: String? = null,
+	/** [SOURCE_GROUP_INSTALL_MODE_SYSTEM] for normal APK installs; null means a managed (sideloaded) package. */
+	val installMode: String? = null,
 )
 
 @Serializable

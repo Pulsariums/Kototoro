@@ -21,6 +21,8 @@ class SettingsSyncStore @Inject constructor(
 		STORE_APP to appSettings.prefs,
 		STORE_TAP_GRID to context.getSharedPreferences("tap_grid", Context.MODE_PRIVATE),
 		STORE_NOVEL_READER to context.getSharedPreferences("novel_reader_settings", Context.MODE_PRIVATE),
+		// Source locks (per-source enabled state lock): name -> true/false, "none" = unlocked marker.
+		STORE_SOURCE_LOCKS to context.getSharedPreferences("source_locks", Context.MODE_PRIVATE),
 	)
 	private val meta = context.getSharedPreferences("sync_settings_meta", Context.MODE_PRIVATE)
 
@@ -136,5 +138,6 @@ class SettingsSyncStore @Inject constructor(
 		const val STORE_APP = "app"
 		const val STORE_TAP_GRID = "tap_grid"
 		const val STORE_NOVEL_READER = "novel_reader"
+		const val STORE_SOURCE_LOCKS = "source_locks"
 	}
 }

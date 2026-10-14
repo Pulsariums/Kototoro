@@ -999,7 +999,10 @@ class UnifiedSourcesViewModel @Inject constructor(
             return
         }
         val ready = uiState.value as? UnifiedSourcesUiState.Ready ?: return
-        val sourceItems = ready.allSources.filter { it.id in sourceIds }
+        // Locked sources ignore bulk/single enable changes in the repository, so they must not get an
+        // optimistic override either: it would never agree with the base state and the row would show
+        // the wrong switch position until the screen is recreated.
+        val sourceItems = ready.allSources.filter { it.id in sourceIds && it.lock == null }
         if (sourceItems.isEmpty()) {
             return
         }

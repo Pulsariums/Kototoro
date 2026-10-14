@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.skepsun.kototoro.R
@@ -268,7 +269,10 @@ class SourceSettingsViewModel @Inject constructor(
     fun toggleLock() {
         launchJob(Dispatchers.Default) {
             val current = mangaSourcesRepository.lockState(source.name)
-            mangaSourcesRepository.setSourceLock(source, if (current == null) isEnabled.value ?: true else null)
+            // isEnabled.value is null until the first DB emission; never default to "on" (that locked disabled
+            // sources as enabled). Read the authoritative stored state instead.
+            val enabledNow = if (current == null) mangaSourcesRepository.observeIsEnabled(source).first() else null
+            mangaSourcesRepository.setSourceLock(source, enabledNow)
         }
     }
 

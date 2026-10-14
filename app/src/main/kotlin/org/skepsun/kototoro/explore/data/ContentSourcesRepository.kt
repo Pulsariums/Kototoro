@@ -107,6 +107,7 @@ class ContentSourcesRepository @Inject constructor(
     private val dao get() = db.getSourcesDao()
     private val jsonDao get() = db.getJsonSourceDao()
     private val isNewSourcesAssimilated = AtomicBoolean(false)
+    private val locksReconciled = AtomicBoolean(false)
     private val cachedKotatsuSources = java.util.concurrent.ConcurrentHashMap<String, org.skepsun.kototoro.core.parser.kotatsu.KotatsuParserSource>()
     private val tvBoxRepositorySelection: StateFlow<TVBoxRepositorySelection> = combine(
         jsonDao.observeEnabledSummaries(),
@@ -232,6 +233,7 @@ class ContentSourcesRepository @Inject constructor(
     suspend fun getEnabledSources(): List<ContentSource> {
         normalizeAllEnabledFlagIfNeeded()
         assimilateNewSources()
+        reconcileLocks()
         val order = settings.sourcesSortOrder
         val disabledNames = if (!settings.isAllSourcesEnabled) dao.findAll().filter { !it.isEnabled }.mapToSet { it.source } else emptySet<String>()
 
@@ -1023,6 +1025,27 @@ class ContentSourcesRepository @Inject constructor(
         setSourcesEnabledImpl(sources, isEnabled)
         return ReversibleHandle {
             setSourcesEnabledImpl(sources, !isEnabled)
+        }
+    }
+
+    /**
+     * Once per process: forces every locked source into its locked state. The lock map lives in its own
+     * preferences, so a backup restore / sync can leave the DB row disagreeing with the lock (the list
+     * shows the lock, Explore uses the DB). The lock always wins.
+     */
+    private suspend fun reconcileLocks() {
+        if (locksReconciled.getAndSet(true)) return
+        val locks = lockStore?.locks?.value.orEmpty()
+        if (locks.isEmpty()) return
+        val jsonOn = locks.filter { it.value && it.key.startsWith("JSON_") }.keys.toList()
+        val jsonOff = locks.filter { !it.value && it.key.startsWith("JSON_") }.keys.toList()
+        if (jsonOn.isNotEmpty()) jsonSourceManager.toggleSourcesBatch(jsonOn, true)
+        if (jsonOff.isNotEmpty()) jsonSourceManager.toggleSourcesBatch(jsonOff, false)
+        val nativeLocks = locks.filterKeys { !it.startsWith("JSON_") }
+        if (nativeLocks.isNotEmpty()) {
+            db.withTransaction {
+                for ((name, enabled) in nativeLocks) dao.setEnabled(name, enabled, BuildConfig.VERSION_CODE)
+            }
         }
     }
 

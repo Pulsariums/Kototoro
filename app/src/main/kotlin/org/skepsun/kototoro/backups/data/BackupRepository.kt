@@ -236,6 +236,9 @@ class BackupRepository @Inject constructor(
     private val savedFiltersRepository: SavedFiltersRepository,
 ) {
 
+    private val sourceLocks: org.skepsun.kototoro.settings.sources.lock.SourceLockStore
+        get() = org.skepsun.kototoro.settings.sources.lock.SourceLockStore.get(appContext)
+
     enum class ExportFormat(
         val sections: List<BackupSection>,
     ) {
@@ -382,7 +385,7 @@ class BackupRepository @Inject constructor(
                             database.getSourcesDao().findAll().asFlow()
                         }
                     ).filter { format != ExportFormat.KOTATSU || it.source in kotatsuSourceNames }
-                        .map { SourceBackup(it) },
+                        .map { SourceBackup(it, SourceBackup.lockCode(sourceLocks.get(it.source))) },
                     serializer = serializer(),
                 )
 
@@ -641,6 +644,12 @@ class BackupRepository @Inject constructor(
 
                     BackupSection.SOURCES -> sectionInput.readJsonArray<SourceBackup>(serializer()).restoreToDb("SOURCES") {
                         getSourcesDao().upsert(it.toEntity())
+                        when (it.lock) {
+                            SourceBackup.LOCK_ON -> sourceLocks.set(it.source, true)
+                            SourceBackup.LOCK_OFF -> sourceLocks.set(it.source, false)
+                            SourceBackup.LOCK_NONE -> sourceLocks.set(it.source, null)
+                            else -> Unit // old backup: keep the local lock
+                        }
                     }
 
                     BackupSection.SOURCE_ORIGINS -> sectionInput.readJsonArray<SourceOriginBackup>(serializer()).restoreToDb(

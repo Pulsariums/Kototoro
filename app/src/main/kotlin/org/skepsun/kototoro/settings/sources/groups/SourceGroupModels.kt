@@ -49,6 +49,8 @@ data class SourceGroupSourceState(
 	val sortKey: Int,
 	/** Locked enabled state (true = locked on, false = locked off); null when not locked. */
 	val locked: Boolean? = null,
+	/** Manual domain override saved in the source settings; null when none was set. */
+	val domain: String? = null,
 )
 
 object SourceGroupJson {

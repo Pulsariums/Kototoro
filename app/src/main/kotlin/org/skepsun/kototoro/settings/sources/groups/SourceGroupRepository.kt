@@ -17,7 +17,9 @@ import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.db.MangaDatabase
 import org.skepsun.kototoro.core.db.dao.SourceOriginsDao
 import org.skepsun.kototoro.core.db.entity.MangaSourceEntity
+import org.skepsun.kototoro.core.parser.ContentRepository
 import org.skepsun.kototoro.core.prefs.AppSettings
+import org.skepsun.kototoro.core.prefs.SourceSettings
 import org.skepsun.kototoro.explore.data.ContentSourcesRepository
 import org.skepsun.kototoro.extensions.install.ExtensionInstallMode
 import org.skepsun.kototoro.extensions.install.ExtensionInstallResult
@@ -61,6 +63,7 @@ class SourceGroupRepository @Inject constructor(
 	private val repoRepository: ExternalExtensionRepoRepository,
 	private val installService: ExtensionInstallService,
 	private val contentSources: ContentSourcesRepository,
+	private val repositoryFactory: ContentRepository.Factory,
 	private val settings: AppSettings,
 ) {
 
@@ -102,6 +105,7 @@ class SourceGroupRepository @Inject constructor(
 							pinned = it.isPinned,
 							sortKey = it.sortKey,
 							locked = lock,
+							domain = currentDomainOverride(it.source),
 						)
 					} else null
 				} + database.getJsonSourceDao().findAll().mapNotNull {
@@ -114,6 +118,7 @@ class SourceGroupRepository @Inject constructor(
 							pinned = it.isPinned,
 							sortKey = 0,
 							locked = lock,
+							domain = currentDomainOverride(it.id),
 						)
 					} else null
 				},
@@ -328,7 +333,25 @@ class SourceGroupRepository @Inject constructor(
 		if (!state.source.startsWith("JSON_")) {
 			contentSources.setSourceSortKey(state.source, state.sortKey)
 		}
+		if (!state.domain.isNullOrBlank()) {
+			sourcePrefs(state.source).edit()
+				.putString(SourceSettings.KEY_DOMAIN, state.domain)
+				.apply()
+			// Rebuild the parser so the restored domain takes effect without an app restart.
+			repositoryFactory.invalidate(source)
+		}
 	}
+
+	/** The per-source settings file, named exactly like [org.skepsun.kototoro.core.prefs.SourceSettings] names it. */
+	private fun sourcePrefs(sourceKey: String): android.content.SharedPreferences =
+		context.getSharedPreferences(sourceKey.replace(File.separatorChar, '$'), Context.MODE_PRIVATE)
+
+	/** The manual domain override currently saved for the source, or null when none is set. */
+	private fun currentDomainOverride(sourceKey: String): String? =
+		sourcePrefs(sourceKey).getString(SourceSettings.KEY_DOMAIN, null)
+			?.trim()
+			?.takeIf { it.isNotEmpty() }
+
 	private suspend fun runGuarded(errors: MutableList<String>, label: String, block: suspend () -> Unit) {
 		try {
 			block()

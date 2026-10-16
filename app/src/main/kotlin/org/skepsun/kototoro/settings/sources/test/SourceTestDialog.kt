@@ -1,7 +1,7 @@
 package org.skepsun.kototoro.settings.sources.test
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,22 +23,32 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ShareCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.skepsun.kototoro.BuildConfig
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.parsers.model.ContentSource
 import org.skepsun.kototoro.settings.compose.SettingsAlertDialog
+import java.io.File
+import java.time.Instant
 
 /**
  * "Test all" dialog for the sources tab. Starts testing [sources] when shown and cancels
@@ -52,6 +62,8 @@ internal fun SourceTestDialog(
 ) {
 	LaunchedEffect(Unit) { viewModel.testAll(sources) }
 	val context = LocalContext.current
+	val clipboard = LocalClipboardManager.current
+	val scope = rememberCoroutineScope()
 	val progress by viewModel.progress.collectAsStateWithLifecycle()
 	var expandedKeys by remember { mutableStateOf(emptySet<String>()) }
 	val failedCount = progress.results.count {
@@ -145,19 +157,35 @@ internal fun SourceTestDialog(
 						HorizontalDivider()
 					}
 				}
-				TextButton(
-					onClick = {
-						val intent = Intent(Intent.ACTION_SEND).apply {
-							type = "text/plain"
-							putExtra(Intent.EXTRA_TEXT, viewModel.exportJson())
-						}
-						val title = context.getString(R.string.source_test_export)
-						context.startActivity(Intent.createChooser(intent, title))
-					},
-					enabled = progress.finished,
-					modifier = Modifier.align(Alignment.End),
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					horizontalArrangement = Arrangement.End,
+					verticalAlignment = Alignment.CenterVertically,
 				) {
-					Text(stringResource(R.string.source_test_export))
+					TextButton(
+						onClick = { clipboard.setText(AnnotatedString(viewModel.exportJson())) },
+						enabled = progress.finished,
+					) {
+						Text(stringResource(R.string.source_test_copy_json))
+					}
+					TextButton(
+						onClick = {
+							val json = viewModel.exportJson()
+							scope.launch(Dispatchers.IO) {
+								val file = File(context.cacheDir, "kototoro-source-test-${Instant.now().epochSecond}.json")
+								file.writeText(json)
+								val uri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.files", file)
+								ShareCompat.IntentBuilder(context)
+									.setType("application/json")
+									.setStream(uri)
+									.setChooserTitle(context.getString(R.string.source_test_export))
+									.startChooser()
+							}
+						},
+						enabled = progress.finished,
+					) {
+						Text(stringResource(R.string.source_test_export))
+					}
 				}
 			}
 		},

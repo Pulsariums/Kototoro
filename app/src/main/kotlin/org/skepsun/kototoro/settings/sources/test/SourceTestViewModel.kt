@@ -86,29 +86,40 @@ class SourceTestViewModel @Inject constructor(
 		job?.cancel()
 	}
 
+	/**
+	 * JSON export of a finished run. Passing sources are only counted, never listed: the report
+	 * is about the sources that do not work and the step where each one stopped.
+	 */
 	fun exportJson(): String {
+		val results = _progress.value.results
+		val problems = results
+			.filter { it.overall == StepStatus.FAIL || it.overall == StepStatus.CLOUDFLARE }
+			.sortedWith(compareBy({ it.overall != StepStatus.FAIL }, { it.title }))
 		val sources = JSONArray()
-		_progress.value.results.forEach { result ->
+		problems.forEach { result ->
 			val steps = JSONObject()
-			val messages = JSONObject()
 			result.steps.forEach { (step, stepResult) ->
-				steps.put(step.name, stepResult.status.name.lowercase())
-				if (stepResult.message.isNotEmpty() &&
-					(stepResult.status == StepStatus.FAIL || stepResult.status == StepStatus.CLOUDFLARE)
-				) {
-					messages.put(step.name, stepResult.message)
+				val entry = JSONObject().put("status", stepResult.status.name.lowercase())
+				if (stepResult.status != StepStatus.PASS && stepResult.message.isNotBlank()) {
+					entry.put("message", stepResult.message)
 				}
+				steps.put(step.name.lowercase(), entry)
 			}
 			sources.put(
 				JSONObject()
 					.put("name", result.sourceKey)
+					.put("title", result.title)
 					.put("status", result.overall.name.lowercase())
-					.put("steps", steps)
-					.apply { if (messages.length() > 0) put("messages", messages) },
+					.put("durationMs", result.durationMs)
+					.put("steps", steps),
 			)
 		}
 		return JSONObject()
 			.put("generated", Instant.now().toString())
+			.put("total", results.size)
+			.put("passed", results.count { it.overall == StepStatus.PASS })
+			.put("failed", results.count { it.overall == StepStatus.FAIL })
+			.put("cloudflare", results.count { it.overall == StepStatus.CLOUDFLARE })
 			.put("sources", sources)
 			.toString()
 	}

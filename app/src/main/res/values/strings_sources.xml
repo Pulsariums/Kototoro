@@ -75,6 +75,7 @@
     <string name="source_test_cloudflare">Cloudflare</string>
     <string name="source_test_msg_cloudflare">Blocked by Cloudflare, needs manual verification</string>
     <string name="source_test_export">Export results</string>
+    <string name="source_test_copy_json">Copy JSON</string>
     <string name="source_lock_locked">Locked, tap to unlock</string>
     <string name="source_lock_unlocked">Lock current state</string>
     <string name="source_lock_action">Lock</string>

@@ -759,54 +759,63 @@ class UnifiedSourcesViewModel @Inject constructor(
         title: String? = null,
         enableImportedSources: Boolean = true,
     ) {
+        launchLoadingJob(Dispatchers.IO) {
+            addRepositoryFromUrlImpl(kind, url, title, enableImportedSources)
+        }
+    }
+
+    private suspend fun addRepositoryFromUrlImpl(
+        kind: UnifiedSourceKind,
+        url: String,
+        title: String?,
+        enableImportedSources: Boolean,
+    ) {
         val cleanUrl = url.trim()
         if (cleanUrl.isBlank()) return
-        launchLoadingJob(Dispatchers.IO) {
-            when (kind) {
-                UnifiedSourceKind.LEGADO -> {
-                    if (settings.legadoRepoUrls.containsRepositoryUrl(cleanUrl)) {
-                        emitMessage(appContext.getString(R.string.unified_sources_repository_already_exists))
-                        return@launchLoadingJob
-                    }
-                    val packageItem = fetchAvailableLegadoPackage(cleanUrl, title)
-                    settings.legadoRepoUrls = settings.legadoRepoUrls + cleanUrl
-                    availableJsonPackages.update { packages ->
-                        (packages.filterNot { it.repositoryId == packageItem.repositoryId } + packageItem)
-                            .sortedBy { it.name.lowercase() }
-                    }
-                    emitMessage(appContext.getString(R.string.unified_sources_repository_added))
+        when (kind) {
+            UnifiedSourceKind.LEGADO -> {
+                if (settings.legadoRepoUrls.containsRepositoryUrl(cleanUrl)) {
+                    emitMessage(appContext.getString(R.string.unified_sources_repository_already_exists))
+                    return
                 }
-                UnifiedSourceKind.JS -> {
-                    importJsonRepository(
-                        kind = kind,
-                        content = fetchRemoteText(cleanUrl),
-                        sourceLocator = cleanUrl,
-                        sourceTitle = title,
-                        enableImportedSources = enableImportedSources,
-                    )
+                val packageItem = fetchAvailableLegadoPackage(cleanUrl, title)
+                settings.legadoRepoUrls = settings.legadoRepoUrls + cleanUrl
+                availableJsonPackages.update { packages ->
+                    (packages.filterNot { it.repositoryId == packageItem.repositoryId } + packageItem)
+                        .sortedBy { it.name.lowercase() }
                 }
-                UnifiedSourceKind.TVBOX -> {
-                    if (settings.tvBoxRepoUrls.containsRepositoryUrl(cleanUrl)) {
-                        emitMessage(appContext.getString(R.string.unified_sources_repository_already_exists))
-                        return@launchLoadingJob
-                    }
-                    val packageItem = fetchAvailableTvBoxPackage(cleanUrl, title)
-                    settings.tvBoxRepoUrls = settings.tvBoxRepoUrls + cleanUrl
-                    availableJsonPackages.update { packages ->
-                        (packages.filterNot { it.repositoryId == packageItem.repositoryId } + packageItem)
-                            .sortedBy { it.name.lowercase() }
-                    }
-                    emitMessage(appContext.getString(R.string.unified_sources_repository_added))
-                }
-                UnifiedSourceKind.LNREADER -> addLnReaderRepository(cleanUrl)
-                UnifiedSourceKind.CLOUDSTREAM,
-                UnifiedSourceKind.MIHON,
-                UnifiedSourceKind.ANIYOMI,
-                UnifiedSourceKind.IREADER,
-                UnifiedSourceKind.JAR,
-                UnifiedSourceKind.TSUNDOKU -> prepareExternalRepository(kind, cleanUrl)
-                UnifiedSourceKind.NATIVE -> emitMessage(appContext.getString(R.string.unified_sources_native_no_repository))
+                emitMessage(appContext.getString(R.string.unified_sources_repository_added))
             }
+            UnifiedSourceKind.JS -> {
+                importJsonRepository(
+                    kind = kind,
+                    content = fetchRemoteText(cleanUrl),
+                    sourceLocator = cleanUrl,
+                    sourceTitle = title,
+                    enableImportedSources = enableImportedSources,
+                )
+            }
+            UnifiedSourceKind.TVBOX -> {
+                if (settings.tvBoxRepoUrls.containsRepositoryUrl(cleanUrl)) {
+                    emitMessage(appContext.getString(R.string.unified_sources_repository_already_exists))
+                    return
+                }
+                val packageItem = fetchAvailableTvBoxPackage(cleanUrl, title)
+                settings.tvBoxRepoUrls = settings.tvBoxRepoUrls + cleanUrl
+                availableJsonPackages.update { packages ->
+                    (packages.filterNot { it.repositoryId == packageItem.repositoryId } + packageItem)
+                        .sortedBy { it.name.lowercase() }
+                }
+                emitMessage(appContext.getString(R.string.unified_sources_repository_added))
+            }
+            UnifiedSourceKind.LNREADER -> addLnReaderRepository(cleanUrl)
+            UnifiedSourceKind.CLOUDSTREAM,
+            UnifiedSourceKind.MIHON,
+            UnifiedSourceKind.ANIYOMI,
+            UnifiedSourceKind.IREADER,
+            UnifiedSourceKind.JAR,
+            UnifiedSourceKind.TSUNDOKU -> prepareExternalRepository(kind, cleanUrl)
+            UnifiedSourceKind.NATIVE -> emitMessage(appContext.getString(R.string.unified_sources_native_no_repository))
         }
     }
 
@@ -904,45 +913,52 @@ class UnifiedSourcesViewModel @Inject constructor(
         val ready = uiState.value as? UnifiedSourcesUiState.Ready ?: return
         val repository = ready.allRepositories.firstOrNull { it.id == repositoryId } ?: return
         launchLoadingJob(Dispatchers.IO) {
-            when (repository.kind) {
-                UnifiedSourceKind.LEGADO -> {
-                    if (settings.legadoRepoUrls.containsRepositoryUrl(repository.url)) {
-                        settings.legadoRepoUrls = settings.legadoRepoUrls.withoutRepositoryUrl(repository.url)
-                        availableJsonPackages.update { packages ->
-                            packages.filterNot { it.repositoryId == repository.id }
-                        }
-                        emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
-                    } else {
-                        deleteImportedJsonRepositorySources(repository, ready)
+            deleteRepositoryImpl(repository, ready)
+        }
+    }
+
+    private suspend fun deleteRepositoryImpl(
+        repository: UnifiedSourceRepositoryItem,
+        ready: UnifiedSourcesUiState.Ready,
+    ) {
+        when (repository.kind) {
+            UnifiedSourceKind.LEGADO -> {
+                if (settings.legadoRepoUrls.containsRepositoryUrl(repository.url)) {
+                    settings.legadoRepoUrls = settings.legadoRepoUrls.withoutRepositoryUrl(repository.url)
+                    availableJsonPackages.update { packages ->
+                        packages.filterNot { it.repositoryId == repository.id }
                     }
-                }
-                UnifiedSourceKind.TVBOX -> {
-                    if (settings.tvBoxRepoUrls.containsRepositoryUrl(repository.url)) {
-                        settings.tvBoxRepoUrls = settings.tvBoxRepoUrls.withoutRepositoryUrl(repository.url)
-                        availableJsonPackages.update { packages ->
-                            packages.filterNot { it.repositoryId == repository.id }
-                        }
-                        emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
-                    } else {
-                        deleteImportedJsonRepositorySources(repository, ready)
-                    }
-                }
-                UnifiedSourceKind.JS -> {
+                    emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
+                } else {
                     deleteImportedJsonRepositorySources(repository, ready)
                 }
-                UnifiedSourceKind.LNREADER -> {
-                    settings.lnReaderRepoUrls = settings.lnReaderRepoUrls - repository.url
-                    refreshAvailableLnReaderPackages()
-                    emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
-                }
-                UnifiedSourceKind.CLOUDSTREAM,
-                UnifiedSourceKind.MIHON,
-                UnifiedSourceKind.ANIYOMI,
-                UnifiedSourceKind.IREADER,
-                UnifiedSourceKind.JAR,
-                UnifiedSourceKind.TSUNDOKU -> deleteExternalRepository(repository)
-                UnifiedSourceKind.NATIVE -> emitMessage(appContext.getString(R.string.unified_sources_native_no_repository))
             }
+            UnifiedSourceKind.TVBOX -> {
+                if (settings.tvBoxRepoUrls.containsRepositoryUrl(repository.url)) {
+                    settings.tvBoxRepoUrls = settings.tvBoxRepoUrls.withoutRepositoryUrl(repository.url)
+                    availableJsonPackages.update { packages ->
+                        packages.filterNot { it.repositoryId == repository.id }
+                    }
+                    emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
+                } else {
+                    deleteImportedJsonRepositorySources(repository, ready)
+                }
+            }
+            UnifiedSourceKind.JS -> {
+                deleteImportedJsonRepositorySources(repository, ready)
+            }
+            UnifiedSourceKind.LNREADER -> {
+                settings.lnReaderRepoUrls = settings.lnReaderRepoUrls - repository.url
+                refreshAvailableLnReaderPackages()
+                emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
+            }
+            UnifiedSourceKind.CLOUDSTREAM,
+            UnifiedSourceKind.MIHON,
+            UnifiedSourceKind.ANIYOMI,
+            UnifiedSourceKind.IREADER,
+            UnifiedSourceKind.JAR,
+            UnifiedSourceKind.TSUNDOKU -> deleteExternalRepository(repository)
+            UnifiedSourceKind.NATIVE -> emitMessage(appContext.getString(R.string.unified_sources_native_no_repository))
         }
     }
 
@@ -957,8 +973,14 @@ class UnifiedSourcesViewModel @Inject constructor(
         if (oldRepository.kind == newKind && oldRepository.url == trimmedUrl && oldRepository.name == trimmedName) {
             return
         }
-        deleteRepository(oldRepository.id)
-        addRepositoryFromUrl(newKind, trimmedUrl, trimmedName.takeIf { it.isNotBlank() })
+        val ready = uiState.value as? UnifiedSourcesUiState.Ready ?: return
+        // Delete and re-add must run in one sequential job: as two concurrent jobs, the add-side
+        // "already exists" check can still see the url the delete job has not removed yet (when the
+        // edit keeps the same url) and bail out after the delete — dropping the repository entirely.
+        launchLoadingJob(Dispatchers.IO) {
+            deleteRepositoryImpl(oldRepository, ready)
+            addRepositoryFromUrlImpl(newKind, trimmedUrl, trimmedName.takeIf { it.isNotBlank() }, true)
+        }
     }
 
     fun confirmExternalRepository(repo: ExternalExtensionRepo) {

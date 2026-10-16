@@ -25,7 +25,6 @@
     <string name="source_groups_error_package">Could not install package %1$s</string>
     <string name="source_groups_error_source">Could not set source %1$s</string>
     <string name="source_groups_error_jar_priority">Could not apply JAR priority order</string>
-    <string name="source_groups_repo_fingerprint">Repository %1$s has a signing key that is already registered</string>
     <string name="source_groups_package_missing">Package %1$s was not found in its repository</string>
     <string name="source_groups_requires_installer">Package %1$s needs the system installer</string>
     <string name="source_test_all">Test all</string>

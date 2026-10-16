@@ -260,15 +260,16 @@ class SourceGroupRepository @Inject constructor(
 		val type = repo.type.toExternalTypeOrNull()
 			?: throw IllegalArgumentException("Unknown repo type ${repo.type}")
 		if (database.getExternalExtensionRepoDao().get(type, repo.url) != null) return
+		// A repository that is already registered — under the same url or under another url with
+		// the same signing key — means the group's content is present: skip it instead of failing.
 		when (val prepared = repoRepository.prepareAddRepo(type, repo.url)) {
-			is PrepareAddRepoResult.Ready -> {
-				if (repoRepository.confirmAddRepo(prepared.repo) is AddRepoResult.DuplicateFingerprint) {
-					throw IllegalStateException(context.getString(R.string.source_groups_repo_fingerprint, repo.url))
-				}
+			is PrepareAddRepoResult.Ready -> when (val added = repoRepository.confirmAddRepo(prepared.repo)) {
+				is AddRepoResult.FetchFailed -> throw added.error
+				AddRepoResult.InvalidUrl -> throw IllegalArgumentException(repo.url)
+				else -> Unit
 			}
 			is PrepareAddRepoResult.RepoAlreadyExists -> Unit
-			is PrepareAddRepoResult.DuplicateFingerprint ->
-				throw IllegalStateException(context.getString(R.string.source_groups_repo_fingerprint, repo.url))
+			is PrepareAddRepoResult.DuplicateFingerprint -> Unit
 			is PrepareAddRepoResult.FetchFailed -> throw prepared.error
 			PrepareAddRepoResult.InvalidUrl -> throw IllegalArgumentException(repo.url)
 		}

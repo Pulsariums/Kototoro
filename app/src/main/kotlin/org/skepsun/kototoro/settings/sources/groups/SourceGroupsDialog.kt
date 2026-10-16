@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -14,12 +15,16 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -144,6 +149,7 @@ fun SourceGroupsDialog(
 				}
 
 				groups.forEach { group ->
+					var menuExpanded by remember(group.id) { mutableStateOf(false) }
 					Surface(
 						shape = RoundedCornerShape(16.dp),
 						color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -189,14 +195,33 @@ fun SourceGroupsDialog(
 								) {
 									Text(text = stringResource(R.string.source_groups_export), maxLines = 1)
 								}
-								TextButton(
-									onClick = { pendingDeleteGroup = group },
-									enabled = !applyState.running,
-									colors = ButtonDefaults.textButtonColors(
-										contentColor = MaterialTheme.colorScheme.error,
-									),
-								) {
-									Text(text = stringResource(R.string.source_groups_delete), maxLines = 1)
+								Box {
+									IconButton(
+										onClick = { menuExpanded = true },
+										enabled = !applyState.running,
+									) {
+										Icon(
+											imageVector = Icons.Default.MoreVert,
+											contentDescription = stringResource(R.string.more),
+										)
+									}
+									DropdownMenu(
+										expanded = menuExpanded,
+										onDismissRequest = { menuExpanded = false },
+									) {
+										DropdownMenuItem(
+											text = {
+												Text(
+													text = stringResource(R.string.source_groups_delete),
+													color = MaterialTheme.colorScheme.error,
+												)
+											},
+											onClick = {
+												menuExpanded = false
+												pendingDeleteGroup = group
+											},
+										)
+									}
 								}
 							}
 						}

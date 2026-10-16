@@ -188,8 +188,16 @@ class SourceGroupRepository @Inject constructor(
 		val notInstalled = group.packages.filterNot { isPackageInstalled(it) }
 		// Normal APK installs need Android's own confirmation per package, so they are listed, not installed.
 		val (manualPackages, autoPackages) = notInstalled.partition { it.installMode == SOURCE_GROUP_INSTALL_MODE_SYSTEM }
-		// JARs first: they install without the system installer.
-		val missing = autoPackages.sortedBy { if (it.kind.equals("jar", ignoreCase = true)) 0 else 1 }
+		// JARs first: they install without the system installer. MIHON packages next: dependent
+		// readers (e.g. Nyora-style forks sharing the Mihon repo format) only recognize their
+		// ecosystem once the base Mihon packages are in place. Everything else keeps file order.
+		val missing = autoPackages.sortedBy {
+			when {
+				it.kind.equals("jar", ignoreCase = true) -> 0
+				it.kind.equals("mihon", ignoreCase = true) -> 1
+				else -> 2
+			}
+		}
 		val total = group.repos.size + missing.size + group.sourceStates.size + 1
 		val errors = mutableListOf<String>()
 		var step = 0

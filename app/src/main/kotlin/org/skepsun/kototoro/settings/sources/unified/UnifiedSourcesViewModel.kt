@@ -946,6 +946,21 @@ class UnifiedSourcesViewModel @Inject constructor(
         }
     }
 
+    fun editRepository(
+        oldRepository: UnifiedSourceRepositoryItem,
+        newKind: UnifiedSourceKind,
+        newUrl: String,
+        newName: String,
+    ) {
+        val trimmedUrl = newUrl.trim()
+        val trimmedName = newName.trim()
+        if (oldRepository.kind == newKind && oldRepository.url == trimmedUrl && oldRepository.name == trimmedName) {
+            return
+        }
+        deleteRepository(oldRepository.id)
+        addRepositoryFromUrl(newKind, trimmedUrl, trimmedName.takeIf { it.isNotBlank() })
+    }
+
     fun confirmExternalRepository(repo: ExternalExtensionRepo) {
         launchLoadingJob(Dispatchers.IO) {
             when (val result = extensionRepoRepository.confirmAddRepo(repo)) {
@@ -1076,6 +1091,19 @@ class UnifiedSourcesViewModel @Inject constructor(
             // guarding against a re-toggle racing between the snapshot and the update.
             val drop = agreed.filterTo(mutableSetOf()) { id -> baseById[id]?.isEnabled == map[id] }
             if (drop.isEmpty()) map else map - drop
+        }
+    }
+
+    fun setSourcesLock(sourceIds: Set<String>, locked: Boolean?) {
+        if (sourceIds.isEmpty()) return
+        val ready = uiState.value as? UnifiedSourcesUiState.Ready ?: return
+        val sourceItems = ready.allSources.filter { it.id in sourceIds }
+        if (sourceItems.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            for (item in sourceItems) {
+                val targetLock = if (locked == true) item.isEnabled else locked
+                contentSourcesRepository.setSourceLock(item.source, targetLock)
+            }
         }
     }
 

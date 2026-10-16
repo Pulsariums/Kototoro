@@ -97,6 +97,7 @@ private sealed interface UnifiedSourcesDialogState {
 
     data class TrustRepository(val repo: ExternalExtensionRepo) : UnifiedSourcesDialogState
     data class DeleteRepository(val repository: UnifiedSourceRepositoryItem) : UnifiedSourcesDialogState
+    data class EditRepository(val repository: UnifiedSourceRepositoryItem) : UnifiedSourcesDialogState
     data class DeleteSelectedSources(val plan: UnifiedSelectedSourceDeletePlan) : UnifiedSourcesDialogState
     data class SetSelectedSourcesNsfw(
         val sourceIds: Set<String>,
@@ -189,6 +190,7 @@ fun UnifiedSourcesRoute(
     var initialRepositoryHandled by rememberSaveable { mutableStateOf(false) }
     var selectedSourceIdList by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val selectedSourceIds = remember(selectedSourceIdList) { selectedSourceIdList.toSet() }
+    var testSourcesList by remember { mutableStateOf<List<org.skepsun.kototoro.parsers.model.ContentSource>?>(null) }
 
     fun proceedThirdPartyAction(action: UnifiedThirdPartyAction, enableImportedSources: Boolean = true) {
         when (action) {
@@ -298,8 +300,20 @@ fun UnifiedSourcesRoute(
             viewModel.setSourcesEnabled(selectedSourceIds, false)
             selectedSourceIdList = emptyList()
         },
+        onLockSelectedSources = {
+            viewModel.setSourcesLock(selectedSourceIds, true)
+            selectedSourceIdList = emptyList()
+        },
+        onUnlockSelectedSources = {
+            viewModel.setSourcesLock(selectedSourceIds, null)
+            selectedSourceIdList = emptyList()
+        },
         onTestSelectedSources = {
-            viewModel.testSources(selectedSourceIds)
+            val readySources = (state as? UnifiedSourcesUiState.Ready)?.allSources.orEmpty()
+            val selected = readySources.filter { it.id in selectedSourceIds }.map { it.source }
+            if (selected.isNotEmpty()) {
+                testSourcesList = selected
+            }
             selectedSourceIdList = emptyList()
         },
         onToggleSelectedSourcesNsfw = {
@@ -344,6 +358,7 @@ fun UnifiedSourcesRoute(
         },
         onRefreshRepository = { item -> viewModel.refreshRepository(item.id) },
         onDeleteRepository = { item -> activeDialog = UnifiedSourcesDialogState.DeleteRepository(item) },
+        onEditRepository = { item -> activeDialog = UnifiedSourcesDialogState.EditRepository(item) },
         onUpdateAllPackages = viewModel::onUpdateAllPackagesAction,
         onPackagePrimaryAction = viewModel::onPackagePrimaryAction,
         onPackageSystemInstall = viewModel::installPackageWithSystemInstaller,
@@ -525,6 +540,15 @@ fun UnifiedSourcesRoute(
             },
         )
 
+        is UnifiedSourcesDialogState.EditRepository -> UnifiedEditRepositoryDialog(
+            repository = dialog.repository,
+            onDismiss = { activeDialog = null },
+            onConfirm = { newKind, newUrl, newName ->
+                viewModel.editRepository(dialog.repository, newKind, newUrl, newName)
+                activeDialog = null
+            },
+        )
+
         is UnifiedSourcesDialogState.SetFilteredSourcesEnabled -> UnifiedSetFilteredSourcesEnabledDialog(
             enabled = dialog.enabled,
             sourceCount = dialog.sourceIds.size,
@@ -607,5 +631,12 @@ fun UnifiedSourcesRoute(
         )
 
         null -> Unit
+    }
+
+    testSourcesList?.let { sourcesToTest ->
+        org.skepsun.kototoro.settings.sources.test.SourceTestDialog(
+            sources = sourcesToTest,
+            onDismiss = { testSourcesList = null },
+        )
     }
 }

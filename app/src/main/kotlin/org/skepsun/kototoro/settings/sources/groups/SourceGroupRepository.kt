@@ -93,25 +93,51 @@ class SourceGroupRepository @Inject constructor(
 					SourceGroupRepo(type = it.type.name, url = it.baseUrl, name = it.shortName ?: it.name)
 				},
 				packages = collectInstalledPackages(),
-				sourceStates = database.getSourcesDao().findAll().map {
-					SourceGroupSourceState(
-						source = it.source,
-						enabled = it.isEnabled,
-						pinned = it.isPinned,
-						sortKey = it.sortKey,
-						locked = contentSources.lockState(it.source),
-					)
-				} + database.getJsonSourceDao().findAll().map {
+				sourceStates = database.getSourcesDao().findAll().mapNotNull {
+					val lock = contentSources.lockState(it.source)
+					if (it.isEnabled || lock != null || it.isPinned) {
+						SourceGroupSourceState(
+							source = it.source,
+							enabled = it.isEnabled,
+							pinned = it.isPinned,
+							sortKey = it.sortKey,
+							locked = lock,
+						)
+					} else null
+				} + database.getJsonSourceDao().findAll().mapNotNull {
 					// JSON sources live in their own table; their lock is keyed by the entity id.
-					SourceGroupSourceState(
-						source = it.id,
-						enabled = it.enabled,
-						pinned = it.isPinned,
-						sortKey = 0,
-						locked = contentSources.lockState(it.id),
-					)
+					val lock = contentSources.lockState(it.id)
+					if (it.enabled || lock != null || it.isPinned) {
+						SourceGroupSourceState(
+							source = it.id,
+							enabled = it.enabled,
+							pinned = it.isPinned,
+							sortKey = 0,
+							locked = lock,
+						)
+					} else null
 				},
 				jarPriority = settings.jarPriorityOrder.split(',').map { it.trim() }.filter { it.isNotEmpty() },
+			)
+		}
+		withContext(Dispatchers.IO) { writeGroup(group) }
+		return group
+	}
+
+	suspend fun createCleanGroup(name: String): SourceGroup {
+		val trimmed = name.trim()
+		require(trimmed.isNotEmpty()) { "Group name must not be blank" }
+		val group = withContext(Dispatchers.IO) {
+			SourceGroup(
+				id = UUID.randomUUID().toString(),
+				name = trimmed,
+				createdAt = System.currentTimeMillis(),
+				repos = database.getExternalExtensionRepoDao().getAll().map {
+					SourceGroupRepo(type = it.type.name, url = it.baseUrl, name = it.shortName ?: it.name)
+				},
+				packages = emptyList(),
+				sourceStates = emptyList(),
+				jarPriority = emptyList(),
 			)
 		}
 		withContext(Dispatchers.IO) { writeGroup(group) }
@@ -193,9 +219,39 @@ class SourceGroupRepository @Inject constructor(
 				tick()
 			}
 
+			// Batch optimize: disable unselected sources and enable target sources at once
+			val groupSourceMap = group.sourceStates.associateBy { it.source }
+			val currentlyEnabled = contentSources.getEnabledSources()
+			val toDisable = currentlyEnabled.filter { source ->
+				val targetState = groupSourceMap[source.name]
+				if (targetState == null) {
+					contentSources.lockState(source.name) == null
+				} else {
+					!targetState.enabled && contentSources.lockState(source.name) == null
+				}
+			}
+			if (toDisable.isNotEmpty()) {
+				runGuarded(errors, "Disable unselected sources") {
+					contentSources.setSourcesEnabled(toDisable, false)
+				}
+			}
+
+			group.sourceStates.forEach { state ->
+				runGuarded(errors, context.getString(R.string.source_groups_error_source, state.source)) {
+					ensureSourceRow(state)
+				}
+			}
+
+			val toEnable = group.sourceStates.filter { it.enabled }.map { contentSources.resolveSource(it.source) }
+			if (toEnable.isNotEmpty()) {
+				runGuarded(errors, "Enable group sources") {
+					contentSources.setSourcesEnabled(toEnable, true)
+				}
+			}
+
 			for (state in group.sourceStates) {
 				runGuarded(errors, context.getString(R.string.source_groups_error_source, state.source)) {
-					applySourceState(state)
+					applySourceDetails(state)
 				}
 				tick()
 			}
@@ -248,35 +304,36 @@ class SourceGroupRepository @Inject constructor(
 		}
 	}
 
-	private suspend fun applySourceState(state: SourceGroupSourceState) {
-		val isJson = state.source.startsWith("JSON_")
+	/** A restored source may have no row yet (new device, extension just installed); create it disabled. */
+	private suspend fun ensureSourceRow(state: SourceGroupSourceState) {
+		if (state.source.startsWith("JSON_")) return
 		val dao = database.getSourcesDao()
-		if (!isJson && dao.find(state.source) == null) {
-			dao.insertIfAbsent(
-				listOf(
-					MangaSourceEntity(
-						source = state.source,
-						isEnabled = false,
-						sortKey = state.sortKey,
-						addedIn = BuildConfig.VERSION_CODE,
-						lastUsedAt = 0L,
-						isPinned = false,
-						cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
-					),
+		if (dao.find(state.source) != null) return
+		dao.insertIfAbsent(
+			listOf(
+				MangaSourceEntity(
+					source = state.source,
+					isEnabled = false,
+					sortKey = state.sortKey,
+					addedIn = BuildConfig.VERSION_CODE,
+					lastUsedAt = 0L,
+					isPinned = false,
+					cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
 				),
-			)
-		}
+			),
+		)
+	}
+
+	private suspend fun applySourceDetails(state: SourceGroupSourceState) {
 		val source = contentSources.resolveSource(state.source)
-		contentSources.setSourcesEnabled(listOf(source), state.enabled)
 		contentSources.setIsPinned(listOf(source), state.pinned)
 		if (state.locked != null) {
 			contentSources.setSourceLock(source, state.locked)
 		}
-		if (!isJson) {
+		if (!state.source.startsWith("JSON_")) {
 			contentSources.setSourceSortKey(state.source, state.sortKey)
 		}
 	}
-
 	private suspend fun runGuarded(errors: MutableList<String>, label: String, block: suspend () -> Unit) {
 		try {
 			block()

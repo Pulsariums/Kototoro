@@ -801,6 +801,7 @@ internal fun UnifiedRepositoryList(
     onAddRepository: (UnifiedSourceRepositoryItem?) -> Unit,
     onRefreshRepository: (UnifiedSourceRepositoryItem) -> Unit,
     onDeleteRepository: (UnifiedSourceRepositoryItem) -> Unit,
+    onEditRepository: (UnifiedSourceRepositoryItem) -> Unit = {},
 ) {
     val expressive = LocalMaterialExpressiveComponentsEnabled.current
     val style = rememberUnifiedSourcesVisualStyle()
@@ -874,6 +875,7 @@ internal fun UnifiedRepositoryList(
                         expressive = expressive,
                         onRefresh = { onRefreshRepository(item) },
                         onDelete = { onDeleteRepository(item) },
+                        onEdit = { onEditRepository(item) },
                         onAdd = null,
                     )
                 }
@@ -925,6 +927,7 @@ private fun UnifiedRepositoryCard(
     expressive: Boolean,
     onRefresh: (() -> Unit)?,
     onDelete: (() -> Unit)?,
+    onEdit: (() -> Unit)? = null,
     onAdd: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -970,6 +973,12 @@ private fun UnifiedRepositoryCard(
                     fontWeight = FontWeight.SemiBold,
                 )
                 if (item.isConfigured) {
+                    if (onEdit != null) {
+                        CompactActionChip(
+                            onClick = onEdit,
+                            label = { Text(stringResource(R.string.edit)) },
+                        )
+                    }
                     if (onRefresh != null) {
                         CompactActionChip(
                             onClick = onRefresh,
@@ -1450,22 +1459,48 @@ private fun UnifiedPackageRow(
                     }
                 }
             }
+                val isInstalling = item.state == UnifiedSourcePackageState.INSTALLING
                 val installProgress = item.installProgressPercent
                 AnimatedVisibility(
-                    visible = installProgress != null,
+                    visible = isInstalling || installProgress != null,
                     enter = expandVertically(),
                     exit = shrinkVertically(),
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = stringResource(R.string.package_download_progress, installProgress ?: 0),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        LinearProgressIndicator(
-                            progress = { (installProgress ?: 0) / 100f },
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                        )
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = if (installProgress != null) {
+                                    stringResource(R.string.package_download_progress, installProgress)
+                                } else {
+                                    stringResource(R.string.loading_)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            if (installProgress != null) {
+                                Text(
+                                    text = "%$installProgress",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                        if (installProgress != null) {
+                            LinearProgressIndicator(
+                                progress = { installProgress / 100f },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            LinearProgressIndicator(
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
             Row(
@@ -1524,10 +1559,15 @@ private fun UnifiedPackageRow(
                         )
                     }
                         UnifiedSourcePackageState.INSTALLING -> {
+                            val chipText = if (item.installProgressPercent != null) {
+                                "%${item.installProgressPercent}"
+                            } else {
+                                item.primaryActionLabel().ifBlank { stringResource(R.string.loading_) }
+                            }
                             CompactActionChip(
                                 onClick = onPrimaryAction,
                                 enabled = false,
-                                label = { Text(item.primaryActionLabel().ifBlank { stringResource(R.string.loading_) }) },
+                                label = { Text(chipText) },
                             )
                         }
                     UnifiedSourcePackageState.INSTALLED -> Unit

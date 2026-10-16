@@ -19,7 +19,7 @@
     <string name="source_groups_invalid_file">Invalid group file</string>
     <string name="source_groups_file_too_large">Group file is too large (max 2 MB)</string>
     <string name="source_groups_error_generic">Error: %1$s</string>
-    <string name="source_groups_meta">%1$d repos · %2$d packages · %3$d sources</string>
+    <string name="source_groups_meta">%1$d repos · %2$d packages · %3$d sources (%4$d enabled)</string>
     <string name="source_groups_progress">Step %1$d / %2$d</string>
     <string name="source_groups_error_repo">Could not add repository %1$s</string>
     <string name="source_groups_error_package">Could not install package %1$s</string>
@@ -78,6 +78,11 @@
     <string name="source_test_export">Export results</string>
     <string name="source_lock_locked">Locked, tap to unlock</string>
     <string name="source_lock_unlocked">Lock current state</string>
+    <string name="source_lock_action">Lock</string>
+    <string name="source_unlock_action">Unlock</string>
+    <string name="edit_repository">Edit repository</string>
+    <string name="source_groups_create_clean">Create clean group</string>
+    <string name="source_groups_delete_confirm">Delete group \"%1$s\"?</string>
     <string name="extension_file_delete_failed">Could not delete %1$s.</string>
     <string name="source_groups_export_lost">The export target was lost. Please try exporting again.</string>
     <string name="extension_repo_update_failed">Update failed: %1$s</string>

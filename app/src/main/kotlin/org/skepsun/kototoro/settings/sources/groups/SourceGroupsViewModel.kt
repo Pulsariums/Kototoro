@@ -47,6 +47,15 @@ class SourceGroupsViewModel @Inject constructor(
 		}
 	}
 
+	fun createCleanGroup(name: String) {
+		viewModelScope.launch {
+			runAction(R.string.source_groups_saved) {
+				repository.createCleanGroup(name)
+				_groups.value = repository.list()
+			}
+		}
+	}
+
 	fun delete(id: String) {
 		viewModelScope.launch {
 			runAction(null) {

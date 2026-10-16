@@ -55,6 +55,8 @@ fun SourceGroupsDialog(
 	val applyState by viewModel.progress.collectAsStateWithLifecycle()
 	val message by viewModel.message.collectAsStateWithLifecycle()
 	var showNameDialog by remember { mutableStateOf(false) }
+	var showCleanDialog by remember { mutableStateOf(false) }
+	var pendingDeleteGroup by remember { mutableStateOf<SourceGroup?>(null) }
 	var pendingExportId by rememberSaveable { mutableStateOf<String?>(null) }
 	val context = LocalContext.current
 	LaunchedEffect(applyState.finished) {
@@ -107,6 +109,17 @@ fun SourceGroupsDialog(
 					)
 				}
 				OutlinedButton(
+					onClick = { showCleanDialog = true },
+					enabled = !applyState.running,
+					modifier = Modifier.fillMaxWidth(),
+				) {
+					Text(
+						text = stringResource(R.string.source_groups_create_clean),
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+					)
+				}
+				OutlinedButton(
 					onClick = { importLauncher.launch(IMPORT_MIME_TYPES) },
 					enabled = !applyState.running,
 					modifier = Modifier.fillMaxWidth(),
@@ -152,6 +165,7 @@ fun SourceGroupsDialog(
 									group.repos.size,
 									group.packages.size,
 									group.sourceStates.size,
+									group.sourceStates.count { it.enabled },
 								),
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -176,7 +190,7 @@ fun SourceGroupsDialog(
 									Text(text = stringResource(R.string.source_groups_export), maxLines = 1)
 								}
 								TextButton(
-									onClick = { viewModel.delete(group.id) },
+									onClick = { pendingDeleteGroup = group },
 									enabled = !applyState.running,
 									colors = ButtonDefaults.textButtonColors(
 										contentColor = MaterialTheme.colorScheme.error,
@@ -228,6 +242,66 @@ fun SourceGroupsDialog(
 					onValueChange = { name = it },
 					singleLine = true,
 					label = { Text(stringResource(R.string.source_groups_name_hint)) },
+				)
+			},
+		)
+	}
+
+	if (showCleanDialog) {
+		val defaultName = stringResource(R.string.source_groups_default_name, groups.size + 1)
+		var name by remember { mutableStateOf(defaultName) }
+		SettingsAlertDialog(
+			title = stringResource(R.string.source_groups_create_clean),
+			onDismissRequest = { showCleanDialog = false },
+			confirmButton = {
+				SettingsDialogActionButton(
+					text = stringResource(R.string.save),
+					onClick = {
+						showCleanDialog = false
+						viewModel.createCleanGroup(name.ifBlank { defaultName })
+					},
+				)
+			},
+			dismissButton = {
+				SettingsDialogActionButton(
+					text = stringResource(R.string.cancel),
+					onClick = { showCleanDialog = false },
+				)
+			},
+			text = {
+				OutlinedTextField(
+					value = name,
+					onValueChange = { name = it },
+					singleLine = true,
+					label = { Text(stringResource(R.string.source_groups_name_hint)) },
+				)
+			},
+		)
+	}
+
+	pendingDeleteGroup?.let { targetGroup ->
+		SettingsAlertDialog(
+			title = stringResource(R.string.delete),
+			onDismissRequest = { pendingDeleteGroup = null },
+			confirmButton = {
+				SettingsDialogActionButton(
+					text = stringResource(R.string.delete),
+					onClick = {
+						viewModel.delete(targetGroup.id)
+						pendingDeleteGroup = null
+					},
+				)
+			},
+			dismissButton = {
+				SettingsDialogActionButton(
+					text = stringResource(R.string.cancel),
+					onClick = { pendingDeleteGroup = null },
+				)
+			},
+			text = {
+				Text(
+					text = stringResource(R.string.source_groups_delete_confirm, targetGroup.name),
+					style = MaterialTheme.typography.bodyMedium,
 				)
 			},
 		)

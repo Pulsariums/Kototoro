@@ -219,34 +219,20 @@ class SourceGroupRepository @Inject constructor(
 				tick()
 			}
 
-			// Batch optimize: disable unselected sources and enable target sources at once
-			val groupSourceMap = group.sourceStates.associateBy { it.source }
-			val currentlyEnabled = contentSources.getEnabledSources()
-			val toDisable = currentlyEnabled.filter { source ->
-				val targetState = groupSourceMap[source.name]
-				if (targetState == null) {
-					contentSources.lockState(source.name) == null
-				} else {
-					!targetState.enabled && contentSources.lockState(source.name) == null
-				}
-			}
-			if (toDisable.isNotEmpty()) {
-				runGuarded(errors, "Disable unselected sources") {
-					contentSources.setSourcesEnabled(toDisable, false)
-				}
-			}
-
 			group.sourceStates.forEach { state ->
 				runGuarded(errors, context.getString(R.string.source_groups_error_source, state.source)) {
 					ensureSourceRow(state)
 				}
 			}
 
-			val toEnable = group.sourceStates.filter { it.enabled }.map { contentSources.resolveSource(it.source) }
-			if (toEnable.isNotEmpty()) {
-				runGuarded(errors, "Enable group sources") {
-					contentSources.setSourcesEnabled(toEnable, true)
-				}
+			// Exclusive batch over the unfiltered db view: getEnabledSources() hides NSFW-disabled,
+			// broken and tvbox-invisible sources, so those would never be switched off. The exclusive
+			// helper walks every row, keeps locked sources at their lock value and clears the
+			// all-sources-enabled flag it just made irrelevant.
+			val groupEnabled = group.sourceStates.filter { it.enabled }
+				.mapTo(mutableSetOf()) { contentSources.resolveSource(it.source) }
+			runGuarded(errors, context.getString(R.string.source_groups_error_apply_state)) {
+				contentSources.setSourcesEnabledExclusive(groupEnabled)
 			}
 
 			for (state in group.sourceStates) {

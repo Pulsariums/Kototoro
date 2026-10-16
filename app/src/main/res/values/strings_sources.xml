@@ -82,6 +82,7 @@
     <string name="source_unlock_action">Unlock</string>
     <string name="edit_repository">Edit repository</string>
     <string name="source_groups_create_clean">Create clean group</string>
+    <string name="source_groups_error_apply_state">Could not apply the group source states</string>
     <string name="source_groups_delete_confirm">Delete group \"%1$s\"?</string>
     <string name="extension_file_delete_failed">Could not delete %1$s.</string>
     <string name="source_groups_export_lost">The export target was lost. Please try exporting again.</string>

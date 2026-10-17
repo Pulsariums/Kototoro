@@ -1453,6 +1453,8 @@ class ContentSourcesRepository @Inject constructor(
         sortOrder: SourcesSortOrder?,
     ): MutableList<ContentSourceInfo> {
         val isAllEnabled = settings.isAllSourcesEnabled
+        // The getter rebuilds the full set from three live flows; resolve it once per pass, not per row.
+        val registrySources = allContentSources
         val result = ArrayList<ContentSourceInfo>(size)
         for (entity in this) {
             val source = entity.source.toContentSourceOrNull() ?: continue
@@ -1462,7 +1464,7 @@ class ContentSourcesRepository @Inject constructor(
                 continue
             }
             // Allow native sources, Mihon sources, and JSON sources
-            val isKnownSource = source in allContentSources ||
+            val isKnownSource = source in registrySources ||
                                 source is org.skepsun.kototoro.mihon.model.MihonMangaSource ||
                                 source is org.skepsun.kototoro.aniyomi.model.AniyomiAnimeSource ||
                                 source is org.skepsun.kototoro.ireader.model.IReaderMangaSource ||
@@ -1550,13 +1552,12 @@ class ContentSourcesRepository @Inject constructor(
 
         // Try JSON sources
         if (startsWith("JSON_")) {
-            // This is a bit expensive but necessary for pinning/top sources to work correctly
-            val jsonSources = kotlinx.coroutines.runBlocking {
-                jsonSourceManager.observeAllJsonSources().first().map {
-                    org.skepsun.kototoro.core.jsonsource.JsonContentSource(it)
-                }
+            // The name is the entity id; hit the manager's per-id cache instead of re-running a
+            // full-table observe per resolved source, which froze every listing pass.
+            val entity = kotlinx.coroutines.runBlocking { jsonSourceManager.getById(this) }
+            if (entity != null) {
+                return org.skepsun.kototoro.core.jsonsource.JsonContentSource(entity)
             }
-            jsonSources.find { it.name == this }?.let { return it }
         }
 
         if (!allowFallback) return null

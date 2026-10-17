@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -268,9 +269,7 @@ class UnifiedSourcesViewModel @Inject constructor(
                 viewModelScope.launch(Dispatchers.IO) {
                     runCatching {
                         withTimeoutOrNull(REFRESH_PACKAGES_TIMEOUT_MS) {
-                            refreshAvailableExternalPackages()
-                            refreshAvailableLnReaderPackages()
-                            refreshAvailableJsonPackages()
+                            refreshAllCatalogPackages(externalExtensionTypes())
                             UnifiedCatalogSeedCache.store(
                                 externalExtensions = availableExternalExtensions.value,
                                 lnReaderPlugins = availableLnReaderPlugins.value,
@@ -536,9 +535,7 @@ class UnifiedSourcesViewModel @Inject constructor(
                     if (refreshRepositories) {
                         types.forEach { type -> extensionRepoRepository.refresh(type) }
                     }
-                    refreshAvailableExternalPackages(types)
-                    refreshAvailableLnReaderPackages()
-                    refreshAvailableJsonPackages()
+                    refreshAllCatalogPackages(types)
                     if (showLoading) {
                         emitRefreshFailures(types)
                     }
@@ -1702,54 +1699,77 @@ class UnifiedSourcesViewModel @Inject constructor(
         _events.emit(UnifiedSourcesEvent.Message(message))
     }
 
-    private suspend fun refreshAvailableExternalPackages(types: List<ExternalExtensionType> = externalExtensionTypes()) {
-        availableExternalExtensions.value = types
-            .flatMap { type -> extensionRepoRepository.getCatalogExtensions(type) }
-            .let { refreshed ->
-                val refreshedTypes = types.toSet()
-                availableExternalExtensions.value.filterNot { it.type in refreshedTypes } + refreshed
-            }
+    /**
+     * The package groups are independent ecosystems; awaiting them one after another made a cold
+     * screen open pay the summed latency of every index — including dead repositories.
+     */
+    private suspend fun refreshAllCatalogPackages(types: List<ExternalExtensionType>) = coroutineScope {
+        listOf(
+            async { refreshAvailableExternalPackages(types) },
+            async { refreshAvailableLnReaderPackages() },
+            async { refreshAvailableJsonPackages() },
+        ).awaitAll()
     }
 
-    private suspend fun refreshAvailableLnReaderPackages() {
-        val plugins = settings.lnReaderRepoUrls.flatMap { repoUrl ->
-            lnReaderRepository.fetchPluginIndex(repoUrl)
-                .getOrNull()
-                .orEmpty()
-                .map { plugin ->
-                    LnReaderAvailablePlugin(
-                        plugin = plugin,
-                        repoUrl = repoUrl,
-                        repoName = repositoryTitleForAction(repoUrl, fallback = "LNReader"),
-                    )
+    private suspend fun refreshAvailableExternalPackages(types: List<ExternalExtensionType> = externalExtensionTypes()) = coroutineScope {
+        // Fetch every ecosystem's catalog concurrently: a slow or dead repository must not stall
+        // the other types' indexes behind it on a cold screen open.
+        val refreshed = types
+            .map { type -> async { extensionRepoRepository.getCatalogExtensions(type) } }
+            .awaitAll()
+            .flatten()
+        val refreshedTypes = types.toSet()
+        availableExternalExtensions.value = availableExternalExtensions.value.filterNot { it.type in refreshedTypes } + refreshed
+    }
+
+    private suspend fun refreshAvailableLnReaderPackages() = coroutineScope {
+        val plugins = settings.lnReaderRepoUrls
+            .map { repoUrl ->
+                async {
+                    lnReaderRepository.fetchPluginIndex(repoUrl)
+                        .getOrNull()
+                        .orEmpty()
+                        .map { plugin ->
+                            LnReaderAvailablePlugin(
+                                plugin = plugin,
+                                repoUrl = repoUrl,
+                                repoName = repositoryTitleForAction(repoUrl, fallback = "LNReader"),
+                            )
+                        }
                 }
-        }
+            }
+            .awaitAll()
+            .flatten()
         availableLnReaderPlugins.value = plugins.withPreferredLnReaderVersions()
         fillMissingLnReaderIcons(availableLnReaderPlugins.value.map { it.plugin })
     }
 
-    private suspend fun refreshAvailableJsonPackages() {
-        val legadoPackages = settings.legadoRepoUrls.mapNotNull { repoUrl ->
-            try {
-                fetchAvailableLegadoPackage(repoUrl)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to load Legado repository $repoUrl", e)
-                null
+    private suspend fun refreshAvailableJsonPackages() = coroutineScope {
+        val fetches = settings.legadoRepoUrls.map { repoUrl ->
+            async {
+                try {
+                    fetchAvailableLegadoPackage(repoUrl)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to load Legado repository $repoUrl", e)
+                    null
+                }
+            }
+        } + settings.tvBoxRepoUrls.map { repoUrl ->
+            async {
+                try {
+                    fetchAvailableTvBoxPackage(repoUrl)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to load TVBox repository $repoUrl", e)
+                    null
+                }
             }
         }
-        val tvBoxPackages = settings.tvBoxRepoUrls.mapNotNull { repoUrl ->
-            try {
-                fetchAvailableTvBoxPackage(repoUrl)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to load TVBox repository $repoUrl", e)
-                null
-            }
-        }
-        availableJsonPackages.value = (legadoPackages + tvBoxPackages).sortedBy { it.name.lowercase() }
+        val packages = fetches.awaitAll().filterNotNull()
+        availableJsonPackages.value = packages.sortedBy { it.name.lowercase() }
     }
 
     private suspend fun fetchAvailableLegadoPackage(

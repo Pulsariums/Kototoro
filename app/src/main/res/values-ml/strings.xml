@@ -3228,4 +3228,25 @@
     <string name="reader_translation_task_stat_ocr_cache">OCR കാഷെ: %1$s</string>
     <string name="reader_translation_task_stat_render_cache">റെണ്ടർ കാഷെ: %1$s</string>
     <string name="reader_translation_task_stat_hit">ഹിറ്റ്</string>
+    <string name="restoring_backup">ബാക്കപ്പ് ചെയ്യുന്നു</string>
+    <string name="sync_now">സിങ്ക് ചെയ്യുക</string>
+    <string name="nsfw_filter_title">NSFW ഉള്ളടക്കം</string>
+    <string name="unified_sources_mark_nsfw">NSFW നൽകുക</string>
+    <string name="unified_sources_set_nsfw">NSFW സജ്ജം…</string>
+    <string name="unified_sources_mark_as_sfw">SFW ആയി അടയാളപ്പെടുത്തുക</string>
+    <string name="extension_install_choice_title">%1$s ഇൻസ്റ്റാൾ</string>
+    <string name="welcome_repo_fetch_failed">ഫെച്ച് പരാജയപ്പെട്ടു</string>
+    <string name="mal_category_anime_upcoming">വരുന്നവ</string>
+    <string name="installing_plugin">%s ഇൻസ്റ്റാൾ…</string>
+    <string name="sync_syncing">സമന്വയിപ്പിക്കുന്നു</string>
+    <string name="or">അല്ലെങ്കിൽ</string>
+    <string name="unified_sources_expand_all">എല്ലാം വികസിപ്പിക്കുക</string>
+    <string name="unified_sources_mark_as_nsfw">NSFW ആയി അടയാളപ്പെടുത്തുക</string>
+    <string name="installing_extension">ഇൻസ്റ്റാൾ ചെയ്യുന്നു...</string>
+    <string name="package_filter_available">ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല</string>
+    <string name="select_all">എല്ലാം തിരഞ്ഞെടുക്കുക</string>
+    <string name="welcome_install_state_installing">ഇൻസ്റ്റാൾ ചെയ്യുന്നു</string>
+    <string name="group_by">ഗ്രൂപ്പ് ചെയ്യുക</string>
+    <string name="novel_text_direction_ltr">ഇടത്തുനിന്ന് വലത്തേക്ക്</string>
+    <string name="novel_text_direction_rtl">വലത്തുനിന്ന് ഇടത്തേക്ക്</string>
 </resources>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="source_groups_title">Erweiterungsgruppen</string>
+    <string name="source_groups_import">Importieren</string>
+    <string name="source_groups_empty">Keine Gruppen</string>
+    <string name="source_groups_name_title">Gruppenname</string>
+    <string name="source_groups_name_hint">Gruppenname</string>
+    <string name="source_groups_default_name">Gruppe %1$d</string>
+    <string name="source_groups_apply">Anwenden</string>
+    <string name="source_groups_confirm_title">\"%1$s\" anwenden?</string>
+    <string name="source_groups_confirm_intro">Diese Gruppe fügt Folgendes zu deinem Gerät hinzu.</string>
+    <string name="source_groups_confirm_repos">Hinzuzufügende Repos:</string>
+    <string name="source_groups_export">Exportieren</string>
+    <string name="source_groups_delete">Löschen</string>
+    <string name="source_groups_imported">Gruppe importiert</string>
+    <string name="source_groups_exported">Gruppe exportiert</string>
+    <string name="source_groups_manual_install">Installiere diese %1$d normalen APK-Pakete manuell über den Reiter Pakete:</string>
+    <string name="source_groups_invalid_file">Ungültige Gruppendatei</string>
+    <string name="source_groups_file_too_large">Gruppendatei zu groß (max. 2 MB)</string>
+    <string name="source_groups_error_generic">Fehler: %1$s</string>
+    <string name="source_groups_meta">%1$d Repos · %2$d Pakete · %3$d Quellen (%4$d aktiv)</string>
+    <string name="source_groups_progress">Schritt %1$d / %2$d</string>
+    <string name="source_groups_domain_skipped">Domain nicht angewendet für %1$d Quellen, die nicht auf diesem Gerät installiert sind</string>
+    <string name="source_groups_rolled_back">Zum Zustand vor dem Anwenden zurückgekehrt. Hinzugefügte Repos und installierte Pakete wurden behalten.</string>
+    <string name="source_groups_package_missing">Paket %1$s wurde in seinem Repo nicht gefunden</string>
+    <string name="source_groups_requires_installer">Paket %1$s benötigt den Systeminstaller</string>
+    <string name="source_test_title">Quellen testen</string>
+</resources>

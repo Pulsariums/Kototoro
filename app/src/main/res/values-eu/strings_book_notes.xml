@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="book_notes_filter_highlights">Nabarmenduak (%1$d)</string>
+    <string name="book_notes_filter_bookmarks">Laster-markak (%1$d)</string>
+    <string name="book_notes_reading_progress">Irakurtzen · %1$d%%</string>
+    <string name="book_notes_chapter_fallback">%1$d. kapitulua</string>
+    <string name="book_notes_count_highlights">%1$d nabarmentze</string>
+    <string name="book_notes_count_thoughts">%1$d pentsamendu</string>
+    <string name="book_notes_count_bookmarks">%1$d laster-marka</string>
+    <string name="book_notes_total_count">%1$d ohar</string>
+    <string name="book_notes_book_search_hint">Bilatu oharrak liburu honetan…</string>
+    <string name="book_notes_no_highlight_excerpt">Ez dago testu nabarmendurik zati honetarako</string>
+    <string name="book_notes_selected_all">Ohar guztiak (%1$d)</string>
+    <string name="book_notes_selected_highlights">Nabarmentzeak soilik (%1$d)</string>
+    <string name="book_notes_search_notes">Bilatu oharrak</string>
+    <string name="book_notes_overview_summary">%1$d ohar · %2$d liburutan</string>
+    <string name="book_notes_overview_count_suffix">oharra</string>
+    <string name="book_notes_overview_book_title">%1$s</string>
+    <string name="book_notes_empty">Oharrik edo laster-markarik ez</string>
+    <string name="book_notes_quote_prefix">Aipamena: %1$s</string>
+    <string name="book_notes_copied">Arbelean kopiatuta</string>
+    <string name="book_notes_export_filename">%1$s irakurketa-oharrak.md</string>
+    <string name="book_notes_export_title">Esportatu oharrak hemendik: \"%1$s\"</string>
+    <string name="book_notes_export_summary">%1$d ohar · Markdown esportazio estandarra</string>
+    <string name="book_notes_copy_markdown">Kopiatu Markdown edukia</string>
+    <string name="book_notes_copy_markdown_summary">Kopiatu sistemako arbelera beste nonbait itsasteko</string>
+    <string name="book_notes_make_excerpt">Sortu zatia</string>
+    <string name="book_notes_copy_content">Kopiatu edukia</string>
+    <string name="book_notes_share_title">Partekatu oharrak hemendik: \"%1$s\"</string>
+    <string name="book_notes_markdown_title"># %1$s — Irakurketa-oharrak</string>
+    <string name="book_notes_markdown_bookmark">🔖 **Laster-marka**: %1$d. or. %2$s</string>
+    <string name="book_notes_markdown_progress"> (aurrerapena %1$d%%)</string>
+</resources>

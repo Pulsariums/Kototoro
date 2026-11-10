@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_settings_enabled_summary">Mga setting ng reader, player, at hitsura. Hindi nako-sync ang mga password, token, at path.</string>
+    <string name="sync_remote_delete_incomplete">Hindi mabura ang %1$d remote file. Nanatili ang lokal na sync; subukang muli.</string>
+    <string name="sync_enable_required">I-on muna ang Google Drive sync.</string>
+    <string name="google_drive_authorization_required">Hindi kumpleto o nag-expire ang awtorisasyon. Ikonekta muli.</string>
+    <string name="google_drive_authorization_canceled">Kinansela o nag-timeout ang awtorisasyon.</string>
+    <string name="google_drive_browser_failed">Hindi mabuksan ang browser ng sistema para sa awtorisasyon ng Google.</string>
+    <string name="google_drive_credential_store_failed">Hindi ma-access ang taguan ng kredensyal ng sistema. Suriin kung available at naka-unlock ito, pagkatapos ay subukan ulit.</string>
+    <string name="google_drive_protocol_failed">Sira o gumagamit ng hindi suportadong format ang cloud snapshot. Walang nai-upload.</string>
+    <string name="google_drive_browser_rejected">Tinanggihan ang callback ng awtorisasyong ito. Bumalik sa Kototoro at subukang kumonekta ulit.</string>
+    <string name="google_drive_stage_download">Dina-download</string>
+    <string name="google_drive_stage_merge">Pinagsasama</string>
+    <string name="google_drive_stage_upload">Ina-upload</string>
+    <string name="google_drive_authorization_pending">Naghihintay ng awtorisasyon ng Google sa iyong browser…</string>
+    <string name="google_drive_client_configuration_failed">Tinanggihan ng Google ang configuration ng OAuth client. Suriin ang uri ng desktop client, Google Cloud project, at mga setting ng pahintulot.</string>
+    <string name="google_drive_client_secret_required">Wala sa build na ito ang Google desktop OAuth client secret. I-configure ito at i-rebuild; hindi ito maaayos sa muling pag-sign in.</string>
+</resources>

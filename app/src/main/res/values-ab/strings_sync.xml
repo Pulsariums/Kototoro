@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_settings_enabled_title">Асинхронизациа</string>
+    <string name="sync_settings_enabled_summary">Аҽырҩшьаԥҟарақәа. Апарольқәа рыҽцыҵаразы аҵара амам.</string>
+    <string name="sync_remote_delete_incomplete">Ианыхәтәом %1$d афаил(қәа). Аҽаҽра ҟаҵатәуп.</string>
+    <string name="sync_enable_required">Google Drive асинхронизациа аҿыц.</string>
+    <string name="google_drive_authorization_required">Google азин аҟнытә аҵара амам. Иҿыцтәуп апрофиль.</string>
+    <string name="google_drive_authorization_canceled">Google азин аҟнытә аҵара аҟәыҵаан.</string>
+    <string name="google_drive_browser_failed">Google авторизациазы азыр аиҳауаҵәҟьа browser аҿы аҾыхра зылшом.</string>
+    <string name="google_drive_credential_store_failed">Системтә учеттә зҵарақәа рҭыԥ аҿы аҭҵаара аҟынӡа аҟазара зылшом. Акаԥара ахьӡуеит ҳәа азгәаҭаны еиҭахәы.</string>
+    <string name="google_drive_settings_failed">Локалтә синхронизациа аҵыҵқәа рҵәахра зылшом. Адыррақәа рҭыԥ аҭагалааны еиҭахәы.</string>
+    <string name="google_drive_protocol_failed">Аблудтә сныпшот аԥырхахеит ма формати ақәшәом. Даҽакалак аҵәахра зылшом.</string>
+    <string name="google_drive_conflict_failed">Даҽа уҵәахрақәак аблудтә дыррақәа аҵәахуеит. Асинхронизациа еиҭахәы.</string>
+    <string name="google_drive_network_failed">Google Drive синхронизациазы аҿыхра аҟынӡа аҟазара зылшом. Азҵаара аиҭахәы.</string>
+    <string name="google_drive_access_failed">Google Drive азин аҟазара зылшом. Азинқәа рықәшәара аиҭахәы.</string>
+    <string name="google_drive_browser_complete">Browser аҟынтәи аҭак аҟалеит. Kototoro ахь ахынҳәрала агәаҭара.</string>
+    <string name="google_drive_browser_rejected">Ари азгәаҭаратә зҵара аҟынӡа аҟазара зылшом. Kototoro ахь ахынҳәрала азҵара аиҭахәы.</string>
+    <string name="google_drive_stage_download">Аҭагалара</string>
+    <string name="google_drive_stage_merge">Еидыҵара</string>
+    <string name="google_drive_stage_upload">Аҭыҵра</string>
+    <string name="google_drive_desktop_scope">Абиблиотека, акатегориақәа, аҩыраҵәахра рпрогресс, астатистика асинхронизациа аҟаҵоит. Аҵыҵқәа аблуд аҿы ыҟоуп аха десктоп аҿы аҟазара зылшом.</string>
+    <string name="google_drive_authorization_pending">Google авторизациа аҭагалара…</string>
+    <string name="google_drive_client_configuration_failed">Google OAuth клиент аҵыҵқәа рыҟазара зылшом. Адесктоп клиент аформа аиҭахәы.</string>
+    <string name="google_drive_client_secret_required">Ари аверсиазы Google OAuth клиент асикрет ыҟам. Аиҭахәра аҟазара зылшом.</string>
+</resources>

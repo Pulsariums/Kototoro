@@ -4071,4 +4071,8 @@
     <string name="source_preferences_browsing">ব্রাউজ করা</string>
     <string name="extension_settings">এক্সটেনশন সেটিংস</string>
     <string name="cloudstream_plugin_reloaded">সেটিংস প্রয়োগ করতে %1$s পুনরায় লোড করা হয়েছে</string>
+    <string name="card_progress_chapters_left">%1$d পর্ব বাকি</string>
+    <string name="migration_migrate_n">মাইগ্রেট %d</string>
+    <string name="migration_next_with_count">পরের · %d</string>
+    <string name="search_displayed_results">%1$d দেখানো</string>
 </resources>

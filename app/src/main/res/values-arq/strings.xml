@@ -4069,4 +4069,10 @@
     <string name="source_preferences_browsing">التصفح</string>
     <string name="extension_settings">إعدادات الإضافات</string>
     <string name="cloudstream_plugin_reloaded">إعادة تحميل %1$s لتطبيق إعداداته</string>
+    <string name="timeline">تسلسل زمني</string>
+    <string name="novel_marking_edit_note">عدل ملاحظة</string>
+    <string name="novel_marking_edit_note_title">عدل ملاحظة</string>
+    <string name="sort_by_added_date">وقت الإضافة</string>
+    <string name="kitsu_info_end_date">النهاية</string>
+    <string name="kitsu_relation_sequel">تتمة</string>
 </resources>

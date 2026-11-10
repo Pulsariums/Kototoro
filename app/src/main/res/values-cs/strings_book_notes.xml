@@ -57,4 +57,5 @@
     <string name="book_notes_markdown_thought">💭 **Myšlenka**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Záložka**: Strana %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (průběh %1$d%%)</string>
+    <string name="book_notes_make_excerpt">Přidat výňatek</string>
 </resources>

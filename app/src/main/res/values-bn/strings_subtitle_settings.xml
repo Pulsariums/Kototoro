@@ -29,4 +29,6 @@
     <string name="video_subtitle_font_sans">স্যান্স</string>
     <string name="video_subtitle_font_serif">সেরিফ</string>
     <string name="video_subtitle_font_monospace">মনোস্পেস</string>
+    <string name="video_subtitle_color_bg">পটভূমি</string>
+    <string name="video_subtitle_background">পটভূমি</string>
 </resources>

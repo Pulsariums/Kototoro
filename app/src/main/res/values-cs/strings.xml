@@ -4084,4 +4084,5 @@
     <string name="source_preferences_browsing">Prohlížení</string>
     <string name="extension_settings">Nastavení rozšíření</string>
     <string name="cloudstream_plugin_reloaded">Doplněk %1$s byl načten k použití nastavení</string>
+    <string name="save_note">Uložit</string>
 </resources>

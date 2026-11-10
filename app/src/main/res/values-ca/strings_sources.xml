@@ -98,4 +98,5 @@
     <string name="source_groups_updated">Grup actualitzat</string>
     <string name="source_groups_newer_schema">Aquest fitxer és d\'una versió més nova. Actualitza l\'aplicació.</string>
     <string name="source_groups_confirm_domains">Substitucions de domini (%1$d fonts):</string>
+    <string name="extension_file_delete_failed">No s\'ha suprimit %1$s.</string>
 </resources>

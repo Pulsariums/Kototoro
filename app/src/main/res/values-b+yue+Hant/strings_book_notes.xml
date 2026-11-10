@@ -54,4 +54,8 @@
     <string name="book_notes_markdown_thought">💭 **想法**：%1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **書籤**：第 %1$d 頁%2$s</string>
     <string name="book_notes_markdown_progress">（進度 %1$d%%）</string>
+    <string name="book_notes_markdown_author">&gt; **作者**：%1$s</string>
+    <string name="book_notes_markdown_source">&gt; **匯出來源**：Kototoro Notes</string>
+    <string name="book_notes_markdown_time">&gt; **匯出時間**：%1$s</string>
+    <string name="book_notes_markdown_total">&gt; **筆記總數**：%1$d</string>
 </resources>

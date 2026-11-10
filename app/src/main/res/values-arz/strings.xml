@@ -4069,4 +4069,10 @@
     <string name="source_preferences_browsing">التصفح</string>
     <string name="extension_settings">إعدادات الإضافات</string>
     <string name="cloudstream_plugin_reloaded">اتعاد تحميل %1$s عشان تتطبق إعداداته</string>
+    <string name="pref_glass_edge_blur">تمويه حواف</string>
+    <string name="timeline">خط زمني</string>
+    <string name="pref_glass_scope_top_bar">شريط علوي</string>
+    <string name="novel_marking_edit_note">عدل ملاحظة</string>
+    <string name="novel_marking_edit_note_title">عدل ملاحظة</string>
+    <string name="sort_by_added_date">وقت الإضافة</string>
 </resources>

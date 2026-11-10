@@ -4071,4 +4071,8 @@
     <string name="source_preferences_browsing">Абжьара</string>
     <string name="extension_settings">Аҿырԥшқәа а параметр</string>
     <string name="cloudstream_plugin_reloaded">%1$s ҿыц иҟаҵан</string>
+    <string name="pref_bangumi_mirror_custom_base_summary">Иҭажәгал авеб-хыҵхырҭа URL, ҿырԥштәыс https://bangumi.pro. API ахост api.&lt;host&gt; ҳәа иԥхьаӡоуп, ҵаҟа ишазгәамҭоу еиԥш.</string>
+    <string name="migration_item_failed">Агха: %s</string>
+    <string name="kitsu_info_age_rating">Ақәрахьтә</string>
+    <string name="kitsu_relation_full_story">Аҭоурых наӡа</string>
 </resources>

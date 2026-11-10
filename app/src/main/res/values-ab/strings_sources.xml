@@ -97,4 +97,6 @@
     <string name="source_groups_updated">Агәыԥ аҿыцςоуп</string>
     <string name="source_groups_newer_schema">Ари агәыԥ афаил аверсиа ҿыц аҟнытә уп. Априложение аҿыц.</string>
     <string name="source_groups_confirm_domains">Адоменқәа рыԥслара (%1$d ашьҭаҵарақәа):</string>
+    <string name="source_groups_confirm_title">«%1$s» ахархәара?</string>
+    <string name="source_test_step_random">Алшаратә</string>
 </resources>

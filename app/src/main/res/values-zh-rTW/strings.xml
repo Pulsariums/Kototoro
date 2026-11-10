@@ -429,7 +429,7 @@
     <string name="brightness">亮度</string>
     <string name="reader_control_ltr">人體工學閱讀器控制</string>
     <string name="services">服務</string>
-    <string name="enabled_d_of_d" tools:ignore="PluralsCandidate">%2$d 之 %1$d 啟用</string>
+    <string name="enabled_d_of_d">%2$d 之 %1$d 啟用</string>
     <string name="user_agent">UserAgent 標頭</string>
     <string name="sync_host_description">您可以使用自建同步伺服器或預設伺服器。如果您不確定您在做什麼，請勿變更此項。</string>
     <string name="reader_info_pattern">Ch. %1$d/%2$d Pg. %3$d/%4$d</string>
@@ -2623,10 +2623,12 @@ SHA-256 指紋:
     <string name="migration_no_sources">收藏中無可遷移的源</string>
     <string name="content_type_filter">內容類型</string>
     <string name="source_type_filter">源類型</string>
-    <plurals name="source_count">
+        <plurals name="source_count">
+        <item quantity="one">%d 個來源</item>
         <item quantity="other">%d 個源</item>
     </plurals>
-    <plurals name="sources_imported_successfully">
+        <plurals name="sources_imported_successfully">
+        <item quantity="one">已成功匯入 %d 個來源</item>
         <item quantity="other">成功匯入 %d 個源</item>
     </plurals>
 
@@ -3108,7 +3110,8 @@ SHA-256 指紋:
     <string name="eink_refresh_every">重新整理間隔</string>
     <string name="eink_refresh_color">重新整理顏色</string>
     <string name="milliseconds_value">%1$d 毫秒</string>
-    <plurals name="pages_value">
+        <plurals name="pages_value">
+        <item quantity="one">每頁</item>
         <item quantity="other">每 %1$d 頁</item>
     </plurals>
     <string name="reader_background">閱讀背景</string>
@@ -3953,7 +3956,8 @@ SHA-256 指紋:
     <string name="migration_candidates_title">候選</string>
     <string name="migration_search_hint">在目標來源中搜索</string>
     <string name="migration_sources_title">按來源換源</string>
-    <plurals name="migration_health_banner">
+        <plurals name="migration_health_banner">
+        <item quantity="one">%1$d 個來源可能失效，影響 %2$d 本收藏</item>
         <item quantity="other">%1$d 個來源可能已失效，涉及 %2$d 部收藏</item>
     </plurals>
     <string name="migration_health_banner_action">一鍵換源這 %d 部</string>
@@ -3967,11 +3971,13 @@ SHA-256 指紋:
     <string name="migration_health_suspicious">偶發失敗</string>
     <string name="migration_health_suspicious_summary">最近的更新檢查有失敗，通常是本裝置網路臨時問題，源本身可能正常</string>
     <string name="migration_health_disabled">已停用</string>
-    <plurals name="migration_health_disabled_summary">
+        <plurals name="migration_health_disabled_summary">
+        <item quantity="one">%d 本收藏 · 於來源中關閉，但仍會開啟並檢查更新</item>
         <item quantity="other">%d 部收藏 · 已在來源管理中關閉，仍可閱讀並檢查更新</item>
     </plurals>
     <string name="migration_next">下一步</string>
-    <plurals name="migration_health_hint">
+        <plurals name="migration_health_hint">
+        <item quantity="one">%d 個來源可能失效</item>
         <item quantity="other">%d 個來源可能失效</item>
     </plurals>
     <string name="migration_no_available_sources">還沒有啟用這類來源</string>
@@ -3999,13 +4005,16 @@ SHA-256 指紋:
     <string name="library_duplicates_keep">保留</string>
     <string name="library_duplicates_chapters">%d 話</string>
     <string name="library_duplicates_merge_all_message">每組都會合併到高亮的那一本。其餘條目會移出收藏和歷史，已下載的內容會保留。</string>
-    <plurals name="library_duplicates_entries">
+        <plurals name="library_duplicates_entries">
+        <item quantity="one">%d 個項目</item>
         <item quantity="other">%d 個條目</item>
     </plurals>
-    <plurals name="library_duplicates_merge_all">
+        <plurals name="library_duplicates_merge_all">
+        <item quantity="one">合併 %d 個群組</item>
         <item quantity="other">全部合併 %d 組</item>
     </plurals>
-    <plurals name="library_duplicates_merged">
+        <plurals name="library_duplicates_merged">
+        <item quantity="one">已合併 %d 個群組。沒有剩餘重複項目</item>
         <item quantity="other">已合併 %d 組，沒有剩餘的重複</item>
     </plurals>
     <string name="duplicate_read_percent">已讀 %d%%</string>

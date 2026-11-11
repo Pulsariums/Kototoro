@@ -3170,7 +3170,7 @@
     <string name="unified_sources_collapse_all">طي الكل</string>
     <string name="unified_sources_enable_all_confirmation">تفعيل جميع المصادر الـ %1$d في الفلتر الحالي؟</string>
     <string name="unified_sources_disable_all_confirmation">تعطيل جميع المصادر الـ %1$d في الفلتر الحالي؟</string>
-    <string name="unified_sources_mark_nsfw">تحديد كنصفوا</string>
+    <string name="unified_sources_mark_nsfw">تعيين كـ NSFW</string>
     <string name="unified_sources_unmark_nsfw">إزالة تصنيف NSFW</string>
     <string name="unified_sources_set_nsfw">تعيين NSFW…</string>
     <string name="unified_sources_set_nsfw_title">تعيين محتوى بالغين للمصادر المحددة</string>

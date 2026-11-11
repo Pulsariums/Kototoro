@@ -528,7 +528,7 @@
     <string name="tracker_warning">Alguns dispositius tenen un comportament del sistema diferent, la qual cosa pot interrompre les tasques en segon pla.</string>
     <string name="read_more">Llegeix més</string>
     <string name="queued">En cua</string>
-    <string name="chapter_is_missing">Malta el capítol</string>
+    <string name="chapter_is_missing">Falta el capítol</string>
     <string name="about_app_translation_summary">Traduïu aquesta aplicació</string>
     <string name="about_app_translation">Traducció</string>
     <string name="auth_complete">Autoritzat</string>
@@ -824,7 +824,7 @@
     <string name="suggestions_excluded_sources_summary">No recuperis suggeriments de les fonts seleccionades</string>
     <string name="text_delete_local_manga_batch">Voleu suprimir permanentment els elements seleccionats del dispositiu?</string>
     <string name="removal_completed">Eliminació completada</string>
-    <string name="download_slowdown"> încetinire</string>
+    <string name="download_slowdown">Ajust de descàrrega</string>
     <string name="download_slowdown_summary">Ajuda a evitar el bloqueig de la vostra adreça IP</string>
     <string name="local_manga_processing">Processament del manga guardat</string>
     <string name="chapters_will_removed_background">Els capítols s\'eliminaran en segon pla</string>
@@ -1258,8 +1258,8 @@
     <string name="email_password_enter_hint">Introduïu el correu electrònic i la contrasenya per continuar</string>
     <string name="username_password_enter_hint">Introduïu el nom d\'usuari i la contrasenya per continuar</string>
     <string name="downloaded">Descarregat</string>
-    <string name="images_proxy_title">的服务 d\'optimització d\'imatges</string>
-    <string name="images_procy_description">Utilitza el servei wsrv.nl per reduir el consum de dades i accelerar la càrrega d\'imatges si és possible</string>
+    <string name="images_proxy_title">Oxigenació d\'imatges</string>
+    <string name="images_procy_description">Utilitza el servei wsrv.nl per a reduir el consum de dades i accelerar la càrrega d\'imatges si és possible</string>
     <string name="invert_colors">Inverteix els colors</string>
     <string name="username">Nom d\'usuari</string>
     <string name="password">Contrasenya</string>

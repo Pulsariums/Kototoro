@@ -922,7 +922,7 @@
     <string name="ireader_extension_repositories">Репозитории расширений IReader</string>
     <string name="open_in_reader_browser">Открыть во встроенном браузере</string>
     <string name="favourite_duplicate_candidate_title">Возможный дубликат</string>
-    <string name="favourite_duplicate_candidate_message">\"%1$s\" возможно уже есть в вашей библиотеке:\n\n%2$s\n\nВсе равно добавить как отдельный источник?</string>
+    <string name="favourite_duplicate_candidate_message">\"%1$s\" уже может быть в вашей библиотеке:\n\n%2$s\n\nПродолжить добавление как отдельную запись источника?</string>
     <string name="favourite_duplicate_merge_back">Объединить</string>
     <string name="continue_action">Продолжить</string>
     <string name="recommended_repositories">Рекомендованные репозитории</string>

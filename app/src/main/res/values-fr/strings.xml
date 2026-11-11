@@ -516,11 +516,11 @@
     <string name="rating_safe">Tout public</string>
     <string name="rating_adult">Adulte</string>
     <string name="default_tab">Onglet par défaut</string>
-    <string name="color_correction_apply_text">Ces paramètres peuvent être appliqué globalement ou uniquement au manga actuel. S\'il est activé globalement il ne remplacera les paramètres individuel.</string>
+    <string name="color_correction_apply_text">Ces paramètres peuvent être appliqués globalement ou uniquement au manga actuel. Les paramètres individuels ne seront pas écrasés en cas d\'application globale.</string>
     <string name="globally">Globalement</string>
     <string name="this_manga">Ce manga</string>
     <string name="apply">Appliqué</string>
-    <string name="genres_search_hint">Commence a écrit un nom de genre</string>
+    <string name="genres_search_hint">Commencez à saisir le genre</string>
     <string name="downloads_settings_info">Vous pouvez réduire la vitesse de téléchargement individuellement pour chaque source de manga dans les paramètres si vous rencontrez des problèmes de blocage avec le serveur</string>
     <string name="backup_date_">Date de sauvegarde : %s</string>
     <string name="by_name_reverse">Nom inversé</string>
@@ -531,7 +531,7 @@
     <string name="vertical">Vertical</string>
     <string name="email_password_enter_hint">Entrez votre courriel et mot de passe pour continuer</string>
     <string name="grayscale">Niveaux de gris</string>
-    <string name="error_filter_locale_genre_not_supported">Le filtrage à la fois par genres et par langues n\'est pas supporté par cette source</string>
+    <string name="error_filter_locale_genre_not_supported">La source ne prend pas en charge le filtrage par genres et par langue simultanément</string>
     <string name="error_filter_states_genre_not_supported">Le filtrage à la fois par genres et par statut n\'est pas supporté par cette source</string>
     <string name="volume_">Volume %d</string>
     <string name="volume_unknown">Volume inconnu</string>
@@ -568,7 +568,7 @@
     <string name="default_webtoon_zoom_out">Zoom webtoon par défaut</string>
     <string name="unsupported_backup_message">Veuillez sélectionner un fichier de sauvegarde Kototoro valide</string>
     <string name="preferred_download_format">Format de téléchargement préféré</string>
-    <string name="clear_stats_confirm">Voulez-vous vraiment effacer tout les statistiques de lecture ? Cette action ne peut pas annuler.</string>
+    <string name="clear_stats_confirm">Voulez-vous vraiment effacer toutes les statistiques de lecture ? Cette action est irréversible.</string>
     <string name="reading_stats">Statistiques de lecture</string>
     <string name="week">Semaine</string>
     <string name="month">Mois</string>
@@ -604,7 +604,7 @@
     <string name="unread">Non lu</string>
     <string name="split_by_translations_summary">Afficher les chapitres avec des traductions différentes séparément, au lieu d\'une seule liste</string>
     <string name="enable_source">Activer la source</string>
-    <string name="unsupported_source">Cette source de manga n\'est pas supporté</string>
+    <string name="unsupported_source">Cette source n\'est pas prise en charge</string>
     <string name="fix">Corrigé</string>
     <string name="delete_read_chapters_prompt">Cela va définitivement effacé tout les chapitres marqués comme lus de l\'espace de stockage. Vous pouvez les re-télécharger plus tard, mais les chapitres importé pourraient ne pas être récupéré.</string>
     <string name="last_used">Dernière utilisation</string>
@@ -869,7 +869,7 @@
     <string name="_install">Installer</string>
     <string name="about_discord">Serveur Discord</string>
     <string name="about_donate">Faire un don</string>
-    <string name="action_apply">Applications</string>
+    <string name="action_apply">Appliquer</string>
     <string name="action_auto_restore">Restauration automatique</string>
     <string name="action_auto_upload">Téléchargement automatique</string>
     <string name="action_manual_restore">Restauration manuelle</string>

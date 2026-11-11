@@ -24,7 +24,7 @@
     <string name="source_groups_invalid_file">অ্যপ্রাপ্য গ্রুপ ফাইল</string>
     <string name="source_groups_file_too_large">গ্রুপ ফাইলটি অনেক বড় (সর্বোচ্চ ২ MB)</string>
     <string name="source_groups_error_generic">ত্রুটি: %1$s</string>
-    <string name="source_groups_meta">%1$dটি রিপো · %2$dটি প্যাকেজ · %3$dটি সোর্স (%4$dটি সচল)</string>
+    <string name="source_groups_meta">%1$d রিপো · %2$d প্যাকেজ · %3$d উৎস (%4$d সচল)</string>
     <string name="source_groups_progress">ধাপ %1$d / %2$d</string>
     <string name="source_groups_error_repo">রিপোজিটরি %1$s যোগ করা যায়নি</string>
     <string name="source_groups_error_package">প্যাকেজ %1$s ইনস্টল করা যায়নি</string>
@@ -79,7 +79,7 @@
     <string name="source_test_msg_unsupported">সমর্থিত নয়</string>
     <string name="source_test_msg_search_unsupported">অনুসন্ধান সমর্থিত নয়</string>
     <string name="source_test_msg_search_empty">ফল নেই: %1$s</string>
-    <string name="source_test_msg_search_hit">\"%1$s\"-%2$dটি ফলাফল দিয়েছে</string>
+    <string name="source_test_msg_search_hit">\"%1$s\" %2$dটি ফলাফল দিয়েছে</string>
     <string name="source_test_status_cloudflare">Cloudflare: ম্যানুয়াল চেক</string>
     <string name="source_test_cloudflare">Cloudflare</string>
     <string name="source_test_msg_cloudflare">Cloudflare দ্বারা অবরুদ্ধ, ম্যানুয়াল যাচাইকরণ প্রয়োজন</string>
@@ -91,12 +91,12 @@
     <string name="source_unlock_action">আনলক</string>
     <string name="edit_repository">রিপো সম্পাদনা</string>
     <string name="source_groups_create_clean">খালি গ্রুপ তৈরি</string>
-    <string name="source_groups_error_apply_state">গ্রুপ সোর্স অবস্থা প্রয়োগ করা যায়নি</string>
+    <string name="source_groups_error_apply_state">গ্রুপ উৎসের অবস্থা প্রয়োগ করা যায়নি</string>
     <string name="source_groups_delete_confirm">\"%1$s\" গ্রুপটি মুছবেন?</string>
     <string name="extension_file_delete_failed">%1$s মোছা যায়নি।</string>
     <string name="source_groups_export_lost">এক্সপোর্ট লক্ষ্য হারিয়েছে। আবার চেষ্টা করুন।</string>
     <string name="extension_repo_update_failed">আপডেট ব্যর্থ: %1$s</string>
-    <string name="source_groups_updated">গ্রুপ আপডেট</string>
+    <string name="source_groups_updated">গ্রুপ আপডেট করা হয়েছে</string>
     <string name="source_groups_newer_schema">এই গ্রুপ ফাইলটি একটি নতুন সংস্করণের। অ্যাপ আপডেট করুন।</string>
-    <string name="source_groups_confirm_domains">ডোমেন ওভাররাইড (%1$d সোর্স):</string>
+    <string name="source_groups_confirm_domains">ডোমেন ওভাররাইড (%1$d উৎস):</string>
 </resources>

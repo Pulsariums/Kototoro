@@ -267,7 +267,7 @@
     <string name="status_reading">Lesen</string>
     <string name="select_range">Bereich auswählen</string>
     <string name="not_found_404">Inhalt nicht gefunden oder entfernt</string>
-    <string name="manga_error_description_pattern">Fehlerdetails:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Versuche, &lt;a href=%2$s&gt;den Manga in einem Webbrowser zu öffnen&lt;/a&gt;, um sicherzustellen, dass er bei seiner Quelle verfügbar ist&lt;br&gt;2. Stelle sicher, dass du die &lt;a href=kototoro://about&gt;neueste Kototoro-Version&lt;/a&gt;&lt;br&gt;3 benutzt. Wenn er verfügbar ist, sende einen Fehlerbericht an die Entwickler.</string>
+    <string name="manga_error_description_pattern">Fehlerdetails:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Versuche, den &lt;a href=\"%2$s\"&gt;Manga im Webbrowser zu öffnen&lt;/a&gt;, um sicherzustellen, dass er auf seiner Quelle verfügbar ist.&lt;br&gt;2. Stelle sicher, dass du die &lt;a href=\"kototoro://about\"&gt;neueste Version von Kototoro&lt;/a&gt; verwendest.&lt;br&gt;3. Wenn er verfügbar ist, sende einen Fehlerbericht an die Entwickler.</string>
     <string name="no_bookmarks_yet">Noch keine Lesezeichen</string>
     <string name="no_manga_sources">Keine Manga-Quellen</string>
     <string name="no_manga_sources_text">Manga-Quellen aktivieren, um Manga online zu lesen</string>
@@ -614,7 +614,7 @@
     <string name="last_used">Zuletzt verwendet</string>
     <string name="hours_short">%d h</string>
     <string name="minutes_short">%d m</string>
-    <string name="invalid_server_address_message">Ungültige Server-Addresse</string>
+    <string name="invalid_server_address_message">Ungültige Serveradresse</string>
     <string name="pages_saved">Seiten wurden gespeichert</string>
     <string name="text_empty_holder_secondary_filtered">Es gibt keine Manga, die deinen Filtern entsprechen.</string>
     <string name="too_many_requests_message_retry">Zu viele Anfragen. Versuche es erneut in %s</string>
@@ -639,7 +639,7 @@
     <string name="sources_disabled">Quellen deaktiviert</string>
     <string name="disable_nsfw_notifications">Deaktiviere NSFW Benachrichtigungen</string>
     <string name="disable_nsfw_notifications_summary">Zeige keine Benachrichtigungen bezüglich NSFW Manga updates</string>
-    <string name="_new">Neues</string>
+    <string name="_new">Neu</string>
     <string name="all_languages">Alle Sprachen</string>
     <string name="screenshots_block_incognito">Blockieren, wenn im Inkognito-Modus</string>
     <string name="image_server">Bevorzugter Server</string>
@@ -694,7 +694,7 @@
     <string name="open_in_reader_browser">Im integrierten Browser öffnen</string>
     <string name="favourite_duplicate_candidate_title">Mögliches Duplikat</string>
     <string name="favourite_duplicate_candidate_message">\"%1$s\" existiert möglicherweise bereits in deiner Bibliothek:\n\n%2$s\n\nTrotzdem als separaten Quelleneintrag hinzufügen?</string>
-    <string name="favourite_duplicate_merge_back">Mergen</string>
+    <string name="favourite_duplicate_merge_back">Zusammen</string>
     <string name="continue_action">Fortfahren</string>
     <string name="recommended_repositories">Empfohlene Repositorien</string>
     <string name="discover">Entdecken</string>
@@ -2013,7 +2013,7 @@
     <string name="pages_save_per_manga_folder">Ordner für jeden Manga erstellen</string>
     <string name="pages_save_per_manga_folder_summary">Im Standardverzeichnis gespeicherte Seiten landen in einem Unterordner benannt nach dem Manga</string>
     <string name="crop_include_previous_page">Vorherige Seite hinzufügen</string>
-    <string name="crop_include_next_page">Nächste Seite zu</string>
+    <string name="crop_include_next_page">Nächste Seite hinzu.</string>
     <string name="crop_stitch_top_to_bottom">Oben nach unten</string>
     <string name="crop_stitch_left_to_right">Links nach rechts</string>
     <string name="crop_stitch_right_to_left">Rechts nach links</string>
@@ -2470,7 +2470,7 @@
     <string name="epub_error_unsupported_version">Nicht unterstützte EPUB-Version: %s</string>
     <string name="epub_error_malformed_html">HTML-Formatfehler in Kapitel %d</string>
     <string name="epub_error_file_not_found">EPUB-Datei nicht gefunden, sie wurde möglicherweise gelöscht: %s</string>
-    <string name="epub_error_insufficient_storage">Unternehmender Speicherplatz. Erforderlich: %1$s, Verfügbar: %2$s</string>
+    <string name="epub_error_insufficient_storage">Unzureichender Speicherplatz. Benötigt: %1$s, Verfügbar: %2$s</string>
     <string name="epub_error_permission_denied">Keine Zugriffsberechtigung: %s</string>
     <string name="epub_error_read_failed">Fehler beim Lesen der EPUB-Datei: %s</string>
     <string name="epub_error_write_failed">Fehler beim Schreiben der EPUB-Datei: %s</string>
@@ -3903,7 +3903,7 @@
     <string name="mangabaka_token_hint">Ein persönliches Zugriffstoken in den MangaBaka-Kontoeinstellungen erstellen und hier einfügen. Dieses Token gewährt vollen Zugriff auf dein MangaBaka-Konto.</string>
     <string name="mangabaka_auth_failed">Anmeldung oder Laden der Bibliothek fehlgeschlagen. Token, Berechtigungen und Verbindung prüfen und erneut versuchen.</string>
     <string name="favourite_categories_in_space">In diesem Space anzuzeigende Kategorien</string>
-    <string name="favourite_categories_in_space_hint">Categories are shared by every Space. This only changes which of them are listed here, so the same category can be shown in one Space and hidden in another. A Space that would hide every category keeps showing all of them.</string>
+    <string name="favourite_categories_in_space_hint">Kategorien werden von allen Bereichen geteilt. Dies ändert nur, welche davon hier aufgelistet werden, sodass dieselbe Kategorie in einem Bereich angezeigt und in einem anderen ausgeblendet werden kann. Ein Bereich, der jede Kategorie ausblenden würde, zeigt weiterhin alle an.</string>
     <string name="show_all_categories">Alle Kategorien zeigen</string>
     <string name="custom_cover_summary">Ersetzt den automatischen Stapel von Mitgliedscovern für diese Kategorie</string>
     <string name="choose_cover">Bild auswählen</string>

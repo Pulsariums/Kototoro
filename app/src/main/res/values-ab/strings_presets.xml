@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="source_presets">Аҧҵәахәқәа</string>
-    <string name="create_preset">Аҧҵәахә ҿыц</string>
-    <string name="edit_preset">Аиҿкаара ариаш</string>
-    <string name="preset_name">Аҧҵәахә ихьӡ</string>
+    <string name="source_presets">Ажьарақəа</string>
+    <string name="create_preset">Иҟаҵа ажьара</string>
+    <string name="edit_preset">Иҷыдоу ажьара</string>
+    <string name="preset_name">Ажьара ахьӡ</string>
     <string name="preset_languages">Абызшәақәа</string>
-    <string name="preset_sources">Ажәытәрақәа</string>
-    <string name="preset_created">Аҧҵәахә иҟаҵоуп</string>
+    <string name="preset_sources">Ажьарақəа</string>
+    <string name="preset_created">Иҟаҵоуп ажьара</string>
     <string name="preset_saved">Иеиқәырхагоуп</string>
-    <string name="preset_deleted">Аҧҵәахә дҭәыххеит</string>
-    <string name="preset_activated">Аҧҵәахә аҵыҵәа</string>
-    <string name="preset_deactivated">Аҧҵәахә аҿыххеит</string>
-    <string name="no_presets">Аҧҵәахәқәа ыҟам</string>
-    <string name="no_presets_text">Иҟаҵатәуп аҧҵәахә ажәытәрақәа реиҧшшәа</string>
-    <string name="manage_preset_sources">Ажәытәрақәа</string>
+    <string name="preset_deleted">Иқəырҵит ажьара</string>
+    <string name="preset_activated">Иҟоуп ажьара</string>
+    <string name="preset_deactivated">Иқəырҵит ажьара</string>
+    <string name="no_presets">Ажьарақəа ыҟам</string>
+    <string name="no_presets_text">Иҟаҵа ажьара</string>
+    <string name="manage_preset_sources">Ажьарақəа</string>
 </resources>

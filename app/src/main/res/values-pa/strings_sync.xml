@@ -15,9 +15,9 @@
     <string name="google_drive_access_failed">Google Drive ਨੇ ਪਹੁੰਚ ਤੋਂ ਇਨਕਾਰ ਕਰ ਦਿੱਤਾ। ਦਿੱਤੀਆਂ ਗਈਆਂ ਇਜਾਜ਼ਤਾਂ ਅਤੇ Drive API ਸੰਰਚਨਾ ਦੀ ਜਾਂਚ ਕਰੋ।</string>
     <string name="google_drive_browser_complete">ਬ੍ਰਾਊਜ਼ਰ ਕਾਲਬੈਕ ਪ੍ਰਾਪਤ ਹੋਇਆ। ਖਾਤਾ ਕਨੈਕਸ਼ਨ ਨਤੀਜੇ ਦੀ ਜਾਂਚ ਕਰਨ ਲਈ Kototoro \'ਤੇ ਵਾਪਸ ਜਾਓ।</string>
     <string name="google_drive_browser_rejected">ਇਹ ਪ੍ਰਮਾਣਕਤਾ ਕਾਲਬੈਕ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ ਸੀ। Kototoro \'ਤੇ ਵਾਪਸ ਜਾਓ ਅਤੇ ਦੁਬਾਰਾ ਕਨੈਕਟ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
-    <string name="google_drive_stage_download">Downloading</string>
-    <string name="google_drive_stage_merge">ਮਰਜ ਹੋ ਰਿਹਾ</string>
-    <string name="google_drive_stage_upload">Uploading</string>
+    <string name="google_drive_stage_download">ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ</string>
+    <string name="google_drive_stage_merge">ਮਰਜ ਹੋ ਰਿਹਾ ਹੈ</string>
+    <string name="google_drive_stage_upload">ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ</string>
     <string name="google_drive_desktop_scope">ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ, ਸ਼੍ਰੇਣੀਆਂ, ਪੜ੍ਹਨ ਦੀ ਪ੍ਰਗਤੀ, ਅੰਕੜੇ ਅਤੇ ਅੱਪਡੇਟ ਰਿਕਾਰਡ ਸਿੰਕ ਕਰਦਾ ਹੈ। ਸੈਟਿੰਗਾਂ ਅਤੇ ਐਕਸਟੈਂਸ਼ਨਾਂ ਨੂੰ ਕਲਾਊਡ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਜਾਂਦਾ ਹੈ ਪਰ ਅਜੇ ਡੈਸਕਟਾਪ \'ਤੇ ਲਾਗੂ ਨਹੀਂ ਕੀਤਾ ਜਾਂਦਾ ਹੈ। Kototoro ਖੁੱਲ੍ਹਾ ਹੋਣ \'ਤੇ ਆਟੋਮੈਟਿਕ ਸਿੰਕ ਚੱਲਦਾ ਹੈ।</string>
     <string name="google_drive_authorization_pending">ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ Google ਪ੍ਰਮਾਣੀਕਰਨ ਦੀ ਉਡੀਕ ਹੈ...</string>
     <string name="google_drive_client_configuration_failed">Google ਨੇ OAuth ਕਲਾਇੰਟ ਸੰਰਚਨਾ ਨੂੰ ਰੱਦ ਕਰ ਦਿੱਤਾ। ਡੈਸਕਟਾਪ ਕਲਾਇੰਟ ਕਿਸਮ, Google Cloud ਪ੍ਰੋਜੈਕਟ ਅਤੇ ਸਹਿਮਤੀ ਸੈਟਿੰਗਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।</string>

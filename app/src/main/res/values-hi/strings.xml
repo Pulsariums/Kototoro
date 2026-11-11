@@ -11,7 +11,7 @@
     <string name="newest">नवीनतम</string>
     <string name="light">हल्की</string>
     <string name="dark">गहरी</string>
-    <string name="close">बंद करे</string>
+    <string name="close">बंद करें</string>
     <string name="try_again">पुनः प्रयास करें</string>
     <string name="you_have_not_favourites_yet">अभी तक कोई पसंदीदा नहीं है</string>
     <string name="remove">हटाएं</string>
@@ -36,7 +36,7 @@
     <string name="manga_downloading_">डाउनलोड हो रहा है…</string>
     <string name="downloads">डाउनलोड</string>
     <string name="by_rating">रेटिंग</string>
-    <string name="clear">साफ करे</string>
+    <string name="clear">साफ करें</string>
     <string name="page_saved">सहेजा गया</string>
     <string name="share_image">छवि साझा करें</string>
     <string name="delete">मिटाएं</string>

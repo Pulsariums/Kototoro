@@ -110,7 +110,7 @@
     <string name="_continue">Jatka</string>
     <string name="switch_pages">Vaihda sivuja</string>
     <string name="reader_settings">Lukijan asetukset</string>
-    <string name="text_delete_local_manga">Haluatko todella poistaa ”%s” puhelimen paikallisesta tallennustilasta?</string>
+    <string name="text_delete_local_manga">Poistetaanko \"%s\" pysyvästi laitteelta?</string>
     <string name="delete_manga">Poista manga</string>
     <string name="search_on_s">Hae kohteesta %s</string>
     <string name="grid_size">Ruudukon koko</string>
@@ -2435,7 +2435,7 @@
     <string name="enable_auto_apply">Käytä automaattisesti</string>
     <string name="disable_auto_apply">Poista autom. käyttö</string>
     <string name="overwrite">Korvaa</string>
-    <string name="filter_overwrite_confirm">Suodatin nimellä \"%s\" on jo olemassa. Haluatko korvata sen?</string>
+    <string name="filter_overwrite_confirm">Suodatin \"%s\" on jo olemassa. Haluatko korvata sen?</string>
     <string name="storage_and_network">Tallennustila ja verkko</string>
     <string name="create_or_restore_backup">Luo tai palauta varmuuskopio</string>
     <string name="data_removal">Tietojen poisto</string>

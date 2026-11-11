@@ -494,7 +494,7 @@
     <string name="lock_screen_rotation">Rotation ng lock screen</string>
     <string name="manual">Manu-mano</string>
     <string name="source_enabled">Napaganang source</string>
-    <string name="disable_nsfw_summary">Di paganahin ang mga source na NSFW at itago ang manga na pang-matanda mula sa listahan kung maaari</string>
+    <string name="disable_nsfw_summary">Huwag paganahin ang mga NSFW source at itago ang mga adult manga</string>
     <string name="no_manga_sources_catalog_text">Walang mga sources na maaring gamitin sa seksyong ito, o maaring na-add na lahat.
 \nManatiling nakatutok para sa iba pang mga source</string>
     <string name="available_d">Available: %1$d</string>
@@ -926,13 +926,13 @@
     <string name="cloudstream_newpipe_required">Kailangan ng extension na ito ang mga klase ng NewPipe na wala sa NewPipe na kasama ng Kototoro, kaya hindi ito makapag-play ng mga video. Subukang i-update ang extension o ang Kototoro.</string>
     <string name="clear_chapter_thumbnails">I-clear ang mga thumbnail ng kabanata</string>
     <string name="continuous_horizontal">Tuloy-tuloy na pahalang</string>
-    <string name="continuous_horizontal_reversed">Basahin mula kanang pakanan</string>
+    <string name="continuous_horizontal_reversed">Magbasa mula pakanan pakaliwa</string>
     <string name="reader_chapters_reversed">Baligtarin ang ayos ng kabanata para sa pamagat na ito</string>
     <string name="reader_spread_page_choice">Aling pahina?</string>
     <string name="reader_spread_left_page">Kaliwang pahina (pahina %1$d)</string>
     <string name="reader_spread_right_page">Kanang pahina (pahina %1$d)</string>
     <string name="ai">AI</string>
-    <string name="reader_translation_long_press_hint">Pindutin nang matagal ang Pagsalin para sa mga shortcut ng wika</string>
+    <string name="reader_translation_long_press_hint">Pindutin nang matagal ang Pagsasalin para sa mga shortcut sa wika</string>
     <string name="reader_translation_status_compact">Isinasalin ang %1$d/%2$d</string>
     <string name="reader_page_turning_mode">Mode ng paglipat ng pahina</string>
     <string name="reader_page_label">Pahina %1$d</string>
@@ -2008,7 +2008,7 @@
     <string name="reader_translation_ocr_model_det_autodetect">Auto Detect</string>
     <string name="reader_translation_ocr_model_download_now">I-download Ngayon</string>
     <string name="reader_translation_ocr_model_redownload">I-download Muli</string>
-    <string name="reader_translation_bypass_hint_default">Angmangang ito ay tugma na sa target na wika. Laktawan ang pagsasalin.</string>
+    <string name="reader_translation_bypass_hint_default">Ang mangang na ito ay tumutugma na sa target na wika. Laktawan na ang pagsasalin.</string>
     <string name="reader_translation_mode_local_first">Lokal muna, pagkatapos ay API</string>
     <string name="reader_translation_mode_api_only">API lang</string>
     <string name="reader_translation_source_lang">Pinagmulang wika</string>
@@ -3098,7 +3098,7 @@
     <string name="reader_translation_ocr_det_model_selection">Modelo ng pagtukoy ng teksto</string>
     <string name="reader_translation_ocr_det_model_selection_summary">Piliin ang modelong gagamitin sa pagahanap ng mga rehiyon ng teksto sa pahina. Magagamit din ang mga tagatukoy bilang posisyon.</string>
     <string name="reader_translation_ocr_rec_model_auto">Auto (piliin ayon sa wika ng manga)</string>
-    <string name="reader_translation_ocr_rec_model_auto_summary">Pumipili muna ayon sa wika ng pagsasalin ng manga, pagkatapos ay sa pinagmulang wika nito: Hapon para sa MangaOCR</string>
+    <string name="reader_translation_ocr_rec_model_auto_summary">Pinipili muna ayon sa wika ng pagsasalin ng manga, pagkatapos ay sa pinagmulang wika nito: ang Japanese ay gumagamit ng MangaOCR, ang Korean ay gumagamit ng PP-OCRv5 Korean, ang Thai ay gumagamit ng PP-OCRv5 Thai, ang mga wikang Latin-script ay gumagamit ng PP-OCRv5 Latin, at ang ibang mga wika ay gumagamit ng multilingual PP-OCRv5 Medium</string>
     <string name="reader_translation_ocr_det_mlkit">ML Kit (Google on-device, walang download)</string>
     <string name="day_monday">Lunes</string>
     <string name="day_tuesday">Martes</string>

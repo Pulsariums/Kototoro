@@ -385,7 +385,7 @@
     <string name="ignore_ssl_errors">SSLエラーを無視する</string>
     <string name="mirror_switching">ミラーを自動的に選択する</string>
     <string name="mirror_switching_summary">ミラーが利用可能な場合、エラー時にマンガ ソースのドメインを自動的に切り替える</string>
-    <string name="resume">履歴書</string>
+    <string name="resume">再開</string>
     <string name="paused">一時停止</string>
     <string name="cancel_all">全てキャンセル</string>
     <string name="downloads_wifi_only">Wi-Fi経由でのみダウンロード</string>
@@ -828,7 +828,7 @@
     <string name="about_discord">Discordサーバー</string>
     <string name="about_donate">寄付</string>
     <string name="access_denied_403">アクセス拒否（403）</string>
-    <string name="action_apply">アプリ</string>
+    <string name="action_apply">適用</string>
     <string name="action_auto_restore">自動復元</string>
     <string name="action_auto_upload">自動アップロード</string>
     <string name="action_manual_restore">手動復元</string>

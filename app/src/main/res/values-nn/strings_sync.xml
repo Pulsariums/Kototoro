@@ -9,12 +9,12 @@
     <string name="google_drive_browser_failed">Klar ikkje opne system-nettlesaren for Google-godkjenning.</string>
     <string name="google_drive_credential_store_failed">Fekk ikkje tilgang til systemets påloggingslager. Kontroller at det er tilgjengeleg og opplåst, og prøv igjen.</string>
     <string name="google_drive_settings_failed">Klar ikkje lagre lokale synkroniseringsinnstillingar. Sjekk datamappa og prøv igjen.</string>
-    <string name="google_drive_protocol_failed">Skybiletet er skadd eller bruker eit format som ikkje støttast. Inann ting vart lasta opp.</string>
+    <string name="google_drive_protocol_failed">Skybiletet er skadd eller nyttar eit format som ikkje er støtta. Injekje vart lasta opp.</string>
     <string name="google_drive_conflict_failed">Andre einingar oppdaterer skydata. Prøv å synkronisere igjen seinare.</string>
     <string name="google_drive_network_failed">Google Drive-synkronisering feila. Sjekk tilkoblinga og prøv igjen.</string>
     <string name="google_drive_access_failed">Google Drive nekta tilgang. Sjekk tildelte løyver og Drive API-konfigurasjonen.</string>
     <string name="google_drive_browser_complete">Nettlesartilbakekall mottatt. Gå tilbake til Kototoro for å sjekke resultatet av kontotilkoblinga.</string>
-    <string name="google_drive_browser_rejected">Dette godkjennings-tilbakekallinga vart avvisst. Gå tilbake til Kototoro og prøv å koble til igjen.</string>
+    <string name="google_drive_browser_rejected">Denne autorisasjonstilbakemeldinga vart avvis. Gå attende til Kototoro og prøv å koble til på nytt.</string>
     <string name="google_drive_stage_download">Lastar ned</string>
     <string name="google_drive_stage_merge">Flettar</string>
     <string name="google_drive_stage_upload">Lastar opp</string>

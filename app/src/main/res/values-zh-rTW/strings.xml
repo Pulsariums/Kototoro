@@ -55,7 +55,7 @@
     <string name="loading_">載入中…</string>
     <string name="close">關閉</string>
     <string name="clear_history">清除歷史紀錄</string>
-    <string name="suggestions_info">所有的資料都在此裝置上進本機分析，並不會傳送至任何其他地方。</string>
+    <string name="suggestions_info">所有資料均僅於本裝置上進行本機分析，絕不會傳送至任何地方。</string>
     <string name="exclude_nsfw_from_history_summary">標記為 NSFW 的漫畫將永遠不會被加入到歷史資料中，您的進度也不會被儲存</string>
     <string name="backup_information">建立整包備份，用於本地保存或 WebDAV 還原。</string>
     <string name="crash_text">發生了一些問題。請向開發人員提交一個錯誤告告，以幫助我們修復它。</string>
@@ -2600,7 +2600,7 @@
     <string name="you_may_like">猜你喜歡</string>
 
     <!-- 批量源遷移 -->
-    <string name="source_migration_from_label">來源源</string>
+    <string name="source_migration_from_label">從來源</string>
     <string name="source_migration_to_label">目標源</string>
     <string name="source_migration_cancel">取消遷移</string>
     <string name="source_migration_concurrency">搜索併發數：%1$d</string>

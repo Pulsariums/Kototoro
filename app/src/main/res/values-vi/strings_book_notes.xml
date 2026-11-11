@@ -12,7 +12,7 @@
     <string name="book_notes_total_count">%1$d ghi chú</string>
     <string name="book_notes_book_search_hint">Tìm ghi chú trong sách này…</string>
     <string name="book_notes_no_highlight_excerpt">Không có văn bản nổi bật nào cho đoạn trích này</string>
-    <string name="book_notes_selected_all">Tất cả ghi chú(%1$d)</string>
+    <string name="book_notes_selected_all">Tất cả ghi chú (%1$d)</string>
     <string name="book_notes_selected_highlights">Chỉ đoạn nổi bật (%1$d)</string>
     <string name="book_notes_selected_thoughts">Chỉ suy nghĩ (%1$d)</string>
     <string name="book_notes_selected_bookmarks">Chỉ dấu trang (%1$d)</string>

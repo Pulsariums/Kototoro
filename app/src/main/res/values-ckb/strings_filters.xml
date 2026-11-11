@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="search_bar_filters">Search filters</string>
-    <string name="show_language_preset_filter">Language preset</string>
-    <string name="fixed_language_preset">Fixed language preset</string>
+    <string name="search_bar_filters">پاڵاوتکەرەکانی شریتەی گەڕان</string>
+    <string name="show_language_preset_filter">پێشوەختەی زمان</string>
+    <string name="fixed_language_preset">پێشوەختەی زمانی جێگیر</string>
     <string name="show_content_type_filter">جۆری ناوەڕۆک</string>
     <string name="fixed_content_type">جۆری ناوەڕۆکی جێگیر</string>
     <string name="show_source_tag_filter">جۆری سەرچاوە</string>

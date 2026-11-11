@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="sync_settings_enabled_title">Sinkron setelan app</string>
+    <string name="sync_settings_enabled_title">Sinkronkan setelan aplikasi</string>
     <string name="sync_settings_enabled_summary">Setelan pembaca, pemutar, dan tampilan. Sandi, token, dan jalur perangkat tidak pernah disinkronkan.</string>
     <string name="sync_remote_delete_incomplete">Gagal menghapus %1$d file jarak jauh. Status sinkronisasi lokal dipertahankan; coba lagi.</string>
     <string name="sync_enable_required">Aktifkan sinkron Google Drive dulu.</string>

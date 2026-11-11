@@ -8,7 +8,7 @@
     <string name="source_groups_name_hint">Ryhmän nimi</string>
     <string name="source_groups_default_name">Ryhmä %1$d</string>
     <string name="source_groups_apply">Käytä</string>
-    <string name="source_groups_confirm_title">\"%1$s\"?</string>
+    <string name="source_groups_confirm_title">Käytetäänkö \"%1$s\"?</string>
     <string name="source_groups_confirm_intro">Tämä ryhmä lisää laitteeseesi seuraavat.</string>
     <string name="source_groups_confirm_repos">Lisättävät lähteet:</string>
     <string name="source_groups_confirm_packages">Asennettavat paketit:</string>

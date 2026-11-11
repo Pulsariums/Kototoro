@@ -401,7 +401,7 @@
     <string name="download_option_whole_manga">Toàn bộ truyện</string>
     <string name="download_option_all_unread_b">Tất cả các chương chưa đọc (%s)</string>
     <string name="no_access_to_file">Bạn không có quyền truy cập vào tập tin hoặc thư mục này</string>
-    <string name="local_manga_directories">Thư mục truyện tên thiết bị</string>
+    <string name="local_manga_directories">Thư mục manga cục bộ</string>
     <string name="pick_custom_directory">Chọn thư mục tuỳ chỉnh</string>
     <string name="reader_info_pattern">Ch. %1$d/%2$d Tr. %3$d/%4$d</string>
     <string name="memory_usage_pattern">%s - %s</string>
@@ -501,7 +501,7 @@
     <string name="in_progress">Đang tiến hành</string>
     <string name="disable_nsfw">Vô hiệu hóa đối với NSFW</string>
     <string name="advanced">Nâng cao</string>
-    <string name="error_corrupted_file">Dữ liệu trả lại không hợp lệ hoặc file đã bị hỏng</string>
+    <string name="error_corrupted_file">Dữ liệu trả về không hợp lệ hoặc tệp bị hỏng</string>
     <string name="related_manga_summary">Hiển thị danh sách manga có liên quan. Đôi khi có thể không có hoặc không liên quan</string>
     <string name="too_many_requests_message">Yêu cầu quá nhiều. Hãy thoát ra và vào lại ¯\\_(ツ)_/¯</string>
     <string name="on_device">Trên máy</string>
@@ -916,7 +916,7 @@
     <string name="home_hero_style_text_quote">Trích đoạn văn học</string>
     <string name="home_hero_style_minimal">Tiến độ tối giản</string>
     <string name="home_hero_style_poster_focus">Tập trung poster</string>
-    <string name="home_hero_style_mixed">Hỗン hợp chọn lọc</string>
+    <string name="home_hero_style_mixed">Hỗn hợp chọn lọc</string>
     <string name="source_origins">Nguồn gốc</string>
     <string name="ireader_sources">IReader</string>
     <string name="ireader_extension_repositories">Kho tiện ích mở rộng IReader</string>
@@ -1824,7 +1824,7 @@
     <string name="video_renderer_gpu">GPU</string>
     <string name="video_renderer_gpu_next">GPU Next (Vulkan)</string>
     <string name="video_renderer_mediacodec_embed">MediaCodec nhúng</string>
-    <string name="video_fallback_super_res_disabled">Độ phân giải siêu cao đã tạm vô hiệu hóa để cải thiện ổn định</string>
+    <string name="video_fallback_super_res_disabled">Độ phân giải siêu cao tạm thời bị vô hiệu hóa để cải thiện độ ổn định khi phát</string>
     <string name="video_fallback_renderer_downgraded">Đã chuyển sang trình kết xuất tương thích hơn để cải thiện phát lại</string>
     <string name="video_fallback_conservative_mode">Thiết bị này đang dùng chế độ phát an toàn để tương thích tốt hơn</string>
     <string name="video_background">Phát nền</string>
@@ -3125,7 +3125,7 @@
     <string name="mal_category_anime_top">Anime hàng đầu</string>
     <string name="mal_category_anime_airing">Đang chiếu</string>
     <string name="mal_category_anime_upcoming">Sắp ra mắt</string>
-    <string name="mal_category_anime_tv">Phêrê TV hàng đầu</string>
+    <string name="mal_category_anime_tv">Phê bình TV hàng đầu</string>
     <string name="mal_category_anime_movie">Phim hàng đầu</string>
     <string name="mal_category_anime_ova">OVA hàng đầu</string>
     <string name="mal_category_anime_special">Đặc biệt hàng đầu</string>

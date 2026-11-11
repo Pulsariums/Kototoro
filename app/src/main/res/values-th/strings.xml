@@ -485,7 +485,7 @@
     <string name="ireader_extension_repositories">ที่เก็บส่วนขยาย IReader</string>
     <string name="open_in_reader_browser">เปิดในเบราว์เซอร์ในตัว</string>
     <string name="favourite_duplicate_candidate_title">รายการที่อาจซ้ำกัน</string>
-    <string name="favourite_duplicate_candidate_message">\"%1$s\" อาจมีอยู่แล้วในคลังของคุณ:\n\n%2$s\n\nต้องการเพิ่มเป็นรายการแยกต่างหากต่อไปหรือไม่</string>
+    <string name="favourite_duplicate_candidate_message">\"%1$s\" อาจมีอยู่ในคลังของคุณแล้ว:\n\n%2$s\n\nต้องการเพิ่มเป็นรายการแยกต่างหากหรือไม่</string>
     <string name="favourite_duplicate_merge_back">ผสาน</string>
     <string name="continue_action">ดำเนินการต่อ</string>
     <string name="recommended_repositories">ที่เก็บแนะนำ</string>
@@ -3692,7 +3692,7 @@
     <string name="novel_reader_chapter_search_tab">ค้นหา</string>
     <string name="novel_reader_content_search_hint">ค้นหาในข้อความบท</string>
     <string name="novel_reader_content_search_empty_title">ค้นหาในหนังสือ</string>
-    <string name="novel_reader_content_search_empty_hint">ป้อนคำค้นหาเพื่อ123</string>
+    <string name="novel_reader_content_search_empty_hint">ป้อนคำค้นหาเพื่อหาข้อความที่ตรงกัน</string>
     <string name="novel_reader_content_search_no_results">ไม่พบข้อความที่ตรงกัน</string>
     <string name="novel_reader_content_search_result_count">%1$d ผลลัพธ์</string>
     <string name="novel_reader_content_search_chapter_fallback">บทที่ %1$d</string>

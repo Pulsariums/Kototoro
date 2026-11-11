@@ -56,7 +56,7 @@
     <string name="source_test_msg_timeout">超時（%1$d 秒）</string>
     <string name="source_test_msg_total_timeout">源總耗時超限（%1$d 秒）</string>
     <string name="source_test_msg_prev_failed">已跳過：上一步失敗</string>
-    <string name="source_test_msg_no_cover">沒有封面地址</string>
+    <string name="source_test_msg_no_cover">沒有封面網址</string>
     <string name="source_test_msg_covers">已載入 %1$d/%2$d 張封面</string>
     <string name="source_test_msg_covers_failed">已載入 %1$d/%2$d 張封面：%3$s</string>
     <string name="source_test_msg_details">已開啟：%1$s</string>

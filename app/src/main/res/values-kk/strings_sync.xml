@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="sync_settings_enabled_title">Param синхрондау</string>
+    <string name="sync_settings_enabled_title">Параметрлерді синхрондау</string>
     <string name="sync_settings_enabled_summary">Оқу құралы, плеер, дизайн. Құпия сөз пен жолдар синхрондалмайды.</string>
     <string name="sync_remote_delete_incomplete">%1$d қашықтағы файл(дар) жойылмады. Жергілікті синхрондау күйі сақталды, қайталап көріңіз.</string>
     <string name="sync_enable_required">Google Drive синхрондауын қосыңыз.</string>

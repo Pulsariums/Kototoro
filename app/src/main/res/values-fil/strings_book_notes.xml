@@ -35,9 +35,9 @@
     <string name="book_notes_save_markdown_summary">Gamitin ang file picker ng sistema para i-save ito</string>
     <string name="book_notes_make_excerpt">Gumawa ng sipi</string>
     <string name="book_notes_share_title">Ibahagi ang tala mula sa \"%1$s\"</string>
-    <string name="book_notes_markdown_thought">💭 **Isipan**: %1$s</string>
+    <string name="book_notes_markdown_thought">💭 **Pag-iisip**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Bookmark**: Pahina %1$d%2$s</string>
-    <string name="book_notes_markdown_progress"> (sulong %1$d%%)</string>
+    <string name="book_notes_markdown_progress"> (progreso %1$d%%)</string>
     <string name="book_notes_filter_thoughts">Thoughts (%1$d)</string>
     <string name="book_notes_book_search_hint">Search notes in this book…</string>
     <string name="book_notes_filtered_empty">No notes match filter</string>
@@ -54,8 +54,8 @@
     <string name="book_notes_saved">Notes saved to file</string>
     <string name="book_notes_save_failed">Save failed: %1$s</string>
     <string name="book_notes_markdown_title"># %1$s — Reading notes</string>
-    <string name="book_notes_markdown_author">&gt; **May-akda**: %1$s</string>
-    <string name="book_notes_markdown_source">&gt; **Nag-export**: Kototoro Notes</string>
-    <string name="book_notes_markdown_time">&gt; **In-export noong**: %1$s</string>
-    <string name="book_notes_markdown_total">&gt; **Kabuuang tala**: %1$d</string>
+    <string name="book_notes_markdown_author">→ **May-akda**: %1$s</string>
+    <string name="book_notes_markdown_source">→ **Na-export mula sa**: Kototoro Notes</string>
+    <string name="book_notes_markdown_time">→ **Na-export noong**: %1$s</string>
+    <string name="book_notes_markdown_total">→ **Kabuuang tala**: %1$d</string>
 </resources>

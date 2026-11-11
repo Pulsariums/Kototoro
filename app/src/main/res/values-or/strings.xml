@@ -606,7 +606,7 @@
     <string name="video_super_resolution_disabled_gpu_next">Anime4K ସହିତ GPU Next ଅସଙ୍ଗତ। ଭିଡିଓ ଆଉଟପୁଟ୍ GPUକୁ ବଦଳାଯାଇଥିଲା।</string>
     <string name="video_mpv_conf">mpv.conf ଏଡିଟ୍ କରନ୍ତୁ</string>
     <string name="video_mpv_conf_hint">ପ୍ରତି ଲାଇନରେ ଗୋଟିଏ ବିକଳ୍ପ। ପରବର୍ତ୍ତୀ ଥର ଭିଡିଓ ପ୍ଲେୟାର୍ ଆରମ୍ଭ ହେଲେ ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ପ୍ରୟୋଗ ହେବ।</string>
-    <string name="video_mpv_conf_guide"><![CDATA[<b>ସାଧାରଣ ବିକଳ୍ପଗୁଡ଼ିକ:</b><br/>• <tt>deband=yes</tt> (ବ୍ୟାଣ୍ଡିଂ ଆର୍ଟିଫାକ୍ଟ କମାଏ)<br/>• <tt>interpolation=yes</tt> (ସୁଗମ ପ୍ଲେବ୍ୟାକ୍)<br/>• <tt>hwdec=mediacodec</tt> (ହାର୍ଡୱେର୍ ଡିକୋଡିଂ)<br/><br/><a href="https://mpv.io/manual/master/#options">ବିସ୍ତୃତ MPV ଡକ୍ୟୁମେଣ୍ଟେସନ୍ ଦେଖନ୍ତୁ</a>]]></string>
+    <string name="video_mpv_conf_guide"><![CDATA[<b>ସାଧାରଣ ବିକଳ୍ପଗୁଡ଼ିକ:</b><br/>• <tt>deband=yes</tt> (ବ୍ୟାଣ୍ଡିଂ ଆର୍ଟିଫାକ୍ଟ କମ କରନ୍ତୁ)<br/>• <tt>interpolation=yes</tt> (ସୁଗମ ପ୍ଲେବ୍ୟାକ୍)<br/>• <tt>hwdec=mediacodec</tt> (ହାର୍ଡୱେର୍ ଡିକୋଡିଂ)<br/><br/><a href="https://mpv.io/manual/master/#options">ବିସ୍ତୃତ MPV ଡକ୍ୟୁମେଣ୍ଟେସନ୍ ଦେଖନ୍ତୁ</a>]]></string>
     <string name="video_mpv_conf_saved">mpv.conf ସଞ୍ଚୟ ହେଲା। ପରିବର୍ତ୍ତନ ପ୍ରୟୋଗ କରିବାକୁ ପ୍ଲେୟାର୍ ପୁନର୍ବାର ଖୋଲନ୍ତୁ।</string>
     <string name="video_mpv_conf_reset">mpv.conf ରିସେଟ୍ ହେଲା। ପରିବର୍ତ୍ତନ ପ୍ରୟୋଗ କରିବାକୁ ପ୍ଲେୟାର୍ ପୁନର୍ବାର ଖୋଲନ୍ତୁ।</string>
     <string name="video_super_resolution_mode_a">ମୋଡ୍ A</string>
@@ -2581,7 +2581,7 @@
     <string name="source_group_video"> ଭିଡିଓ ସୋର୍ସ</string>
     <string name="source_group_hentai_manga"> ବୟସ୍କ ମଙ୍ଗା ସୋର୍ସ</string>
     <string name="source_group_hentai_novel"> ବୟସ୍କ ଉପନ୍ୟାସ ସୋର୍ସ</string>
-    <string name="source_group_hentai_video">Aଭିଡିଓ ସ୍ରୋତ</string>
+    <string name="source_group_hentai_video">ବୟସ୍କ ଭିଡିଓ ସ୍ରୋତଗୁଡ଼ିକ</string>
     <string name="source_group_other">ଅନ୍ୟାନ୍ୟ ସ୍ରୋତ</string>
     <string name="source_group_native">ସ୍ଥାନୀୟ ସ୍ରୋତ</string>
     <string name="source_group_legado">Legado ସ୍ରୋତ</string>
@@ -3692,7 +3692,7 @@
     <string name="novel_reader_notes_search_hint">ନୋଟ୍ କିମ୍ବା ହାଇଲାଇଟ୍ ଖୋଜନ୍ତୁ…</string>
     <string name="novel_reader_no_matching_notes">କୌଣସି ନୋଟ୍ ନାହିଁ</string>
     <string name="novel_reader_translation_no_content">ଅନୁବାଦ ପାଇଁ ଟେକ୍ସଟ୍ ନାହିଁ</string>
-    <string name="novel_reader_translation_not_configured">ପ୍ରଥମେ ସେଟିଂସଡ଼୍ସ → ଏଆଇ ଅନୁବାଦରେ ଏକ ଅନୁବାଦ ଇଞ୍ଜିନ (API ବା ଲୋକାଲ ONNX ମଡେଲ) ସେଟଅପ୍ କରନ୍ତୁ</string>
+    <string name="novel_reader_translation_not_configured">ପ୍ରଥମେ ସେଟିଂସଫ୍ଟ → ଏଆଇ ଅନୁବାଦରେ ଏକ ଅନୁବାଦ ଇଞ୍ଜିନ୍ (API କିମ୍ବା ସ୍ଥାନୀୟ ONNX ମଡେଲ୍) ସେଟଅପ୍ କରନ୍ତୁ</string>
     <string name="novel_reader_translation_no_result">କୌଣସି ଅନୁବାଦ ଫେରୁନାହିଁ। ସେଟିଂସଡ଼୍ସ → ଏଆଇ ଅନୁବାଦରେ ଇଞ୍ଜିନ कन्ଫିଗରଣ ଯାଞ୍ଚ କରନ୍ତୁ</string>
     <string name="novel_reader_translation_failed">ଅନୁବାଦ ବିଫଳ ହେଲା: %1$s</string>
     <string name="novel_reader_translation_cache_cleared">ଅନୁବାଦ କ୍ୟାଚ୍ ଡିଲିଟ୍ ହୋଇଗଲା</string>

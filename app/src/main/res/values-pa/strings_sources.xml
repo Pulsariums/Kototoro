@@ -8,11 +8,11 @@
     <string name="source_groups_name_hint">ਸਮੂਹ ਦਾ ਨਾਮ</string>
     <string name="source_groups_default_name">ਸਮੂਹ %1$d</string>
     <string name="source_groups_apply">ਲਾਗੂ ਕਰੋ</string>
-    <string name="source_groups_confirm_title">ਲਾਗੂ \"%1$s\"?</string>
-    <string name="source_groups_confirm_intro">ਇਹ ਸਮੂਹ ਤੁਹਾਡੀ ਡਿਵਾਈਸ ਵਿੱਚ ਹੇਠ ਲਿਖੇ ਨੂੰ ਜੋੜ ਦੇਵੇਗਾ।</string>
-    <string name="source_groups_confirm_repos">ਜੋੜਨ ਲਈ ਰਿਪੋਜ਼ਟਰੀਆਂ:</string>
+    <string name="source_groups_confirm_title">\"%1$s\" ਲਾਗੂ ਕਰਨਾ ਹੈ?</string>
+    <string name="source_groups_confirm_intro">ਇਹ ਗਰੁੱਪ ਤੁਹਾਡੀ ਡਿਵਾਈਸ ਵਿੱਚ ਹੇਠ ਲਿਖին ਚੀਜ਼ਾਂ ਸ਼ਾਮਲ ਕਰੇਗਾ।</string>
+    <string name="source_groups_confirm_repos">ਸ਼ਾਮਲ ਕਰਨ ਲਈ ਰਿਪੋਜ਼ਟਰੀਆਂ:</string>
     <string name="source_groups_confirm_packages">ਇੰਸਟਾਲ ਕਰਨ ਲਈ ਪੈਕੇਜ:</string>
-    <string name="source_groups_confirm_more">+%1$d ਹੋਰ</string>
+    <string name="source_groups_confirm_more">+%1$d ਹੋર</string>
     <string name="source_groups_export">ਨਿਰਯਾਤ ਕਰੋ</string>
     <string name="source_groups_delete">ਮਿਟਾਓ</string>
     <string name="source_groups_saved">ਗਰੁੱਪ ਸੁਰੱਖਿਅਤ</string>
@@ -20,7 +20,7 @@
     <string name="source_groups_exported">ਗਰੁੱਪ ਨਿਰਯਾਤ ਕੀਤਾ</string>
     <string name="source_groups_applied">ਗਰੁੱਪ ਲਾਗੂ ਕੀਤਾ</string>
     <string name="source_groups_apply_errors">ਸਮੂਹ ਲਾਗੂ ਕਰਨ ਵੇਲੇ %1$d ਪੜਾਅ ਅਸਫਲ ਹੋ ਗਏ</string>
-    <string name="source_groups_manual_install">ਪੈਕੇਜ ਟੈਬ ਤੋਂ ਇਹਨਾਂ %1$d ਆਮ-APK ਪੈਕੇਜਾਂ ਨੂੰ ਹੱਥੀਂ ਇੰਸਟਾਲ ਕਰੋ:</string>
+    <string name="source_groups_manual_install">ਪੈਕੇਜ ਟੈਬ ਤੋਂ ਇਹ %1$d ਸਧਾਰਨ-APK ਪੈਕੇਜ ਹੱਥੀਂ ਇੰਸਟਾਲ ਕਰੋ:</string>
     <string name="source_groups_invalid_file">ਅਵੈਧ ਸਮੂਹ ਫ਼ਾਈਲ</string>
     <string name="source_groups_file_too_large">ਸਮੂਹ ਫ਼ਾਈਲ ਬਹੁਤ ਵੱਡੀ ਹੈ (ਅਧਿਕਤਮ 2 MB)</string>
     <string name="source_groups_error_generic">ਗਲਤੀ: %1$s</string>
@@ -79,7 +79,7 @@
     <string name="source_test_msg_unsupported">ਸਮਰਥਿਤ ਨਹੀਂ</string>
     <string name="source_test_msg_search_unsupported">ਖੋਜ ਸਮਰਥਿਤ ਨਹੀਂ ਹੈ</string>
     <string name="source_test_msg_search_empty">ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ: %1$s</string>
-    <string name="source_test_msg_search_hit">\"%1$s\" ਦੇ %2$d ਨਤੀਜੇ ਮਿਲੇ</string>
+    <string name="source_test_msg_search_hit">\"%1$s\" ਦੇ %2$d ਨਤੀਜੇ ਆਏ</string>
     <string name="source_test_status_cloudflare">Cloudflare: ਹੱਥੀਂ ਜਾਂچ</string>
     <string name="source_test_cloudflare">Cloudflare</string>
     <string name="source_test_msg_cloudflare">Cloudflare ਦੁਆਰਾ ਬਲੌਕ ਕੀਤਾ ਗਿਆ, ਹੱਥੀਂ ਤਸਦੀਕ ਲੋੜੀਂਦੀ ਹੈ</string>

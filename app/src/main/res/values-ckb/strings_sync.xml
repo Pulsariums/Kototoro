@@ -18,7 +18,7 @@
     <string name="google_drive_stage_download">دابەزاندن</string>
     <string name="google_drive_stage_merge">تێکەڵکردن</string>
     <string name="google_drive_stage_upload">بارکردن</string>
-    <string name="google_drive_desktop_scope">Syncs your library, categories, reading progress, statistics and update records. Settings and extensions are preserved in the cloud but are not applied on desktop yet. Automatic sync runs while Kototoro is open.</string>
+    <string name="google_drive_desktop_scope">کتێبخانە، پۆلێنەکان، پێشکەوتنی خوندنەوە، ئامارەکان و تۆمارەکانی نوێکردنەوەت هاوکات دەکات. ڕێکخستنەکان و پاشکۆکان لە هەوردا دەپارێزرێن بەڵام هێشتا لەسەر دێکتۆپ جێبەجێ نەکراون. هاوکاتکردنی خۆکار لە کاتی کراوەبوونی کۆتۆتۆرۆ بەڕێوەدەچێت.</string>
     <string name="google_drive_authorization_pending">چاوەڕێی ڕێپێدانی گووگڵە لە وێبگەڕەکەتدا…</string>
     <string name="google_drive_client_configuration_failed">گووگڵ ڕێکخستنی کڵایەنت OAuth ڕەتکردەوە. جۆری کڵایێنتی دێسکتاپ، پرۆژەی Google Cloud و ڕێکخستنەکانی ڕەزامەندی پشکنە.</string>
     <string name="google_drive_client_secret_required">ئەم دروستکراوە نهێنی کڵایێنتی دێسکتاپ OAuthـی گووگڵی نییە. ڕێکی بخە و دووبارە دروستبکەرەوە؛ چوونەژوورەوە دووبارە ئەمە چارەسەر ناکات.</string>

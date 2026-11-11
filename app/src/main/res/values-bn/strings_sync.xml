@@ -18,7 +18,7 @@
     <string name="google_drive_stage_download">ডাউনলোড হচ্ছে</string>
     <string name="google_drive_stage_merge">মাজিং হচ্ছে</string>
     <string name="google_drive_stage_upload">আপলোড হচ্ছে</string>
-    <string name="google_drive_desktop_scope">আপনার লাইব্রেরি, বিভাগ, পড়ার অগ্রগতি, পরিসংখ্যান এবং আপডেট রেকর্ড সিঙ্ক করে। সেটিংস ও এক্সটেনশনগুলো ক্লাউডে সংরক্ষিত থাকে কিন্তু ডেস্কটপে এখনও প্রয়োগ হয় না। Kototoro খোলা থাকাকালীন স্বয়ংক্রিয় সিঙ্ক চলে।</string>
+    <string name="google_drive_desktop_scope">আপনার লাইব্রেরি, ক্যাটাগরি, পড়ার অগ্রগতি, পরিসংখ্যান এবং আপডেট রেকর্ড সিঙ্ক করে। সেটিংস এবং এক্সটেনশন ক্লাউডে সংরক্ষিত থাকে কিন্তু ডেস্কটপে এখনও প্রয়োগ করা হয় না। Kototoro খোলা থাকাকালীন স্বয়ংক্রিয় সিঙ্ক চলে।</string>
     <string name="google_drive_authorization_pending">আপনার ব্রাউজারে গুগল অনুমোদনের জন্য অপেক্ষা করা হচ্ছে…</string>
     <string name="google_drive_client_configuration_failed">গুগল OAuth ক্লায়েন্ট কনফিগারেশন প্রত্যাখ্যান করেছে। ডেস্কটপ ক্লায়েন্ট টাইপ, Google Cloud প্রজেক্ট এবং কনসেন্ট সেটিংস পরীক্ষা করুন।</string>
     <string name="google_drive_client_secret_required">এই বিল্ডে গুগল ডেস্কটপ OAuth ক্লায়েন্ট সিক্রেট অনুপস্থিত। এটি কনফিগার করে রিবাউন্ড করুন; আবার সাইন ইন করলে এটি ঠিক হবে না।</string>

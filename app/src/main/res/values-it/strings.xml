@@ -81,7 +81,7 @@
     <string name="create_backup">Crea un backup dei dati</string>
     <string name="backup_restore">Backup e ripristino</string>
     <string name="black_dark_theme_summary">Utile per gli schermi AMOLED</string>
-    <string name="black_dark_theme">Tema nero scuro</string>
+    <string name="black_dark_theme">Nero</string>
     <string name="create_category">Nuova categoria</string>
     <string name="right_to_left">Da destra a sinistra</string>
     <string name="no_update_available">Nessun aggiornamento disponibile</string>
@@ -116,7 +116,7 @@
     <string name="manga_save_location">Cartella download</string>
     <string name="pages_animation">Animazione delle pagine</string>
     <string name="recent_manga">Manga recenti</string>
-    <string name="manga_shelf">Scaffale da manga</string>
+    <string name="manga_shelf">Libreria</string>
     <string name="text_local_holder_secondary">Salva qualcosa da un catalogo online o importalo da un file.</string>
     <string name="text_local_holder_primary">Non hai ancora salvato nessun manga</string>
     <string name="text_history_holder_secondary">Trova cosa leggere nella sezione «Esplora»</string>
@@ -265,7 +265,7 @@
     <string name="logout">Esci</string>
     <string name="status_planned">Pianificato</string>
     <string name="status_completed">Finito</string>
-    <string name="status_dropped">Caduto</string>
+    <string name="status_dropped">Abbandonato</string>
     <string name="invalid_domain_message">Dominio non valido</string>
     <string name="select_range">Seleziona l\'intervallo</string>
     <string name="not_found_404">Contenuto non trovato o rimosso</string>
@@ -890,7 +890,7 @@
     <string name="video_chapter_group_ungrouped">Non raggruppati</string>
     <string name="compact_grid">Griglia compatta</string>
     <string name="movie_grid">Film</string>
-    <string name="compact_movie_grid">Film compatta</string>
+    <string name="compact_movie_grid">Film compatti</string>
     <string name="pref_home_hero_style">Stile carosello Home</string>
     <string name="pref_home_hero_style_summary">Scegli come disporre gli elementi in evidenza nella schermata iniziale</string>
     <string name="pref_home_hero_mode">Modalità carosello</string>
@@ -1760,7 +1760,7 @@
     <string name="e_ink">E-Ink</string>
     <string name="eink_mode">Modalità E-Ink</string>
     <string name="eink_mode_summary">Ottimizza la lettura a pagine per display E-Ink senza modificare l\'animazione salvata</string>
-    <string name="eink_refresh">Aggiorna schermo intero</string>
+    <string name="eink_refresh">Aggiornamento e-ink</string>
     <string name="eink_refresh_summary">Sostituisce brevemente la pagina con un colore pieno per ridurre l\'effetto scia</string>
     <string name="eink_refresh_duration">Durata aggiornamento</string>
     <string name="eink_refresh_every">Interv. aggiornamento</string>
@@ -2480,7 +2480,7 @@
     <string name="epub_error_index_out_of_bounds">Indice capitolo fuori intervallo: %1$d (totale %2$d capitoli)</string>
     <string name="epub_error_invalid_url">Formato URL capitolo non valido: %s</string>
     <string name="epub_error_load_failed">Impossibile caricare il capitolo: %d</string>
-    <string name="epub_error_mapping_insert_failed">Impossibile salvare la mappatura del capitolo: %d</string>
+    <string name="epub_error_mapping_insert_failed">Salvataggio mappatura capitoli fallito: %d</string>
     <string name="epub_error_query_failed">Interrogazione database fallita</string>
     <string name="epub_error_migration_failed">Aggiornamento database fallito: versione %1$d → %2$d</string>
     <string name="epub_error_unexpected">Si è verificato un errore sconosciuto: %s</string>
@@ -4055,7 +4055,7 @@
     <string name="kitsu_info_other_names">Altri nomi</string>
     <string name="kitsu_section_voice_actors">Doppiatori</string>
     <string name="kitsu_action_character_page">Pagina person.</string>
-    <string name="kitsu_role_main">Principe</string>
+    <string name="kitsu_role_main">Principale</string>
     <string name="kitsu_role_supporting">Secondario</string>
     <string name="kitsu_dub_ja">Audio giapp.</string>
     <string name="kitsu_dub_en">Audio inglese</string>

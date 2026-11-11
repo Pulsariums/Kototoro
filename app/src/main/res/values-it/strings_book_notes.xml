@@ -31,7 +31,7 @@
     <string name="book_notes_empty">Nessuna nota o segnalibro</string>
     <string name="book_notes_no_matches">Nessuna nota trovata</string>
     <string name="book_notes_empty_hint">Tieni premuto un testo durante la lettura, aggiungi un pensiero o un segnalibro per vederlo qui.</string>
-    <string name="book_notes_quote_prefix">Cit: %1$s</string>
+    <string name="book_notes_quote_prefix">Citazione: %1$s</string>
     <string name="book_notes_bookmark_position">%1$s (pag. %2$d)</string>
     <string name="book_notes_copied">Copiato negli appunti</string>
     <string name="book_notes_export_filename">%1$s note di lettura.md</string>

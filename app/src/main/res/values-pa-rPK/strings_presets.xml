@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="source_presets">سورس پری سیٹس</string>
-    <string name="create_preset">نیا پری سیٹ</string>
-    <string name="edit_preset">ਪ੍ਰੀ-ਸੈੱਟ ਸੋਧੋ</string>
-    <string name="preset_name">پری سیٹ کا نام</string>
-    <string name="preset_languages">زبانیں</string>
-    <string name="preset_sources">سورسز</string>
-    <string name="preset_created">پری سیٹ بن گیا</string>
-    <string name="preset_deleted">پری سیٹ مٹ گیا</string>
-    <string name="preset_activated">پری سیٹ فعال ہو گیا</string>
-    <string name="preset_deactivated">پری سیٹ بند</string>
-    <string name="no_presets">کوئی پری سیٹ نہیں</string>
-    <string name="no_presets_text">مختلف سورس کنفیگریشنز کے درمیان جلدی سے سوئچ کرنے کے لیے ایک پری سیٹ بنائیں</string>
-    <string name="manage_preset_sources">سورسز سنبھالیں</string>
-    <string name="preset_saved">پری سیٹ محفوظ ہو گیا</string>
+    <string name="source_presets">ਸਰੋਤ ਪ੍ਰੀਸੈੱਟ</string>
+    <string name="create_preset">ਨਵਾਂ ਪ੍ਰੀਸੈੱਟ</string>
+    <string name="edit_preset">ਪ੍ਰੀਸੈੱਟ ਸੋਧੋ</string>
+    <string name="preset_name">ਪ੍ਰੀਸੈੱਟ ਦਾ ਨਾਮ</string>
+    <string name="preset_languages">ਭਾਸ਼ਾਵਾਂ</string>
+    <string name="preset_sources">ਸਰੋਤ</string>
+    <string name="preset_created">ਪ੍ਰੀਸੈੱਟ ਬਣਾਇਆ ਗਿਆ</string>
+    <string name="preset_deleted">ਪ੍ਰੀਸੈੱਟ ਹਟਾਇਆ ਗਿਆ</string>
+    <string name="preset_activated">ਪ੍ਰੀਸੈੱਟ ਚਾਲੂ</string>
+    <string name="preset_deactivated">ਪ੍ਰੀਸੈੱਟ ਬੰਦ</string>
+    <string name="no_presets">ਕੋਈ ਪ੍ਰੀਸੈੱਟ ਨਹੀਂ</string>
+    <string name="no_presets_text">ਵੱਖ-ਵੱਖ ਸਰੋਤ ਸੰਰਚਨਾਵਾਂ ਵਿੱਚ ਤੇਜ਼ੀ ਨਾਲ ਸਵਿਚ ਕਰਨ ਲਈ ਇੱਕ ਪ੍ਰੀਸੈੱਟ ਬਣਾਓ</string>
+    <string name="manage_preset_sources">ਸਰੋਤ ਪ੍ਰਬੰਧਿਤ ਕਰੋ</string>
+    <string name="preset_saved">ਪ੍ਰੀਸੈੱਟ ਸੇਵ ਹੋਇਆ</string>
 </resources>

@@ -18,7 +18,7 @@
     <string name="google_drive_stage_download">Atsisiunčiama</string>
     <string name="google_drive_stage_merge">Sujungiama</string>
     <string name="google_drive_stage_upload">Įkeliama</string>
-    <string name="google_drive_desktop_scope">Sinchronizuoja biblioteką, kategorijas, skaitymo eigą, statistiką ir atnaujinimų įrašus. Nustatymai ir plėtiniai saugomi danguje, bet kompiuteryje dar netaikomi. Automatinis sinchronizavimas veikia veikiant Kototoro.</string>
+    <string name="google_drive_desktop_scope">Sinchronizuoja jūsų biblioteką, kategorijas, skaitymo pažangą, statistiką ir atnaujinimų įrašus. Nustatymai ir plėtiniai saugomi debesyje, tačiau stalinčiame kompiuteryje dar netaikomi. Automatinis sinchronizavimas veikia, kol atidaryta Kototoro.</string>
     <string name="google_drive_authorization_pending">Laukiama Google autorizacijos naršyklėje…</string>
     <string name="google_drive_client_configuration_failed">Google atmetė OAuth kliento konfigūraciją. Patikrinkite kliento tipą, projektą ir sutikimo nustatymus.</string>
     <string name="google_drive_client_secret_required">Šioje laidoje trūksta Google OAuth kliento slaptojo rakto. Sukonfigūruokite ir perstatykite programą.</string>

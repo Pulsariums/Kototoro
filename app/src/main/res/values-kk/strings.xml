@@ -2286,7 +2286,7 @@
     <string name="link_to_manga_in_app">Kototoro қолданбасындағы мангаға сілтеме</string>
     <string name="clear_browser_data">Браузер деректерін тазарту</string>
     <string name="clear_browser_data_summary">Кэш пен cookie сияқты браузер деректерін тазарту. Ескерту: Мазмұн көздеріндегі авторизация жарамсыз болып қалуы мүмкін</string>
-    <string name="no_write_permission_to_file">File-ge jazru qūqyğı joq</string>
+    <string name="no_write_permission_to_file">Файлға жазу құқығы жоқ</string>
     <string name="exclude_nsfw_from_suggestions_summary">Ұсыныстарда ересектерге арналған манга көрсетілмейді. Бұл опция кейбір дереккөздерде дұрыс жұмыс істемеуі мүмкін</string>
     <string name="include_disabled_sources">Өшірілген дереккөздерді қосу</string>
     <string name="suggestions_disabled_sources_summary">Барлық дереккөздерден, соның ішінде өшірілгендерден ұсыныстар көрсету</string>

@@ -146,18 +146,18 @@
     <string name="state_finished">Tamat</string>
     <string name="state_ongoing">Masih lanjut</string>
     <string name="system_default">Bawaan</string>
-    <string name="exclude_nsfw_from_history">Kecualikan manga TAUSB dari riwayat</string>
+    <string name="exclude_nsfw_from_history">Kecualikan manga dewasa dari riwayat</string>
     <string name="show_pages_numbers">Nomor halaman</string>
     <string name="screenshots_policy">Kebijakan tangkapan layar</string>
     <string name="screenshots_allow">Bolehkan</string>
-    <string name="screenshots_block_nsfw">Blokir TAUSB</string>
+    <string name="screenshots_block_nsfw">Blokir NSFW</string>
     <string name="screenshots_block_all">Selalu blokir</string>
     <string name="suggestions">Saran</string>
     <string name="suggestions_enable">Aktifkan saran</string>
     <string name="suggestions_summary">Sarankan manga berdasarkan preferensi Anda</string>
     <string name="suggestions_info">Semua data hanya dianalisis secara lokal pada perangkat ini dan tidak pernah dikirim ke mana pun.</string>
     <string name="text_suggestion_holder">Mulai membaca manga dan Anda akan mendapatkan saran yang dipersonalisasi</string>
-    <string name="exclude_nsfw_from_suggestions">Jangan menyarankan manga TAUSB</string>
+    <string name="exclude_nsfw_from_suggestions">Jangan sarankan manga dewasa</string>
     <string name="always">Selalu</string>
     <string name="preload_pages">Muat ulang halaman</string>
     <string name="logged_in_as">Masuk sebagai %s</string>
@@ -297,7 +297,7 @@
     <string name="disable_battery_optimization_summary">Membantu pemeriksaan pembaruan di latar belakang</string>
     <string name="crash_text">Ada sesuatu yang salah. Mohon untuk mengirim laporan kutu ke pengembang untuk membantu kami memperbaikinya.</string>
     <string name="report">Lapor</string>
-    <string name="exclude_nsfw_from_history_summary">Manga yang ditandai sebagai TAUSB tidak akan ditambahkan ke riwayat dan progres Anda tidak akan disimpan</string>
+    <string name="exclude_nsfw_from_history_summary">Manga yang ditandai dewasa tidak akan pernah ditambahkan ke riwayat dan progres Anda tidak akan disimpan</string>
     <string name="clear_cookies_summary">Bisa membantu dalam beberapa masalah. Seluruh otorisasi akan menjadi tidak valid</string>
     <string name="manage">Kelola</string>
     <string name="no_manga_sources_text">Aktifkan sumber manga untuk membaca manga daring</string>
@@ -400,7 +400,7 @@
     <string name="invalid_value_message">Nilai tidak sah</string>
     <string name="images_procy_description">Gunakan layanan wsrv.nl untuk mengurangi penggunaan lalu lintas dan mempercepat pemuatan gambar jika memungkinkan</string>
     <string name="images_proxy_title">Proksi pengoptimalan gambar</string>
-    <string name="username">NamaUser</string>
+    <string name="username">Nama pengguna</string>
     <string name="downloaded">Diunduh</string>
     <string name="invert_colors">Balikkan warna</string>
     <string name="password">Kata sandi</string>
@@ -423,7 +423,7 @@
     <string name="pick_custom_directory">Pilih direktori khusus</string>
     <string name="no_access_to_file">Anda tidak memiliki akses ke file atau direktori ini</string>
     <string name="local_manga_directories">Direktori manga</string>
-    <string name="disable_nsfw">Nonaktifkan TAUSB</string>
+    <string name="disable_nsfw">Matikan NSFW</string>
     <string name="description">Deskripsi</string>
     <string name="manage_categories">Atur kategori</string>
     <string name="show">Tampilkan</string>
@@ -509,7 +509,7 @@
     <string name="state_upcoming">Mendatang</string>
     <string name="color_correction_apply_text">Pengaturan ini dapat diterapkan secara menyeluruh atau hanya pada manga saat ini. Jika diterapkan secara menyeluruh, pengaturan pada manga tidak akan ditimpa.</string>
     <string name="source_enabled">Sumber yang diaktifkan</string>
-    <string name="disable_nsfw_summary">Nonaktifkan sumber TAUSB dan sembunyikan manga dewasa dari daftar jika memungkinkan</string>
+    <string name="disable_nsfw_summary">Nonaktifkan sumber dewasa dan sembunyikan manga dewasa dari daftar jika memungkinkan</string>
     <string name="content_rating">Peringkat konten</string>
     <string name="backup_date_">Tanggal dicadangkan %s</string>
     <string name="available_d">Tersedia:%1$d</string>
@@ -601,7 +601,7 @@
     <string name="unsupported_backup_message">Pilih file cadangan Kototoro yang tepat</string>
     <string name="fix">Memperbaiki</string>
     <string name="missing_storage_permission">Tidak ada izin untuk mengakses manga di penyimpanan eksternal</string>
-    <string name="disable_nsfw_notifications_summary">Jangan tampilkan notifikasi tentang pembaruan manga TAUSB</string>
+    <string name="disable_nsfw_notifications_summary">Jangan tampilkan notifikasi tentang pembaruan manga dewasa</string>
     <string name="search_suggestions">Saran pencarian</string>
     <string name="recent_queries">Pertanyaan terbaru</string>
     <string name="authors">Penulis</string>
@@ -785,8 +785,8 @@
     <string name="search_disabled_sources">Cari melalui sumber yang dinonaktifkan</string>
     <string name="content_type_game_cg">Permainan CG</string>
     <string name="unnamed_chapter">Bab tanpa nama</string>
-    <string name="chapter_volume_number">Vol %1$sBab%2$s</string>
-    <string name="chapter_number">Bab%s</string>
+    <string name="chapter_volume_number">Vol. %1$s Bab %2$s</string>
+    <string name="chapter_number">Bab %s</string>
     <string name="simple">Simpel</string>
     <string name="reader_controls_in_bottom_bar">Kontrol pembaca di bilah bawah</string>
     <string name="chapters_and_pages">Bab dan halaman</string>
@@ -805,8 +805,8 @@
     <string name="badges_in_lists">Lencana dalam daftar</string>
     <string name="tags_warnings">tandai genre berbahaya</string>
     <string name="tags_warnings_summary">Tandai genre yang mungkin tidak pantas untuk sebagian besar pengguna</string>
-    <string name="error_non_file_uri">Jalur yang dipilih tidak dapat digunakan karena tidak menunjukkan berkas atau direktori</string>
-    <string name="use_default_cover">gunakan penutup default</string>
+    <string name="error_non_file_uri">Jalur yang dipilih tidak dapat digunakan karena bukan berupa file atau direktori</string>
+    <string name="use_default_cover">Gunakan Sampul Bawaan</string>
     <string name="pick_manga_page">Pilih halaman manga</string>
     <string name="pick_custom_file">Pilih file khusus</string>
     <string name="change_cover">Ganti penutup</string>
@@ -1276,7 +1276,7 @@
     <string name="video_super_resolution_disabled_gpu_next">Anime4K tidak kompatibel dengan GPU Next. Output video dialihkan ke GPU.</string>
     <string name="video_mpv_conf">Edit mpv.conf</string>
     <string name="video_mpv_conf_hint">Satu opsi per baris. Perubahan diterapkan saat pemutar video berikutnya dimulai.</string>
-    <string name="video_mpv_conf_guide"><![CDATA[<b>Opsi umum:</b><br/>• <tt>deband=yes</tt> (Kurangi artefak banding)<br/>• <tt>interpolation=yes</tt> (Pemutaran halus)<br/>• <tt>hwdec=mediacodec</tt> (Dekode perangkat keras)<br/><br/><a href="https://mpv.io/manual/master/#options">Lihat dokumentasi MPV terperinci</a>]]></string>
+    <string name="video_mpv_conf_guide"><![CDATA[<b>Opsi umum:</b><br/>• <tt>deband=yes</tt> (Mengurangi artefak banding)<br/>• <tt>interpolation=yes</tt> (Pemutaran halus)<br/>• <tt>hwdec=mediacodec</tt> (Dekode perangkat keras)<br/><br/><a href="https://mpv.io/manual/master/#options">Lihat dokumentasi MPV lengkap</a>]]></string>
     <string name="video_mpv_conf_saved">mpv.conf disimpan. Buka ulang pemutar untuk menerapkan perubahan.</string>
     <string name="video_mpv_conf_reset">mpv.conf diatur ulang. Buka ulang pemutar untuk menerapkan perubahan.</string>
     <string name="video_super_resolution_mode_a">Mode A</string>

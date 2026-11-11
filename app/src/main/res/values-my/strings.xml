@@ -74,7 +74,7 @@
     <string name="open_in_reader_browser">ပါ၀င်သော ဘราဝဇာတွင် ဖွင့်ရန်</string>
     <string name="you_have_not_favourites_yet">အကြိုက်ဆုံးများ မရှိသေးပါ</string>
     <string name="favourite_duplicate_candidate_title">ထပ်နေနိုင်သည်</string>
-    <string name="favourite_duplicate_candidate_message">\"%1$s\" သည် သင့်စာကြည့်တိုက်တွင် ရှိနှင့်ပြီးဖြစ်နိုင်သည်:\n\n%2$s\n\n වෙනම ရရင်းမြစ် ထည့်သွင်းမှုအဖြစ် ဆက်ထည့်မည်လား။</string>
+    <string name="favourite_duplicate_candidate_message">\"%1$s\" သည် သင့်စာကြည့်တိုက်တွင် ရှိနှင့်ပြီးဖြစ်နိုင်သည်:\n\n%2$s\n\nသီးခြားရင်းမြစ်အဖြစ် ဆက်ထည့်မည်လား။</string>
     <string name="favourite_duplicate_merge_back">ပေါင်းမည်</string>
     <string name="continue_action">ဆက်လုပ်ရန်</string>
     <string name="recommended_repositories">အကြံပြုထားသော သိုက်များ</string>
@@ -110,7 +110,7 @@
     <string name="pages">စာမျက်နှာ</string>
     <string name="clear">ရှင်းလင်းရန်</string>
     <string name="remove">ဖယ်ရှားရန်</string>
-    <string name="_s_deleted_from_local_storage">ဒေသတွင်း သိုလှောင်မှုမှ \"%s\" ကို ဖယ်ရှားလိုက်ပါပြီ</string>
+    <string name="_s_deleted_from_local_storage">\"%s\" ကို ဒေသတွင်း သိုလှောင်မှုမှ ဖယ်ရှားပြီးပါပြီ</string>
     <string name="save_page">စာမျက်နှာသိမ်း</string>
     <string name="page_save_manga_title_length">သိမ်းဆည်းထားသော ဖိုင်နာမည်များရှိ မန်ဂါခေါင်းစဉ် အရှည်</string>
     <string name="page_save_manga_title_length_summary">သိမ်းဆည်းထားသော ပုံဖိုင်နာမည်များတွင် ထိန်းသိမ်းထားမည့် မန်ဂါခေါင်းစဉ် စာလုံးရေ (၁၂-၆၄)</string>
@@ -169,7 +169,7 @@
     <string name="display_options">ပြသမှု ရွေးချယ်စရာများ</string>
     <string name="search_on_s">%s တွင် ရှာရန်</string>
     <string name="delete_manga">မန်ဂါကို ဖျက်ရန်</string>
-    <string name="text_delete_local_manga">စက်ထဲမှ \"%s\" ကို အပြီးတိုင် ဖျက်မလား။</string>
+    <string name="text_delete_local_manga">\"%s\" ကို စက်ပစ္စည်းမှ အပြီးအပိုင် ဖယ်ရှားမလား။</string>
     <string name="reader_settings">ဖတ်ရှုမှု ဆက်တင်များ</string>
     <string name="replace_rules">စာသား အစားထိုးခြင်း စည်းမျဉ်းများ</string>
     <string name="replace_rules_summary">ရင်းမြစ်နှင့်ကိုက်ညီသော စည်းမျဉ်းများဖြင့် ဝတ္ထုစာသားကို သန့်စင်ပါ</string>
@@ -272,7 +272,7 @@
     <string name="vibration">တုန်ခါမှု</string>
     <string name="favourites_categories">အနှစ်သက်ဆုံး အမျိုးအစားများ</string>
     <string name="remove_category">ဖယ်ရှားရန်</string>
-    <string name="text_empty_holder_primary">ဒီမှာ ဘာမှမရှိသလောက်ပါပဲ…</string>
+    <string name="text_empty_holder_primary">ဒီမှာ ဘာမှမရှိသေးပါဘူး...</string>
     <string name="text_search_holder_secondary">ရှာဖွေမှုကို ပုံစံပြောင်းပြီး စမ်းကြည့်ပါ။</string>
     <string name="text_history_holder_primary">သင်ဖတ်ထားသည်များကို ဤနေရာတွင် ပြသပါမည်</string>
     <string name="text_history_holder_secondary">«စူးစမ်းရန်» ကဏ္ဍတွင် ဖတ်စရာများကို ရှာပါ</string>
@@ -311,7 +311,7 @@
     <string name="update">အပ်ဒိတ်</string>
     <string name="feed_will_update_soon">ဖိဒ် အပ်ဒိတ်လုပ်ခြင်း မကြာမီ စတင်ပါမည်</string>
     <string name="track_sources">အပ်ဒိတ်များကို ရှာရန်</string>
-    <string name="dont_check">မစစ်ဆေးပါ</string>
+    <string name="dont_check">မစစ်ဆေးပါနှင့်</string>
     <string name="enter_password">စကားဝှက် ထည့်ပါ</string>
     <string name="wrong_password">စကားဝှက် မှားယွင်းနေသည်</string>
     <string name="protect_application">အက်ပ်ကို ကာကွယ်ရန်</string>
@@ -1066,7 +1066,7 @@
     <string name="language">ဘာသာစကား</string>
     <string name="share_logs">လော့ဂ် မျှဝေရန်</string>
     <string name="enable_logging">လော့ဂ် ဖွင့်ရန်</string>
-    <string name="enable_logging_summary">အမှားရှာဖွေရန် လုပ်ဆောင်ချက်အချို့ကို မှတ်တမ်းတင်သည်။ သေချာမသိပါက မဖွင့်ပါနှင့်</string>
+    <string name="enable_logging_summary">အမှားရှာဖွေရန် အချို့လုပ်ဆောင်ချက်များကို မှတ်တမ်းတင်ပါ။ မသေချာပါက မဖွင့်ပါနှင့်</string>
     <string name="storage_usage">သိုလှောင်မှု အသုံးပြုမှု</string>
     <plurals name="library_duplicates_entries">
         <item quantity="one">ထည့်သွင်းမှု %d ခု</item>
@@ -1224,7 +1224,7 @@
     <string name="import_backup_scope_summary">ဤဗားရှင်းသည် အကြိုက်ဆုံးများ၊ မှတ်တမ်းနှင့် တင်သွင်းထားသော ဖတ်ရှုခြင်း တိုးတက်မှု မက်တာဒေတာတို့ကို ပြန်လည်ရယူပေးသည်။</string>
     <string name="import_backup_started_background">ပြင်ပ မိတ္တူကူးထားချက်ကို နောက်ခံတွင် တင်သွင်းပါမည်</string>
     <string name="server_address">ဆာဗာ လိပ်စာ</string>
-    <string name="sync_host_description">သင်ကိုယ်တိုင် လက်ခံဆောင်ရွက်သော စင့်ခ်လုပ်သည့် ဆာဗာ သို့မဟုတ် မူလအတိုင်းကို သုံးနိုင်သည်။ သေချာမှုမရှိပါက ယင်းကို မပြောင်းပါနှင့်။</string>
+    <string name="sync_host_description">ကိုယ်ပိုင် ထပ်တူပြုဆာဗာ သို့မဟုတ် မူလဆာဗာကို သုံးနိုင်သည်။ မသေချာပါက မပြောင်းပါနှင့်။</string>
     <string name="ignore_ssl_errors">SSL အမှား လျစ်လျူရှု</string>
     <string name="mirror_switching">ကြေးမုံကို အလိုအလျောက် ရွေးပါ</string>
     <string name="mirror_switching_summary">အမှားများရှိပါက ကြေးမုံများ ရနိုင်လျှင် အကြောင်းအရာ ရင်းမြစ်များအတွက် ဒိုမိန်းများကို အလိုအလျောက် ပြောင်းပါ</string>
@@ -1242,7 +1242,7 @@
     <string name="no_thanks">ကျေးဇူးတင်ပါတယ်</string>
     <string name="cancel_all_downloads_confirm">ဒေါင်းလုဒ်အားလုံး ပယ်ဖျက်မည်ဖြစ်ပြီး မပြီးသေးသည်များ ဆုံးရှုံးမည်</string>
     <string name="remove_completed_downloads_confirm">သင့် ဒေါင်းလုဒ်မှတ်တမ်းကို အပြီးတိုင် ဖျက်ပစ်ပါမည်။ ဒေါင်းလုဒ်လုပ်ထားသော ဖိုင်များ မည်သို့မျှ သက်ရောက်မှုရှိမည်မဟုတ်ပါ</string>
-    <string name="text_downloads_list_holder">သင့်တွင် ဒေါင်းလုဒ်လုပ်ထားသည်များ မရှိပါ</string>
+    <string name="text_downloads_list_holder">ဒေါင်းလုပ်ဆွဲထားသည်များ မရှိပါ</string>
     <string name="downloads_resumed">ဒေါင်းလုဒ်များကို ဆက်လုပ်နေပါပြီ</string>
     <string name="downloads_paused">ဒေါင်းလုဒ်များကို ခေတ္တရပ်ထားသည်</string>
     <string name="downloads_removed">ဒေါင်းလုဒ်များကို ဖယ်ရှားပြီးပါပြီ</string>
@@ -1333,7 +1333,7 @@
     <string name="suggestions_wifi_only_summary">မီတာသုံး အင်တာနက် ချိတ်ဆက်မှုများကို အသုံးပြု၍ အကြံပြုချက်များကို မွမ်းမံခြင်း မပြုပါ</string>
     <string name="tracker_wifi_only_summary">မီတာသုံး အင်တာနက် ချိတ်ဆက်မှုများကို အသုံးပြု၍ အခန်းသစ်များ ရှိမရှိ စစ်ဆေးခြင်း မပြုပါ</string>
     <string name="tracker_skip_completed">ပြီးစီးသည်များ ကျော်ရန်</string>
-    <string name="tracker_skip_completed_summary">ရင်းမြစ်က ပြီးဆုံးပြီဟု အမှတ်အသားပြုထားသော ခေါင်းစဉ်များကို မစစ်ဆေးပါ</string>
+    <string name="tracker_skip_completed_summary">ရင်းမြစ်က ပြီးဆုံးပြီဟု သတ်မှတ်ထားသော ခေါင်းစဉ်များကို ကျော်သွားမည်</string>
     <string name="tracker_mark_duplicates_read">ထပ်နေသောအခန်းများ ဖတ်ပြီးမှတ်</string>
     <string name="tracker_mark_duplicates_read_summary">သင်ဖတ်ပြီးသား အခန်းနံပါတ်ပါသည့် အခန်းသစ်များကို ဖတ်ပြီးအဖြစ် ရေတွက်သည်</string>
     <string name="tracker_progress_summary">အခန်းသစ်များ- %1$d · မအောင်မြင်ပါ- %2$d · ကျော်သွားသည်- %3$d</string>
@@ -2081,7 +2081,7 @@
     <string name="scrobbler_search_auth_hint">အကောင့်မဝင်ဘဲ ရှာဖွေနိုင်ပါသည်။ %s နှင့် ချိတ်ဆက်ရန် အကောင့်ဝင်ပါ။</string>
     <string name="scrobbler_auth_intro">%s နှင့် ချိတ်ဆက်မှုကို သတ်မှတ်ရန် အကောင့်ဝင်ပါ။ ၎င်းသည် သင့်မန်ဂါဖတ်ရှုမှု တိုးတက်မှုနှင့် အခြေအနေကို ခြေရာခံနိုင်စေမည်</string>
     <string name="unstable_feature">မတည်ငြိမ်သော အင်္ဂါရပ်</string>
-    <string name="unstable_feature_summary">ဤလုပ်ဆောင်ချက်သည် စမ်းသပ်ဆဲဖြစ်သည်။ ဒေတာဆုံးရှုံးမှုကို ရှောင်ရှားရန် အရန်သိမ်းဆည်းမှု ရှိမရှိ စစ်ဆေးပါ</string>
+    <string name="unstable_feature_summary">ဤလုပ်ဆောင်ချက်သည် စမ်းသပ်ဆဲဖြစ်သည်။ ဒေတာဆုံးရှုံးမှုမရှိစေရန် အရန်သိမ်းဆည်းမှုရှိပါစေ</string>
     <string name="downloads_background">နောက်ခံ ဒေါင်းလုဒ်များ</string>
     <string name="download_new_chapters">အခန်းအသစ်များကို ဒေါင်းလုဒ်လုပ်ရန်</string>
     <string name="manga_with_downloaded_chapters">ဒေါင်းလုဒ်လုပ်ထားသော အခန်းများပါရှိသော မန်ဂါ</string>
@@ -2253,7 +2253,7 @@
     <string name="disable_captcha_notifications">CAPTCHA အကြောင်းကြားချက်များကို ပိတ်ရန်</string>
     <string name="disable_captcha_notifications_summary">ဤရင်းမြစ်အတွက် CAPTCHA ဖြေရှင်းခြင်းဆိုင်ရာ အကြောင်းကြားချက်များကို လက်ခံရရှိမည်မဟုတ်ပါ၊ သို့သော် ၎င်းသည် နောက်ခံလုပ်ဆောင်ချက်များကို (အခန်းအသစ်များ ရှိမရှိ စစ်ဆေးခြင်း၊ အကြံပြုချက်များ ရယူခြင်း စသည်ဖြင့်) ထိခိုက်စေနိုင်သည်</string>
     <string name="disable_captcha_auto_solve">အလိုအလျောက် CAPTCHA ဖြေရှင်းခြင်းကို ပိတ်ရန်</string>
-    <string name="disable_captcha_auto_solve_summary">နောက်ခံတွင် CAPTCHA ကို အသံတိတ်ဖြေရှင်းရန် မကြိုးစားပါနှင့်။ ယင်းအစား ကိုယ်တိုင်ဖြေရှင်းရန် တောင်းဆိုမည်ဖြစ်သည်။</string>
+    <string name="disable_captcha_auto_solve_summary">နောက်ခံတွင် CAPTCHA ကို အလိုအလျောက် မဖြေရှင်းပါ။ ကိုယ်တိုင်ဖြေရှင်းရန် တောင်းဆိုလိမ့်မည်။</string>
     <string name="chapter_volume_number">တွဲ %1$s အခန်း %2$s</string>
     <string name="chapter_number">အခန်း %s</string>
     <string name="unnamed_chapter">အမည်မရှိသော အခန်း</string>

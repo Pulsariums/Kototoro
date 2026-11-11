@@ -6,7 +6,7 @@
     <string name="favourites">المفضلة</string>
     <string name="history">السجل</string>
     <string name="error_occurred">حصل خطأ</string>
-    <string name="video_player_native_init_failed">فشل تشغيل مشغل الفيديو على هذا الجهاز. اتأكد من المكتبات وتغليف C++.</string>
+    <string name="video_player_native_init_failed">مشغل الفيديو مشتغلش على الجهاز ده. اتأكد من الملفات والمكتبات بتاعت النظام.</string>
     <string name="network_error">خطأ في الشبكة</string>
     <string name="details">التفاصيل</string>
     <string name="chapters">الفصول</string>
@@ -3114,7 +3114,7 @@
     <string name="kitsu_category_horror">رعب</string>
     <string name="kitsu_category_isekai">إيسيكاي</string>
     <string name="mal_category_seasonal">أنمي موسمي</string>
-    <string name="mal_category_anime_top">أفضل الأنشطة</string>
+    <string name="mal_category_anime_top">أفضل الأنميات</string>
     <string name="mal_category_anime_airing">يعرض حالياً</string>
     <string name="mal_category_anime_upcoming">القادم</string>
     <string name="mal_category_anime_tv">أفضل مسلسلات التلفزيون</string>

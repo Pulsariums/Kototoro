@@ -143,7 +143,7 @@
     <string name="sign_in">ورود</string>
     <string name="state_ongoing">درحال پخش</string>
     <string name="system_default">پیش فرض</string>
-    <string name="exclude_nsfw_from_history">مانگاهای صحنه دار را از تاریخچه ی جسنجو پاک کنید</string>
+    <string name="exclude_nsfw_from_history">مستثنی کردن مانگای NSFW از تاریخچه</string>
     <string name="clear_updates_feed">پاکسازی فیدهای بروزرسانی</string>
     <string name="clear_feed">پاکسازی فید</string>
     <string name="search">جستجو</string>

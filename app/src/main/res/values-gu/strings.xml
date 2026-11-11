@@ -454,7 +454,7 @@
     <string name="home_placeholder_subtitle">તમારું તાજેતરનું વાંચન, અપડેટ્સ, લાઇબ્રેરી, સિન્ક અને સ્ત્રોતો એક જ જગ્યાએ જુઓ.</string>
     <string name="home_hero_local_subtitle">તમે જ્યાંથી છોડ્યું હતું ત્યાંથી ચાલુ રાખો, અથવા તાજેતરમાં ખોલેલી વસ્તુ પર પાછા જાઓ.</string>
     <string name="check_updates">અપડેટ્સ તપાસો</string>
-    <string name="home_overview_title">এক નજરમાં</string>
+    <string name="home_overview_title">એક નજરમાં</string>
     <string name="sync_status">સિન્ક</string>
     <string name="home_sync_status_auto">WebDAV ઓટો સિન્ક</string>
     <string name="home_sync_status_ready">WebDAV સિન્ક તૈયાર છે</string>
@@ -2730,7 +2730,7 @@
     <string name="mihon_source_count">%d સ્ત્રોત ઉપલબ્ધ છે</string>
     <string name="aniyomi_extension_count">%d એક્સટેન્શન લોડ થયા</string>
     <string name="aniyomi_source_count">%d સ્ત્રોત ઉપલબ્ધ છે</string>
-    <string name="no_aniyomi_extensions">ਕੋਈ Aniyomi ਐਕਸਟਨਸ਼ਨ ਨਹੀਂ</string>
+    <string name="no_aniyomi_extensions">કોઈ Aniyomi એક્સટેન્શન્સ નથી</string>
     <string name="no_aniyomi_extensions_text">ਆਨਲਾਈਨ ਐਨੀਮੇ ਦੇਖਣ ਲਈ Aniyomi ਐਕਸਟਨਸ਼ਨ ਸਥਾਪਿਤ ਕਰੋ</string>
     <string name="loading_mihon_extensions">Mihon ਐਕਸਟਨਸ਼ਨ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…</string>
     <string name="mihon_extension_error">ਐਕਸਟਨਸ਼ਨ ਲੋਡ ਕਰਨ ਵਿੱਚ ਅਸਫਲ: %s</string>

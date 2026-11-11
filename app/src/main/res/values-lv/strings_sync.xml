@@ -7,7 +7,7 @@
     <string name="google_drive_authorization_required">Google autorizācija ir nepilnīga vai beigusies. Pievienojiet kontu vēlreiz.</string>
     <string name="google_drive_authorization_canceled">Google autorizācija tika atcelta vai tai beidzās laiks.</string>
     <string name="google_drive_browser_failed">Nevarēja atvērt sistēmas pārlūku Google autorizācijai.</string>
-    <string name="google_drive_credential_store_failed">Nevarēja piekļūt sistēmas kredītkaršu krātuvei. Pārbaudiet, vai tā ir pieejama un atbloķēta, un mēģiniet vēlreiz.</string>
+    <string name="google_drive_credential_store_failed">Nevarēja piekļūt sistēmas akreditācijas datu krātuvei. Pārbaudiet, vai tā ir pieejama un atbloķēta, un mēģiniet vēlreiz.</string>
     <string name="google_drive_settings_failed">Nevar saglabāt iestatījumus. Pārbaudiet datu mapi un mēģiniet vēlreiz.</string>
     <string name="google_drive_protocol_failed">Mākoņa momentuzņēmums ir bojāts vai izmanto neatbalstītu formātu. Nekas netika augšupielādēts.</string>
     <string name="google_drive_conflict_failed">Citas ierīces atjaunina mākoņa datus. Mēģiniet sinhronizēt vēlāk.</string>

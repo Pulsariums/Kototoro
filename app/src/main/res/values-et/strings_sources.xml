@@ -86,7 +86,7 @@
     <string name="source_groups_create_clean">Loo tühi rühm</string>
     <string name="source_groups_error_apply_state">Grupi allikate olekuid ei õnnestunud rakendada</string>
     <string name="source_groups_delete_confirm">Kustutada rühm \"%1$s\"?</string>
-    <string name="extension_file_delete_failed">Pole vallas: %1$s.</string>
+    <string name="extension_file_delete_failed">Faili %1$s kustutamine ebaönnestus.</string>
     <string name="source_groups_export_lost">Eksportimise sihtkoht kadus. Proovi eksportida uuesti.</string>
     <string name="extension_repo_update_failed">Uuendamine nurjus: %1$s</string>
     <string name="source_groups_updated">Rühma uuendati</string>

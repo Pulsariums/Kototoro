@@ -4078,4 +4078,6 @@
     <string name="migration_config_categories_locked">Kategoriar vert alltid tekne vare på</string>
     <string name="search_retry_failed_sources">Prøv feila kjelder på nytt</string>
     <string name="kitsu_status_tba">Kjem</string>
+    <string name="migration_health_banner_disable">Ikkje vis igjen</string>
+    <string name="migration_health_banner_setting">Åtvaringar for kjelder</string>
 </resources>

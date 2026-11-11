@@ -4084,4 +4084,6 @@
     <string name="novel_reader_notes_sort_time">Berdasar waktu</string>
     <string name="untitled_content">Tanpa judul</string>
     <string name="kitsu_info_rating_rank">Peringkat nilai</string>
+    <string name="migration_health_banner_disable">Jangan tampilkan lagi</string>
+    <string name="migration_health_banner_setting">Peringatan sumber rusak</string>
 </resources>

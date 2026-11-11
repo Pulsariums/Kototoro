@@ -4098,4 +4098,6 @@
         <item>Doğrudan yerel (varsayılan)</item>
         <item>hf-mirror.com</item>
     </string-array>
+    <string name="migration_health_banner_disable">Bir daha gösterme</string>
+    <string name="migration_health_banner_setting">Bozuk kaynak uyarıları</string>
 </resources>

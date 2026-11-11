@@ -4075,4 +4075,6 @@
     <string name="kitsu_dub_es">دۆبی ئیسپانی</string>
     <string name="kitsu_dub_fr">دۆبی فەڕەنسی</string>
     <string name="kitsu_dub_de">دۆبی ئەڵمانی</string>
+    <string name="migration_health_banner_disable">دووبارە پیشانی مەدە</string>
+    <string name="migration_health_banner_setting">ئاگاداریی سەرچاوە خراپەکان</string>
 </resources>

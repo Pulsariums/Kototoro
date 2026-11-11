@@ -4108,4 +4108,6 @@
     <string name="kitsu_dub_de">Doublage ALL</string>
     <string name="kitsu_dub_ko">Doublage COR</string>
     <string name="extension_settings">Options d\'extension</string>
+    <string name="migration_health_banner_disable">Ne plus afficher</string>
+    <string name="migration_health_banner_setting">Sources défectueuses</string>
 </resources>

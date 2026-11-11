@@ -4082,4 +4082,6 @@
     <string name="search_displayed_results">%1$d exibidos</string>
     <string name="kitsu_info_age_rating">Faixa etária</string>
     <string name="kitsu_relation_side_story">História paralela</string>
+    <string name="migration_health_banner_disable">Não mostrar novamente</string>
+    <string name="migration_health_banner_setting">Avisos de fontes quebradas</string>
 </resources>

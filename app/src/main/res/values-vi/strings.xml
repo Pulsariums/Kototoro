@@ -4083,4 +4083,6 @@
     <string name="kitsu_dub_fr">Lồng tiếng Pháp</string>
     <string name="kitsu_dub_de">Lồng tiếng Đức</string>
     <string name="kitsu_dub_ko">Lồng tiếng Hàn</string>
+    <string name="migration_health_banner_disable">Không hiển thị lại</string>
+    <string name="migration_health_banner_setting">Cảnh báo nguồn hỏng</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="extension_settings">Setelan ekstensi</string>
     <string name="cloudstream_plugin_reloaded">%1$s dimuat ulang kanggo ngetrapake setelane</string>
     <string name="kitsu_dub_fr">Flansɛ nɛn</string>
+    <string name="migration_health_banner_disable">Nda ubuya</string>
+    <string name="migration_health_banner_setting">Teta biibi biya bubi</string>
 </resources>

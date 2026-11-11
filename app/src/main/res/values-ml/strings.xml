@@ -4075,4 +4075,6 @@
     <string name="pref_glass_delete_preset">പ്രീസെറ്റ് ഇല്ലാതാക്കുക</string>
     <string name="novel_selection_ask_ai">AI-യോട് ചോദിക്കുക</string>
     <string name="novel_reader_reset_confirm">എല്ലാ റീഡർ ക്രമീകരണങ്ങളും റീസെറ്റ് ചെയ്യണോ?</string>
+    <string name="migration_health_banner_disable">ഇനി കാണിക്കരുത്</string>
+    <string name="migration_health_banner_setting">തകർന്ന ഉറവിട മുന്നറിയിപ്പ്</string>
 </resources>

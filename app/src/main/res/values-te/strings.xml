@@ -4075,4 +4075,6 @@
     <string name="kitsu_info_end_date">ముగింపు తేదీ</string>
     <string name="kitsu_info_rating_rank">రేటింగ్ ర్యాంక్</string>
     <string name="extension_settings">ఎక్స్‌టెన్షన్ సెట్టింగ్‌లు</string>
+    <string name="migration_health_banner_disable">మళ్లీ చూపవద్దు</string>
+    <string name="migration_health_banner_setting">విఫలమైన సోర్స్ హెచ్చరికలు</string>
 </resources>

@@ -4084,4 +4084,6 @@
     <string name="novel_excerpt_background_dusk">Azul crepúsculo</string>
     <string name="novel_marking_locate_original">Localizar no texto</string>
     <string name="search_displayed_results">%1$d visíveis</string>
+    <string name="migration_health_banner_disable">Não mostrar novamente</string>
+    <string name="migration_health_banner_setting">Avisos de fontes quebradas</string>
 </resources>

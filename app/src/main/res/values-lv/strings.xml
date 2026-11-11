@@ -4075,4 +4075,6 @@
     <string name="kitsu_relation_side_story">Blakusests</string>
     <string name="kitsu_section_staff_works">Personāla darbi</string>
     <string name="source_preferences_browsing">Pārlūkošana</string>
+    <string name="migration_health_banner_disable">Vairs nerādīt</string>
+    <string name="migration_health_banner_setting">Brīdinājumi par avotiem</string>
 </resources>

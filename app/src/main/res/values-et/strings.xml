@@ -4080,4 +4080,6 @@
     <string name="migration_clear_visible">Puhasta kuvatu</string>
     <string name="search_displayed_results">Kuvatud %1$d</string>
     <string name="kitsu_dub_fr">Prantsuse d.</string>
+    <string name="migration_health_banner_disable">Ära näita uuesti</string>
+    <string name="migration_health_banner_setting">Katkiste allikate hoiatused</string>
 </resources>

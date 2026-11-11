@@ -4075,4 +4075,6 @@
     <string name="search_retry_failed_sources">ناکام ذرائع دوبارہ کوشش کرو</string>
     <string name="library_search_apply">%1$s نوں “%2$s” نال فلٹر کرو</string>
     <string name="kitsu_info_start_date">ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ</string>
+    <string name="migration_health_banner_disable">دوباره نه دکھاؤ</string>
+    <string name="migration_health_banner_setting">خراب سورس انتباہات</string>
 </resources>

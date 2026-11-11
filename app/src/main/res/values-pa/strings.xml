@@ -4075,4 +4075,6 @@
     <string name="source_preferences_browsing">ਬ੍ਰਾਊਜ਼ਿੰਗ</string>
     <string name="extension_settings">ਐਕਸਟੈਨਸ਼ਨ ਸੈਟਿੰਗਾਂ</string>
     <string name="cloudstream_plugin_reloaded">ਸੈਟਿੰਗਾਂ ਲਾਗੂ ਕਰਨ ਲਈ %1$s ਮੁੜ ਲੋਡ ਕੀਤਾ ਗਿਆ</string>
+    <string name="migration_health_banner_disable">ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ</string>
+    <string name="migration_health_banner_setting">ਟੁੱਟੇ ਸਰੋਤ ਚੇਤਾਵਨੀਆਂ</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="search_refreshing_results">Renovelar rèsultâts…</string>
     <string name="library_search_matches">Trovâs dens %1$s</string>
     <string name="kitsu_dub_ko">Doublâjo ko</string>
+    <string name="migration_health_banner_disable">Pan anthé trô</string>
+    <string name="migration_health_banner_setting">Alèrtes sôources cassées</string>
 </resources>

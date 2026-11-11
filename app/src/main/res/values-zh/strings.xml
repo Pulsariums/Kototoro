@@ -4162,4 +4162,6 @@
     <string name="kitsu_dub_de">德语配音</string>
     <string name="kitsu_dub_ko">韩语配音</string>
     <string name="kitsu_dub_it">意大利语配音</string>
+    <string name="migration_health_banner_disable">不再显示</string>
+    <string name="migration_health_banner_setting">失效源警告</string>
 </resources>

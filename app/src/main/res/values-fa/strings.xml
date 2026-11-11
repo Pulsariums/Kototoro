@@ -4077,4 +4077,6 @@
     <string name="sort_by_last_read">آخرین خوانش</string>
     <string name="card_progress_percent_read">%1$d%% خوانده</string>
     <string name="card_progress_percent_left">%1$d%% مانده</string>
+    <string name="migration_health_banner_disable">دیگر نمایش داده نشود</string>
+    <string name="migration_health_banner_setting">هشدار منابع خراب</string>
 </resources>

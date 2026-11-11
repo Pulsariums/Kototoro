@@ -4079,4 +4079,6 @@
     <string name="extension_settings">การตั้งค่าส่วนขยาย</string>
     <string name="cloudstream_plugin_reloaded">โหลด %1$s ใหม่แล้วเพื่อใช้การตั้งค่า</string>
     <string name="kitsu_dub_fr">พากย์ฝรั่งเศส</string>
+    <string name="migration_health_banner_disable">ไม่ต้องแสดงอีก</string>
+    <string name="migration_health_banner_setting">คำเตือนแหล่งข้อมูลที่เสีย</string>
 </resources>

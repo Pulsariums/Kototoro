@@ -4075,4 +4075,6 @@
     <string name="novel_marking_edit_note">عدل ملاحظة</string>
     <string name="novel_marking_edit_note_title">عدل ملاحظة</string>
     <string name="sort_by_added_date">وقت الإضافة</string>
+    <string name="migration_health_banner_disable">ما تظهرش تاني</string>
+    <string name="migration_health_banner_setting">تحذيرات المصادر المضروبة</string>
 </resources>

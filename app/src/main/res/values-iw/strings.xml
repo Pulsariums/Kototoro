@@ -4075,4 +4075,6 @@
     <string name="cloudstream_plugin_reloaded">%1$s נטען מחדש להחלת ההגדרות</string>
     <string name="sort_by_last_read">נקראה לאחרונה</string>
     <string name="kitsu_dub_ko">דיבוב קוריאני</string>
+    <string name="migration_health_banner_disable">אל תציג שוב</string>
+    <string name="migration_health_banner_setting">אזהרות על מקורות פגומים</string>
 </resources>

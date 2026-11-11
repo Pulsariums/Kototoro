@@ -4085,4 +4085,6 @@
     <string name="untitled_content">Bez naslova</string>
     <string name="migration_match_first_hit">Prvo poklapanje</string>
     <string name="kitsu_relation_side_story">Sporedna priča</string>
+    <string name="migration_health_banner_disable">Ne prikazuj ponovo</string>
+    <string name="migration_health_banner_setting">Upozorenja za izvore</string>
 </resources>

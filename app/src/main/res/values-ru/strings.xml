@@ -4085,4 +4085,6 @@
     <string name="cloudstream_plugin_reloaded">%1$s перезагружен для применения настроек</string>
     <string name="pref_glass_scope_top_bar">Верхняя панель</string>
     <string name="dictionary_rule_url_label">Правило URL</string>
+    <string name="migration_health_banner_disable">Больше не показывать</string>
+    <string name="migration_health_banner_setting">О сбоях источников</string>
 </resources>

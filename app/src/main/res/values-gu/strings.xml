@@ -4075,4 +4075,6 @@
     <string name="search_retry_failed_sources">Retry failed sources</string>
     <string name="library_search_apply">Filter %1$s by “%2$s”</string>
     <string name="kitsu_relation_full_story">આખી વાર્તા</string>
+    <string name="migration_health_banner_disable">다이 다시 표시 안 함</string>
+    <string name="migration_health_banner_setting">خلاف مكسور صدمات</string>
 </resources>

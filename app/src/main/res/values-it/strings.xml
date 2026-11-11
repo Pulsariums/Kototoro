@@ -4085,4 +4085,6 @@
     <string name="search_displayed_results">%1$d mostrati</string>
     <string name="remove_custom_cover">Usa originale</string>
     <string name="custom_cover_failed">Impossibile leggere questa immagine</string>
+    <string name="migration_health_banner_disable">Non mostrare più</string>
+    <string name="migration_health_banner_setting">Avvisi fonti guaste</string>
 </resources>

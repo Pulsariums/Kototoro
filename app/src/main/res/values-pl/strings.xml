@@ -4085,4 +4085,6 @@
     <string name="migration_select_all">Wszystkie</string>
     <string name="migration_filter_all">Wszystkie %d</string>
     <string name="duplicate_read_percent">Przeczytano %d%%</string>
+    <string name="migration_health_banner_disable">Nie pokazuj ponownie</string>
+    <string name="migration_health_banner_setting">Ostrzeżenia o źródłach</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="migration_next_with_count">Sabanjuré · %d</string>
     <string name="choose_categories_to_show">Kategori sing katon</string>
     <string name="kitsu_info_end_date">Tgl rampung</string>
+    <string name="migration_health_banner_disable">Aja dituduhake maneh</string>
+    <string name="migration_health_banner_setting">Pèngetan sumber rusak</string>
 </resources>

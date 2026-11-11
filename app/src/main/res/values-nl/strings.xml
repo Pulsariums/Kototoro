@@ -4075,4 +4075,6 @@
     <string name="sort_by_last_read">Laatst gelezen</string>
     <string name="updated_header_up_to_date">Alles is bijgewerkt</string>
     <string name="duplicate_read_percent">%d%% gelezen</string>
+    <string name="migration_health_banner_disable">Niet meer tonen</string>
+    <string name="migration_health_banner_setting">Waarschuwingen bronnen</string>
 </resources>

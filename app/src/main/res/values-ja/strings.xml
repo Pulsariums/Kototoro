@@ -4107,4 +4107,6 @@
     <string name="source_preferences_browsing">閲覧</string>
     <string name="extension_settings">拡張機能の設定</string>
     <string name="cloudstream_plugin_reloaded">設定を適用するため %1$s を再読み込みしました</string>
+    <string name="migration_health_banner_disable">今後表示しない</string>
+    <string name="migration_health_banner_setting">利用できないソースの警告</string>
 </resources>

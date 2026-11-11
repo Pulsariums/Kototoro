@@ -4077,4 +4077,6 @@
     <string name="migration_action_skip">Hoppa över</string>
     <string name="migration_health_disabled">Inaktiverad</string>
     <string name="remove_custom_cover">Återställ omslag</string>
+    <string name="migration_health_banner_disable">Visa inte igen</string>
+    <string name="migration_health_banner_setting">Varningar för trasiga källor</string>
 </resources>

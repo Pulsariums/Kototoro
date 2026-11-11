@@ -4085,4 +4085,6 @@
     <string name="dictionary_rule_url_label">Правило URL</string>
     <string name="duplicate_read_percent">Прочитано %d%%</string>
     <string name="search_displayed_results">Показано: %1$d</string>
+    <string name="migration_health_banner_disable">Більше не показувати</string>
+    <string name="migration_health_banner_setting">Попередження про джерела</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="kitsu_action_person_page">Asmens puslapis</string>
     <string name="kitsu_info_japanese_name">Japoniškas vardas</string>
     <string name="kitsu_action_character_page">Veikėjo puslapis</string>
+    <string name="migration_health_banner_disable">Daugiau nerodyti</string>
+    <string name="migration_health_banner_setting">Brokuotų šaltinių įspėjimai</string>
 </resources>

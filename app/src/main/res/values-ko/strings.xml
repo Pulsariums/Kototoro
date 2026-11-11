@@ -4078,4 +4078,6 @@
     <string name="source_preferences_browsing">탐색</string>
     <string name="extension_settings">확장 기능 설정</string>
     <string name="cloudstream_plugin_reloaded">설정을 적용하기 위해 %1$s을(를) 다시 불러왔습니다</string>
+    <string name="migration_health_banner_disable">다시 보지 않기</string>
+    <string name="migration_health_banner_setting">작동 중단 소스 경고</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="choose_categories_to_show">Erakutsi beharreko kategoriak</string>
     <string name="kitsu_status_unreleased">Argitaratu gabea</string>
     <string name="kitsu_info_end_date">Amaiera-data</string>
+    <string name="migration_health_banner_disable">Ez erakutsi berriro</string>
+    <string name="migration_health_banner_setting">Iturri apurtuen abisuak</string>
 </resources>

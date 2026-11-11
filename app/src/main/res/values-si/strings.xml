@@ -4075,4 +4075,6 @@
     <string name="kitsu_info_rating_rank">ශ්‍රේණිගත කිරීම</string>
     <string name="kitsu_relation_full_story">මුල් කතාව</string>
     <string name="kitsu_section_staff_works">කාර්ය මණ්ඩල වැඩ</string>
+    <string name="migration_health_banner_disable">다시 표시 안 함</string>
+    <string name="migration_health_banner_setting">경고 표시 안 함</string>
 </resources>

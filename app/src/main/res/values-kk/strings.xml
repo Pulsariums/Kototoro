@@ -4080,4 +4080,6 @@
     <string name="sort_by_added_date">Қосылған күні</string>
     <string name="dictionary_rule_url_label">URL ережесі</string>
     <string name="kitsu_dub_ko">Корейше дыбыстау</string>
+    <string name="migration_health_banner_disable">Қайта көрсetпеу</string>
+    <string name="migration_health_banner_setting">Істен шыққан көздер</string>
 </resources>

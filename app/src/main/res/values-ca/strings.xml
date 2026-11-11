@@ -4075,4 +4075,6 @@
     <string name="extension_settings">Extensions</string>
     <string name="cloudstream_plugin_reloaded">S\'ha recarregat %1$s per aplicar els canvis</string>
     <string name="search_displayed_results">Mostra: %1$d</string>
+    <string name="migration_health_banner_disable">No tornar a mostrar</string>
+    <string name="migration_health_banner_setting">Avís de font trencada</string>
 </resources>

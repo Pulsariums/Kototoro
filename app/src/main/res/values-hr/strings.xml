@@ -4080,4 +4080,6 @@
     <string name="dictionary_rule_url_label">URL pravilo</string>
     <string name="migration_exit_message">Rezultati podudaranja bit će izgubljeni.</string>
     <string name="kitsu_dub_de">Njemačka sinkr.</string>
+    <string name="migration_health_banner_disable">Ne prikazuj više</string>
+    <string name="migration_health_banner_setting">Upozorenja o izvorima</string>
 </resources>

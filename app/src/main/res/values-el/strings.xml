@@ -4082,4 +4082,6 @@
     <string name="migration_clear_visible">Εκκαθ. ορατών</string>
     <string name="update_read_completed">Ανάγνωση</string>
     <string name="kitsu_section_staff_works">Έργα συντελ.</string>
+    <string name="migration_health_banner_disable">Να μην εμφανιστεί</string>
+    <string name="migration_health_banner_setting">Προειδοποιήσεις πηγών</string>
 </resources>

@@ -4075,4 +4075,6 @@
     <string name="duplicate_read_to">ଅଧ୍ୟାୟ %s ପଢ଼ନ୍ତୁ</string>
     <string name="migration_next_with_count">ପରବର୍ତ୍ତୀ · %d</string>
     <string name="migration_clear_visible">ଦୃଶ୍ୟମାନ ସଫା କରନ୍ତୁ</string>
+    <string name="migration_health_banner_disable">ଆଉ ଦେଖାନ୍ତୁ ନାହିଁ</string>
+    <string name="migration_health_banner_setting">ଭଙ୍ଗା ଉତ୍ସ ଚେତାବନୀ</string>
 </resources>

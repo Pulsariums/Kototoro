@@ -4075,4 +4075,6 @@
     <string name="kitsu_relation_full_story">Poveste completă</string>
     <string name="kitsu_action_person_page">Pagină persoană</string>
     <string name="kitsu_dub_fr">Dublaj franceză</string>
+    <string name="migration_health_banner_disable">Nu mai afișa</string>
+    <string name="migration_health_banner_setting">Avertismente surse defecte</string>
 </resources>

@@ -4084,4 +4084,6 @@
     <string name="migration_clear_visible">Láthatók törlése</string>
     <string name="mangabaka_access_token">Személyes hozzáférési token</string>
     <string name="kitsu_info_rating_rank">Értékelési rang</string>
+    <string name="migration_health_banner_disable">Ne mutassa újra</string>
+    <string name="migration_health_banner_setting">Hibás források jelezve</string>
 </resources>

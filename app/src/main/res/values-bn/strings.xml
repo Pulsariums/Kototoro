@@ -4075,4 +4075,6 @@
     <string name="migration_migrate_n">মাইগ্রেট %d</string>
     <string name="migration_next_with_count">পরের · %d</string>
     <string name="search_displayed_results">%1$d দেখানো</string>
+    <string name="migration_health_banner_disable">আর দেখাবেন না</string>
+    <string name="migration_health_banner_setting">অকেজো সোর্স সতর্কতা</string>
 </resources>

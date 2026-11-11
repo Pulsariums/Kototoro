@@ -4077,4 +4077,6 @@
     <string name="migration_config_title">%d प्रविष्टिहरू सार्नुहोस्</string>
     <string name="search_displayed_results">%1$d देखाइएको छ</string>
     <string name="library_search_placeholder">%1$s मा खोज्नुहोस्</string>
+    <string name="migration_health_banner_disable">फेरी नदेखाउनुहोस्</string>
+    <string name="migration_health_banner_setting">खराब स्रोत चेताउनीहरू</string>
 </resources>

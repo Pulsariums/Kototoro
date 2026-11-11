@@ -4085,4 +4085,6 @@
     <string name="migration_confirm_title">%d आइटम माइग्रेट करें?</string>
     <string name="migration_confirm_copy">पुराने आइटम लाइब्रेरी में रहेंगे।</string>
     <string name="search_displayed_results">%1$d दिखे</string>
+    <string name="migration_health_banner_disable">دوباره نشان نده</string>
+    <string name="migration_health_banner_setting">ارتباط به منبع خراب</string>
 </resources>

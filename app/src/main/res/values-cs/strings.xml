@@ -4085,4 +4085,6 @@
     <string name="extension_settings">Nastavení rozšíření</string>
     <string name="cloudstream_plugin_reloaded">Doplněk %1$s byl načten k použití nastavení</string>
     <string name="save_note">Uložit</string>
+    <string name="migration_health_banner_disable">Nezobrazovat znovu</string>
+    <string name="migration_health_banner_setting">Chyby zdrojů</string>
 </resources>

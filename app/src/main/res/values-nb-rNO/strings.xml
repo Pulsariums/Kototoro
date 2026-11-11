@@ -4077,4 +4077,6 @@
     <string name="novel_reader_reset_confirm">Tilbakestill alle leserinnstillinger?</string>
     <string name="novel_reader_no_matching_notes">Ingen matchende notater</string>
     <string name="kitsu_relation_full_story">Hele historien</string>
+    <string name="migration_health_banner_disable">Ikke vis igjen</string>
+    <string name="migration_health_banner_setting">Varsler om ødelagte kilder</string>
 </resources>

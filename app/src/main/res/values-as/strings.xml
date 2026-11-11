@@ -4075,4 +4075,6 @@
     <string name="extension_settings">এক্সটেনশ্বন ছেটিংছ</string>
     <string name="cloudstream_plugin_reloaded">ছেটিংছ প্ৰয়োগ কৰিবলৈ %1$s পুনৰ লোড কৰা হ\'ল</string>
     <string name="migration_migrate_n">প্ৰব্ৰজন %d</string>
+    <string name="migration_health_banner_disable">আকৌ নেদেখুৱাব</string>
+    <string name="migration_health_banner_setting">ভঙা উৎসৰ সতৰ্কবাণী</string>
 </resources>

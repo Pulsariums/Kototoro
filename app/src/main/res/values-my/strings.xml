@@ -4075,4 +4075,6 @@
     <string name="kitsu_action_person_page">ပုဂ္ဂိုလ် စာမျက်နှာ</string>
     <string name="kitsu_action_character_page">ဇာတ်ကောင် စာမျက်နှာ</string>
     <string name="dictionary_query_label">စကားလုံး သို့မဟုတ် စာသား</string>
+    <string name="migration_health_banner_disable">ထပ်မပြပါနှင့်</string>
+    <string name="migration_health_banner_setting">ရင်းမြစ်သတိပေးချက်များ</string>
 </resources>

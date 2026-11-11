@@ -4075,4 +4075,6 @@
     <string name="source_preferences_browsing">瀏覽</string>
     <string name="extension_settings">擴充功能設定</string>
     <string name="cloudstream_plugin_reloaded">已重新載入 %1$s 以套用設定</string>
+    <string name="migration_health_banner_disable">不再顯示</string>
+    <string name="migration_health_banner_setting">損毀的圖源警告</string>
 </resources>

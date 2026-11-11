@@ -4075,4 +4075,6 @@
     <string name="custom_cover">គម្របផ្ទាល់ខ្លួន</string>
     <string name="novel_epub_author_line">អ្នកនិពន្ធ៖ %1$s</string>
     <string name="kitsu_info_start_date">ថ្ងៃចាប់ផ្តើម</string>
+    <string name="migration_health_banner_disable">កុំបង្ហាញម្ដងទៀត</string>
+    <string name="migration_health_banner_setting">ការព្រមានប្រភពខូច</string>
 </resources>

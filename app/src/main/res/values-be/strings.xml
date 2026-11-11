@@ -4085,4 +4085,6 @@
     <string name="card_progress_percent_left">Яшчэ %1$d%%</string>
     <string name="search_displayed_results">%1$d паказ.</string>
     <string name="kitsu_info_episode_length">Даўжыня</string>
+    <string name="migration_health_banner_disable">Больш не паказваць</string>
+    <string name="migration_health_banner_setting">Аб памылках крыніц</string>
 </resources>

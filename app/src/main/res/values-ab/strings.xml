@@ -4075,4 +4075,6 @@
     <string name="migration_item_failed">Агха: %s</string>
     <string name="kitsu_info_age_rating">Ақәрахьтә</string>
     <string name="kitsu_relation_full_story">Аҭоурых наӡа</string>
+    <string name="migration_health_banner_disable">Шәҟәымҵәа</string>
+    <string name="migration_health_banner_setting">Ажәабжьқәа</string>
 </resources>

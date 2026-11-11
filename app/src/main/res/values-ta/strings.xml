@@ -4077,4 +4077,6 @@
     <string name="kitsu_dub_it">இத்தாலிய டப்பிங்</string>
     <string name="jar_plugins_update_all">அனைத்தும் புதுப்பி</string>
     <string name="local_download_pause_all">அனைத்தையும் இடைநிறுத்து</string>
+    <string name="migration_health_banner_disable">மீண்டும் காட்டாதே</string>
+    <string name="migration_health_banner_setting">செயலிழந்த மூல எச்சரிக்கைகள்</string>
 </resources>

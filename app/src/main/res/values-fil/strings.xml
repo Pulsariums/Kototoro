@@ -4085,4 +4085,6 @@
     <string name="local_download_paused">%1$d naka-pause</string>
     <string name="local_download_pause_all">I-pause lahat</string>
     <string name="untitled_content">Walang pamagat</string>
+    <string name="migration_health_banner_disable">Huwag nang ipakita</string>
+    <string name="migration_health_banner_setting">Babala sa sirang pinagmulan</string>
 </resources>

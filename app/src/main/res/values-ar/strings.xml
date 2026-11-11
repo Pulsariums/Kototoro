@@ -4110,4 +4110,6 @@
     <string name="sort_by_added_date">وقت الإضافة</string>
     <string name="kitsu_info_end_date">الانتهاء</string>
     <string name="kitsu_dub_de">مدبلج ألماني</string>
+    <string name="migration_health_banner_disable">عدم الإظهار مجدداً</string>
+    <string name="migration_health_banner_setting">تحذيرات المصادر المعطلة</string>
 </resources>

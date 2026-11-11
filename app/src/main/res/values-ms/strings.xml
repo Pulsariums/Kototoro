@@ -4079,4 +4079,6 @@
     <string name="migration_next_with_count">Seterusnya · %d</string>
     <string name="kitsu_status_upcoming">Akan datang</string>
     <string name="kitsu_info_end_date">Tarikh tamat</string>
+    <string name="migration_health_banner_disable">Jangan tunjukkan lagi</string>
+    <string name="migration_health_banner_setting">Amaran sumber rosak</string>
 </resources>

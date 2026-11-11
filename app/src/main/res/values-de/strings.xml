@@ -4084,4 +4084,6 @@
     <string name="duplicate_read_percent">%d%% gelesen</string>
     <string name="migration_clear_visible">Anzeige löschen</string>
     <string name="kitsu_status_unreleased">Unveröffentlicht</string>
+    <string name="migration_health_banner_disable">Nicht mehr anzeigen</string>
+    <string name="migration_health_banner_setting">Defekte Quellen warnen</string>
 </resources>

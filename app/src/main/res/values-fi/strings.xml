@@ -4077,4 +4077,6 @@
     <string name="kitsu_status_unreleased">Ei julkaistu</string>
     <string name="kitsu_info_end_date">Loppupvm</string>
     <string name="cloudstream_plugin_reloaded">%1$s ladattiin uudelleen asetusten vuoksi</string>
+    <string name="migration_health_banner_disable">Älä näytä uudelleen</string>
+    <string name="migration_health_banner_setting">Toimimattomat lähteet</string>
 </resources>

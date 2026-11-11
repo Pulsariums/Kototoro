@@ -4085,4 +4085,6 @@
     <string name="migration_exit_message">Se perderán las coincidencias.</string>
     <string name="migration_health_disabled">Inactivo</string>
     <string name="search_displayed_results">Viendo %1$d</string>
+    <string name="migration_health_banner_disable">No volver a mostrar</string>
+    <string name="migration_health_banner_setting">Avisos de fuentes rotas</string>
 </resources>

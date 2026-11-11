@@ -1,0 +1,44 @@
+name: Fork Unit Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch to test
+        required: true
+        default: pr/source-management-improvements
+      tests:
+        description: Gradle --tests filters (space separated, empty = all)
+        required: false
+        default: ""
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        ref: ${{ inputs.ref }}
+        submodules: recursive
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: '17'
+        cache: gradle
+    - run: chmod +x gradlew
+    - name: Run unit tests
+      env:
+        FILTERS: ${{ inputs.tests }}
+      run: |
+        ARGS=""
+        for f in $FILTERS; do ARGS="$ARGS --tests $f"; done
+        ./gradlew :app:testDebugUnitTest $ARGS --no-daemon --stacktrace --continue
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: unit-test-reports
+        path: app/build/reports/tests/
+        if-no-files-found: ignore

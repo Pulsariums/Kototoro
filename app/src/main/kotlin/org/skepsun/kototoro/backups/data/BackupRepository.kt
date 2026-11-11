@@ -66,6 +66,7 @@ import org.skepsun.kototoro.core.db.entity.RestoreCheckpointEntity
 import org.skepsun.kototoro.core.parser.kotatsu.KotatsuParserSource
 import org.skepsun.kototoro.core.prefs.AppSettings
 import org.skepsun.kototoro.core.prefs.BackupSettingsFilter
+import org.skepsun.kototoro.settings.sources.groups.SourceGroupsDirectory
 import org.skepsun.kototoro.core.util.CompositeResult
 import org.skepsun.kototoro.core.util.progress.Progress
 import org.skepsun.kototoro.explore.data.ContentSourcesRepository
@@ -1259,7 +1260,38 @@ class BackupRepository @Inject constructor(
         return result
     }
 
-    private fun sourceGroupsDir() = java.io.File(appContext.filesDir, "source_groups")
+    private fun sourceGroupsDir() = SourceGroupsDirectory.resolve(appContext.filesDir)
+
+    private fun swapSourceGroupsDir(staging: File) = synchronized(SourceGroupsDirectory.lock) {
+        // Resolving first puts back the only copy an interrupted earlier swap left aside.
+        val dir = sourceGroupsDir()
+        staging.mkdirs()
+        val previous = SourceGroupsDirectory.previous(appContext.filesDir)
+        previous.deleteRecursively()
+        val hadPrevious = dir.exists()
+        if (hadPrevious) check(dir.renameTo(previous)) { "Cannot move aside source groups" }
+        try {
+            try {
+                java.nio.file.Files.move(
+                    staging.toPath(),
+                    dir.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                )
+            } catch (e: java.nio.file.AtomicMoveNotSupportedException) {
+                java.nio.file.Files.move(
+                    staging.toPath(),
+                    dir.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                )
+            }
+        } catch (e: Throwable) {
+            dir.deleteRecursively()
+            if (hadPrevious) previous.renameTo(dir)
+            throw e
+        }
+        previous.deleteRecursively()
+        Unit
+    }
 
     private fun swapSourceGroupsDir(staging: File) {
         val dir = sourceGroupsDir()

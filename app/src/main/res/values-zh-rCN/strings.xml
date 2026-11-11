@@ -3835,6 +3835,8 @@
         <item quantity="one">%1$d个图源可能已失效，影响 %2$d部收藏</item>
         <item quantity="other">%1$d 个来源可能已失效，涉及 %2$d 部收藏</item>
     </plurals>
+    <string name="migration_health_banner_disable">不再提示</string>
+    <string name="migration_health_banner_setting">源损坏提示</string>
     <string name="migration_health_banner_action">一键换源这 %d 部</string>
     <string name="migration_health_needs_attention">需要处理</string>
     <string name="migration_health_ok">正常</string>

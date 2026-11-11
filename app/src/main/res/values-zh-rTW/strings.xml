@@ -3949,6 +3949,8 @@
         <item quantity="one">%1$d 個來源可能失效，影響 %2$d 本收藏</item>
         <item quantity="other">%1$d 個來源可能已失效，涉及 %2$d 部收藏</item>
     </plurals>
+    <string name="migration_health_banner_disable">不再提示</string>
+    <string name="migration_health_banner_setting">來源損壞提示</string>
     <string name="migration_health_banner_action">一鍵換源這 %d 部</string>
     <string name="migration_health_needs_attention">需要處理</string>
     <string name="migration_health_ok">正常</string>

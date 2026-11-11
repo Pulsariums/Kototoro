@@ -96,7 +96,7 @@ internal fun DesktopFeedPanel(controller: DesktopController, state: DesktopAppSt
         topBar = {
             Box(Modifier.fillMaxWidth().padding(top = inset, bottom = 12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TopBarTitleBlock(desktopText("nav.subscriptions"))
+                    TopBarTitleBlock(AndroidStrings["feed"])
                     Spacer(Modifier.weight(1f))
                     DesktopSourceFilterControls(filter, state.sources, controller::feedFilter, enabled, "feed")
                     Button({ controller.checkUpdates() }, enabled = enabled, modifier = Modifier.testTag("feed-check")) {
@@ -175,7 +175,7 @@ internal fun DesktopFeedPanel(controller: DesktopController, state: DesktopAppSt
                 val label = feedDateLabel(row.createdAt)
                 (row to label.takeIf { it != previousLabel }).also { previousLabel = label }
             }
-            items(labelled, key = { it.first.logId }) { (row, label) ->
+            items(labelled, key = { it.first.key }) { (row, label) ->
                 FeedRow(controller, state, row, label, enabled)
             }
         }

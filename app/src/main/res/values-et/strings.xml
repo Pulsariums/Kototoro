@@ -4058,4 +4058,26 @@
     <string name="source_preferences_browsing">Sirvimine</string>
     <string name="extension_settings">Laiendi seaded</string>
     <string name="cloudstream_plugin_reloaded">Seadete rakendamiseks laaditi %1$s uuesti</string>
+    <string name="loading_circle_style_thin_wavy">Õhuke lain.</string>
+    <string name="space_switcher_position_top_right">Ülal parem.</string>
+    <string name="space_switcher_position_top_left">Üla-vasak</string>
+    <string name="pref_glass_presets_export_empty">Ekspordiks pole eelseadistusi</string>
+    <string name="built_in_space">Sisemine</string>
+    <string name="novel_ai_ask_suggestions">Võid küsida</string>
+    <string name="novel_markings_summary">%1$d salvestatud</string>
+    <string name="novel_marking_edit_note_title">Muuda märk.</string>
+    <string name="novel_reader_notes_sort_chapter">Peatükiti</string>
+    <string name="novel_reader_no_matching_notes">Märkmeid ei leitud</string>
+    <string name="novel_excerpt_save_to_gallery">Lisa galeriisse</string>
+    <string name="novel_marking_tab_bookmarks">Järjehoidja</string>
+    <string name="local_download_queued">%1$d ootel</string>
+    <string name="sort_by_last_read">Viimati</string>
+    <string name="settings_source_check_login_title">Logimisoleku kontroll</string>
+    <string name="migration_flag_stats">Statistika</string>
+    <string name="migration_deep_search">Süvaotsing</string>
+    <string name="migration_migrating">Migreerib…</string>
+    <string name="migration_health_broken">Märgitud katki</string>
+    <string name="migration_clear_visible">Puhasta kuvatu</string>
+    <string name="search_displayed_results">Kuvatud %1$d</string>
+    <string name="kitsu_dub_fr">Prantsuse d.</string>
 </resources>

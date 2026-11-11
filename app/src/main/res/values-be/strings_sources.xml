@@ -98,4 +98,5 @@
     <string name="source_groups_updated">Група абноўлена</string>
     <string name="source_groups_newer_schema">Гэты файл групы з новай версіі. Абновіце праграму.</string>
     <string name="source_groups_confirm_domains">Перавызначэнні даменаў (%1$d крыніц):</string>
+    <string name="source_groups_exported">Група выгружана</string>
 </resources>

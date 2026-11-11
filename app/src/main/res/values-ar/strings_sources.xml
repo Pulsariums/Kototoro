@@ -98,4 +98,5 @@
     <string name="source_groups_updated">حُدثت المجموعة</string>
     <string name="source_groups_newer_schema">ملف المجموعة هذا من إصدار أحدث. قم بتحديث التطبيق.</string>
     <string name="source_groups_confirm_domains">تجاوزات النطاق (%1$d مصدر):</string>
+    <string name="source_test_all">فحص الكل</string>
 </resources>

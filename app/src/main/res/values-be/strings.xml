@@ -4080,4 +4080,9 @@
     <string name="source_preferences_browsing">Агляд</string>
     <string name="extension_settings">Налады пашырэння</string>
     <string name="cloudstream_plugin_reloaded">Плагін %1$s перазагружаны для прымянення налад</string>
+    <string name="space_switcher_position_top_right">Верх справа</string>
+    <string name="space_switcher_position_top_left">Верх злева</string>
+    <string name="card_progress_percent_left">Яшчэ %1$d%%</string>
+    <string name="search_displayed_results">%1$d паказ.</string>
+    <string name="kitsu_info_episode_length">Даўжыня</string>
 </resources>

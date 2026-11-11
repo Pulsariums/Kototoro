@@ -56,4 +56,6 @@
     <string name="book_notes_markdown_thought">💭 **Mõte**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Järjehoidja**: Lk %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (edenemine %1$d%%)</string>
+    <string name="book_notes_export">Ekspordi märked</string>
+    <string name="book_notes_empty">Märkmeid ja järjehoidjaid pole</string>
 </resources>

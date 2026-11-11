@@ -4079,4 +4079,10 @@
     <string name="source_preferences_browsing">ब्रोज़िंग</string>
     <string name="extension_settings">एक्सटेंशन सेटिंग्स</string>
     <string name="cloudstream_plugin_reloaded">सेटिंग्स लागू करने के लिए %1$s रीलोड किया गया</string>
+    <string name="novel_reader_notes_sort_chapter">अध्यायवार</string>
+    <string name="sort_by_added_date">जोड़ा गया</string>
+    <string name="migration_config_title">%d आइटम माइग्रेट करें</string>
+    <string name="migration_confirm_title">%d आइटम माइग्रेट करें?</string>
+    <string name="migration_confirm_copy">पुराने आइटम लाइब्रेरी में रहेंगे।</string>
+    <string name="search_displayed_results">%1$d दिखे</string>
 </resources>

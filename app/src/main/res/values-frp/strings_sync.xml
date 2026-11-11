@@ -18,4 +18,8 @@
     <string name="google_drive_stage_merge">Fusion</string>
     <string name="google_drive_authorization_pending">En atenta de l’ôtorisacion Google dens voutre fureteur…</string>
     <string name="google_drive_client_configuration_failed">Google at refusâ la conficoracion du client OAuth. Controlâ lo typo de client burèu, lo projèt Google Cloud et los paramètros de consante.</string>
+    <string name="google_drive_network_failed">Èchèc de sincro Google Drive. Controlâd la conèxion et tornâs èprovar.</string>
+    <string name="google_drive_stage_upload">Chèrgament</string>
+    <string name="google_drive_desktop_scope">Sincronise voutra bibliotèca, catègories, progrèssion de liéta, statistiques et historico. Los règllâjos et èxtensions sont consèrvâs sur lo nivo mas pas aplicâs sur burô. La sincro ôtomatica torne quand Kototoro est uvèrt.</string>
+    <string name="google_drive_client_secret_required">Ceta vèrsion manque lo secret cliant OAuth Google burô. Configurâd-lo et rebâtisséd ; sè reconèctar resôldrat pas cen.</string>
 </resources>

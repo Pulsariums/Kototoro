@@ -48,4 +48,14 @@
     <string name="book_notes_markdown_thought">💭 **Gedanke**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Lesezeichen**: Seite %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (Fortschritt %1$d%%)</string>
+    <string name="book_notes_overview_empty">Keine Notizen</string>
+    <string name="book_notes_overview_no_matches">Keine Notizen</string>
+    <string name="book_notes_empty">Keine Notizen/Lesezeichen</string>
+    <string name="book_notes_no_matches">Keine Notizen</string>
+    <string name="book_notes_copied">In Zwischenablage</string>
+    <string name="book_notes_save_markdown">Als Datei speichern</string>
+    <string name="book_notes_make_excerpt">Auszug erstell.</string>
+    <string name="book_notes_share_failed">Fehler: %1$s</string>
+    <string name="book_notes_saved">In Datei gespeichert</string>
+    <string name="book_notes_save_failed">%1$s fehlgeschl.</string>
 </resources>

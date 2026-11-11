@@ -24,4 +24,11 @@
     <string name="video_subtitle_font_sans">Sans</string>
     <string name="video_subtitle_font_serif">Serif</string>
     <string name="video_subtitle_font_monospace">Monospace</string>
+    <string name="video_subtitle_font_size">Tamaina</string>
+    <string name="video_subtitle_border_size">Ertz-tamaina</string>
+    <string name="video_subtitle_color_bg">Atzealdea</string>
+    <string name="video_subtitle_background">Atzealdea</string>
+    <string name="video_subtitle_background_style">Atzealde estiloa</string>
+    <string name="video_subtitle_background_bar">Zabalera</string>
+    <string name="video_subtitle_font_family">Letra-t.</string>
 </resources>

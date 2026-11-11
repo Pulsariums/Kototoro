@@ -4055,4 +4055,24 @@
     <string name="source_preferences_browsing">બ્રાઉઝિંગ</string>
     <string name="extension_settings">એક્સટેન્શન સેટિંગ્સ</string>
     <string name="cloudstream_plugin_reloaded">સેટિંગ્સ લાગુ કરવા %1$s રિલોડ થયું</string>
+    <string name="glass_material_fluent_mica_alt">Mica Alt</string>
+    <string name="pref_glass_preview">Preview</string>
+    <string name="pref_glass_delete_preset">Delete preset</string>
+    <string name="pref_glass_delete_preset_message">Delete %1$s?</string>
+    <string name="novel_ai_ask_loading">Thinking…</string>
+    <string name="novel_ai_ask_suggestions">પૂછી જુઓ</string>
+    <string name="novel_reader_notes_sort_chapter">By chapter</string>
+    <string name="novel_excerpt_background_dusk">Dusk blue</string>
+    <string name="novel_marking_style_wavy">તરંગિત રેખા</string>
+    <string name="sort_by_last_read">Last read</string>
+    <string name="card_progress_percent_read">%1$d%% વાંચેલ</string>
+    <string name="card_progress_chapters_read">%1$d ch. read</string>
+    <string name="migration_config_title">Migrate %d entries</string>
+    <string name="migration_migrate_n">Migrate %d</string>
+    <string name="duplicate_read_percent">Read %d%%</string>
+    <string name="migration_select_visible">Select shown</string>
+    <string name="migration_clear_visible">Clear shown</string>
+    <string name="search_retry_failed_sources">Retry failed sources</string>
+    <string name="library_search_apply">Filter %1$s by “%2$s”</string>
+    <string name="kitsu_relation_full_story">આખી વાર્તા</string>
 </resources>

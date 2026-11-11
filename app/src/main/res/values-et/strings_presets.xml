@@ -13,4 +13,5 @@
     <string name="no_presets">Eelseadeid pole</string>
     <string name="no_presets_text">Loo eelseade, et kiiresti erinevate allikakonfiguratsioonide vahel lülituda</string>
     <string name="manage_preset_sources">Halda allikaid</string>
+    <string name="edit_preset">Muuda eelsead.</string>
 </resources>

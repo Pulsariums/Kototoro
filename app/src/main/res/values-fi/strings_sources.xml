@@ -92,4 +92,11 @@
     <string name="source_groups_updated">Ryhmä päivitetty</string>
     <string name="source_groups_newer_schema">Tämä ryhmätiedosto on uudemmasta versiosta. Päivitä sovellus.</string>
     <string name="source_groups_confirm_domains">Verkkotunnukset (%1$d lähdettä):</string>
+    <string name="source_test_all">Aja kaikki</string>
+    <string name="source_test_disabled">Ei käyt.</string>
+    <string name="source_test_msg_count">%1$d kpl</string>
+    <string name="source_lock_locked">Lukittu, avaa napauttaen</string>
+    <string name="source_unlock_action">Avaa lukko</string>
+    <string name="extension_file_delete_failed">Ei voitu poistaa: %1$s.</string>
+    <string name="extension_repo_update_failed">Päivitysvirhe: %1$s</string>
 </resources>

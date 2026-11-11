@@ -55,4 +55,7 @@
     <string name="book_notes_markdown_thought">💭 **فکر**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **نشانک**: صفحه %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (پیشرفت %1$d%%)</string>
+    <string name="book_notes_selected_all">کل یادداشت‌ها (%1$d)</string>
+    <string name="book_notes_export">صدور یادداشت‌ها</string>
+    <string name="book_notes_saved">یادداشت‌ها ذخیره شدند</string>
 </resources>

@@ -4077,4 +4077,12 @@
     <string name="source_preferences_browsing">Explorar</string>
     <string name="extension_settings">Ajustes de extensión</string>
     <string name="cloudstream_plugin_reloaded">Se recargó %1$s para aplicar sus ajustes</string>
+    <string name="pref_glass_local_overrides_count">%1$d ajuste(s) local(es)</string>
+    <string name="novel_selection_ask_ai">Pregunta IA</string>
+    <string name="save_note">Guardar</string>
+    <string name="local_storage_header_subtitle">Gestiona descargas y almacenamiento</string>
+    <string name="migration_confirm_copy">Se conservan las entradas antiguas.</string>
+    <string name="migration_exit_message">Se perderán las coincidencias.</string>
+    <string name="migration_health_disabled">Inactivo</string>
+    <string name="search_displayed_results">Viendo %1$d</string>
 </resources>

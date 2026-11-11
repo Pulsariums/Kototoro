@@ -92,4 +92,11 @@
     <string name="source_groups_updated">Rühma uuendati</string>
     <string name="source_groups_newer_schema">See rühmafail on uuemast versioonist. Uuenda rakendust.</string>
     <string name="source_groups_confirm_domains">Domeenide asendused (%1$d allikat):</string>
+    <string name="source_groups_saved">Grupp salvest.</string>
+    <string name="source_test_all">Testi kõik</string>
+    <string name="source_test_status_skip">Vahele jäet.</string>
+    <string name="source_test_step_list">Põhiloend</string>
+    <string name="source_test_msg_no_cover">Kaane URL puudu</string>
+    <string name="source_test_export">Tulemuste eksport</string>
+    <string name="source_test_copy_json">Kop. JSON</string>
 </resources>

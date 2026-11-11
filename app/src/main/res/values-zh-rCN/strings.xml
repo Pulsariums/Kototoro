@@ -3105,12 +3105,7 @@
     <string name="translation_prepared">翻译已准备</string>
     <string name="trust_and_add">信任并添加</string>
     <string name="trust_extension_repository">信任仓库指纹</string>
-    <string name="trust_extension_repository_message">仓库: %1$s
-网站: %2$s
-SHA-256 指纹:
-%3$s
-
-请在信任此仓库前与发布者核实该指纹。</string>
+    <string name="trust_extension_repository_message">仓库: %1$s\n网站: %2$s\nSHA-256 指纹:\n%3$s\n\n请在信任此仓库前与发布者核实该指纹。</string>
     <string name="tts_audio_cache">TTS 音频缓存</string>
     <string name="tts_audio_cache_limit">TTS 音频缓存限制</string>
     <string name="two_page_scroll_sensitivity">双页滚动灵敏度</string>
@@ -3133,9 +3128,7 @@ SHA-256 指纹:
     <string name="unified_sources_mark_as_nsfw">标记为NSFW</string>
     <string name="unified_sources_mark_as_sfw">标记为非NSFW</string>
     <string name="unified_sources_delete_selected_only_skipped_jars">选择中包含 JAR 源。为避免意外删除，已跳过其扩展包: %1$s</string>
-    <string name="unified_sources_delete_selected_with_skipped_jars">删除选中的 %1$d 个扩展包？
-
-已跳过 JAR 扩展包以避免意外删除: %2$s</string>
+    <string name="unified_sources_delete_selected_with_skipped_jars">删除选中的 %1$d 个扩展包？\n\n已跳过 JAR 扩展包以避免意外删除: %2$s</string>
     <string name="unified_sources_empty_response_body">响应内容为空</string>
     <string name="unified_sources_http_error">HTTP %1$d</string>
     <string name="unified_sources_imported_plugin">已导入插件: %1$s</string>
@@ -3175,11 +3168,7 @@ SHA-256 指纹:
     <string name="packages_missing_sources_add_repo">可以添加仓库来查找它们，例如：</string>
     <string name="uninstall">卸载</string>
     <string name="untrusted_extension">未信任</string>
-    <string name="untrusted_extension_message">%1$s（%2$s）已安装，但其签名与所选仓库指纹不匹配。
-
-仓库指纹: %3$s
-
-请先移除已安装的扩展包，再从该仓库重新安装。</string>
+    <string name="untrusted_extension_message">%1$s（%2$s）已安装，但其签名与所选仓库指纹不匹配。\n\n仓库指纹: %3$s\n\n请先移除已安装的扩展包，再从该仓库重新安装。</string>
     <string name="untrusted_section">未信任</string>
     <string name="update_all_extensions">全部更新</string>
     <string name="update_all_packages">全部更新</string>
@@ -4195,4 +4184,19 @@ SHA-256 指纹:
     <string name="panorama_animation_on">动效开启</string>
     <string name="panorama_animation_off">动效关闭</string>
     <string name="panorama_animation_reduced_effects_summary">启用“减少视觉效果”时动效将暂停</string>
+    <string name="reader_settings_group_reading_mode">阅读模式</string>
+    <string name="reader_settings_group_zoom_scroll">缩放与滚动</string>
+    <string name="reader_settings_group_webtoon">条漫</string>
+    <string name="reader_settings_group_controls">控制</string>
+    <string name="reader_settings_group_display">显示与信息</string>
+    <string name="reader_settings_group_performance">性能与网络</string>
+    <string name="periodical_backup_group_schedule">备份计划</string>
+    <string name="network_group_proxy_mirrors">代理与镜像</string>
+    <string name="network_group_security">安全与过滤</string>
+    <string name="settings_section_reading_interface">阅读与界面</string>
+    <string name="settings_section_content_sources">内容与图源</string>
+    <string name="settings_section_accounts_data">账号与数据</string>
+    <string name="settings_section_system_services">系统与服务</string>
+    <string name="help_and_feedback">帮助与反馈</string>
+    <string name="about_group_support">支持</string>
 </resources>

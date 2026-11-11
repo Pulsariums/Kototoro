@@ -55,4 +55,7 @@
     <string name="book_notes_markdown_thought">💭 **વિચાર**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **બુકમાર્ક**: પૃષ્ઠ %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (પ્રગતિ %1$d%%)</string>
+    <string name="book_notes_overview_empty">No notes yet</string>
+    <string name="book_notes_copy_content">Copy content</string>
+    <string name="book_notes_save_failed">Save failed: %1$s</string>
 </resources>

@@ -21,4 +21,5 @@
     <string name="google_drive_authorization_pending">En attente de l\'autorisation Google dans le navigateur…</string>
     <string name="google_drive_client_configuration_failed">Google a rejeté la config OAuth. Vérifiez le type de client de bureau, le projet Google Cloud et les paramètres de consentement.</string>
     <string name="google_drive_client_secret_required">Le secret client OAuth de bureau est manquant dans cette version. Configurez-le et recompilez ; se reconnecter ne suffira pas.</string>
+    <string name="sync_enable_required">Activez d\'abord la sync Google Drive.</string>
 </resources>

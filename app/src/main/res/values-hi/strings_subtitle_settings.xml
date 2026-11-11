@@ -29,4 +29,6 @@
     <string name="video_subtitle_font_sans">सैंस</string>
     <string name="video_subtitle_font_serif">सेरिफ़</string>
     <string name="video_subtitle_font_monospace">मोनोस्पेस</string>
+    <string name="video_subtitle_font_size">फॉन्ट आकार</string>
+    <string name="video_subtitle_background_block">अक्षर ब्लॉक</string>
 </resources>

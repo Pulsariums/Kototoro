@@ -82,4 +82,21 @@
     <string name="extension_repo_update_failed">Échec : %1$s</string>
     <string name="source_groups_newer_schema">Fichier d\'une version plus récente. Màj requise.</string>
     <string name="source_groups_confirm_domains">Surcharges de domaine (%1$d sources) :</string>
+    <string name="source_groups_title">Groupes d\'ext.</string>
+    <string name="source_groups_name_title">Nom groupe</string>
+    <string name="source_groups_name_hint">Nom groupe</string>
+    <string name="source_groups_confirm_title">Appliquer %1$s ?</string>
+    <string name="source_groups_confirm_more">+%1$d autres</string>
+    <string name="source_groups_saved">Groupe créé</string>
+    <string name="source_groups_invalid_file">Fichier invalide</string>
+    <string name="source_test_all">Tester</string>
+    <string name="source_test_step_list">Principale</string>
+    <string name="source_test_msg_count">%1$d entrées</string>
+    <string name="source_test_msg_unsupported">non pris en ch.</string>
+    <string name="source_test_msg_search_unsupported">Recherche non supportée</string>
+    <string name="source_test_export">Exporter rés.</string>
+    <string name="source_lock_action">Verrouil.</string>
+    <string name="source_unlock_action">Déverrouil.</string>
+    <string name="extension_file_delete_failed">Suppression de %1$s échouée</string>
+    <string name="source_groups_updated">Groupe màj</string>
 </resources>

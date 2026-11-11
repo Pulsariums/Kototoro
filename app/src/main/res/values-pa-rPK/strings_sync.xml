@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_settings_enabled_title">এপ সেটিংস সিঙ্ক করুন</string>
+    <string name="sync_settings_enabled_summary">রিডার، প্লেয়ার এবং উপস্থিতির সেটিংস। পাসওয়ার্ড، টোকেন এবং ডিভাইসের পাথ কখনো সিঙ্ক হয় না।</string>
+    <string name="sync_remote_delete_incomplete">%1$d ریموٹ فائلیں حذف نہیں ہو سکیں۔ مقامی সিঙ্ক حالت محفوظ رہی؛ دوبارہ کوشش کریں۔</string>
+    <string name="sync_enable_required">پہلے Google Drive সিঙ্ক آن کریں۔</string>
+    <string name="google_drive_authorization_required">Google کی اجازت نامکمل ہے یا اس کی میعاد ختم ہو گئی ہے۔ اپنا اکاؤنٹ دوبارہ جوڑیں۔</string>
+    <string name="google_drive_authorization_canceled">Google کی اجازت منسوخ کر دی گئی یا ٹائم آؤٹ ہو گیا۔</string>
+    <string name="google_drive_browser_failed">گوگل اَستھورائزیشن واسطے سِسٹم براؤزر نئیں کُھل سِکیا۔</string>
+    <string name="google_drive_credential_store_failed">سِسٹم کریڈنشل سٹور تک رسائی نئیں ہو سِکی۔ تصدیق کرو کہ ایہ دستیاب تے اَنلاک اے، فیر کوشِش کرو۔</string>
+    <string name="google_drive_settings_failed">مقامی سِنک سیٹنگز نئیں بچائیاں جا سِکیاں۔ ڈیٹا ڈائرکٹری چیک کرو تے فیر کوشِش کرو۔</string>
+    <string name="google_drive_protocol_failed">کلاؤڈ سنيپ شاٹ خراب اے یا غیر تائید شدہ فارمیٹ ورتدا اے۔ کُجھ وی اَپلوڈ نئیں ہویا۔</string>
+    <string name="google_drive_conflict_failed">دوسرے آلات کلاؤڈ ڈیٹا بدل رہے ہیں۔ بعد میں سنک آزمائیں۔</string>
+    <string name="google_drive_network_failed">Google Drive سِنک فیل ہو گیا۔ اپنا کنکشن چیک کرو تے فیر کوشِش کرو۔</string>
+    <string name="google_drive_access_failed">Google Drive نے رسائی مسترد کر دِتی۔ دِتیاں گئیاں اجازتیں تے Drive API کنفگریشن چیک کرو۔</string>
+    <string name="google_drive_browser_complete">براؤزر کال بیک مِل گیا۔ اَکاؤنٹ کنکشن دا نتیجہ دیکھن واسطے Kototoro ول پرطو۔</string>
+    <string name="google_drive_browser_rejected">ایہ اَستھورائزیشن کال بیک مسترد کر دِتا گیا اے۔ Kototoro ول پرطو تے دوبارہ جُڑن دی کوشِش کرو۔</string>
+    <string name="google_drive_stage_download">ڈاؤن لوڈ جاری</string>
+    <string name="google_drive_stage_merge">ملایا جا رہا</string>
+    <string name="google_drive_stage_upload">اپ لوڈ جاری</string>
+    <string name="google_drive_desktop_scope">تہاڈی لائبریری، کیٹیگریز، پڑھن دی پُٹھ، شماریات تے اَپڈیٹ ریکارڈ سِنک کریندا اے۔ سیٹنگز تے ایکسٹینشنز کلاؤڈ وچ محفوظ رہندیاں نیں پر ہجے ڈیسک ٹاپ تے لاگو نئیں ہوندیاں۔ Kototoro کُھلا ہون تے آٹومیٹک سِنک چلد اے۔</string>
+    <string name="google_drive_authorization_pending">تہاڈے براؤزر وچ Google اَستھورائزیشن دا انتظار اے۔</string>
+    <string name="google_drive_client_configuration_failed">گوگل نے OAuth کلائنٹ کنفگریشن مسترد کر دِتی۔ ڈیسک ٹاپ کلائنٹ ٹائپ، Google Cloud پروجیکٹ تے رضامندی سیٹنگز چیک کرو۔</string>
+    <string name="google_drive_client_secret_required">اس بِلڈ وچ Google ڈیسک ٹاپ OAuth کلائنٹ سیکرٹ غائب اے۔ اینوں کنفگُر کرو تے دوبارہ بِلڈ کرو؛ دوبارہ سائن اِن کرن نال ایہ ٹھیک نہیں ہووے گا۔</string>
+</resources>

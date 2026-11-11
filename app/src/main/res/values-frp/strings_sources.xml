@@ -96,4 +96,7 @@
     <string name="source_groups_updated">Tropa anoter</string>
     <string name="source_groups_newer_schema">Cisse fitchî a tropa vut d\'on pus nôve bera. Anoter l\'ap.</string>
     <string name="source_groups_confirm_domains">Mete d\'ôte pårt li domen (%1$d sôrs):</string>
+    <string name="source_groups_confirm_more">+%1$d de més</string>
+    <string name="source_test_step_list">Lista princ</string>
+    <string name="source_test_msg_unsupported">pas sotegnu</string>
 </resources>

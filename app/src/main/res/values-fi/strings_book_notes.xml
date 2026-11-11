@@ -50,4 +50,12 @@
     <string name="book_notes_markdown_thought">💭 **Ajatus**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Kirjanmerkki**: Sivu %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (edistyminen %1$d%%)</string>
+    <string name="book_notes_filter_all">Kaik. (%1$d)</string>
+    <string name="book_notes_count_bookmarks">%1$d kirjanmerk.</string>
+    <string name="book_notes_total_count">%1$d muist.</string>
+    <string name="book_notes_selected_all">Muistiinpanot (%1$d)</string>
+    <string name="book_notes_overview_empty">Ei merkintöjä</string>
+    <string name="book_notes_export">Vie merkinnät</string>
+    <string name="book_notes_share_failed">Jako epäonnistui: %1$s</string>
+    <string name="book_notes_save_failed">Tallennusvirhe: %1$s</string>
 </resources>

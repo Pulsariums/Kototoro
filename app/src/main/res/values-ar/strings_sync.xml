@@ -21,4 +21,5 @@
     <string name="google_drive_authorization_pending">في انتظار تفويض Google في متصفحك...</string>
     <string name="google_drive_client_configuration_failed">رفض Google تكوين عميل OAuth. تحقق من نوع عميل سطح المكتب، مشروع Google Cloud وإعدادات الموافقة.</string>
     <string name="google_drive_client_secret_required">هذا الإصدار يفتقر إلى سر عميل سطح المكتب OAuth لـ Google. قم بتكوينه وإعادة البناء؛ تسجيل الدخول مرة أخرى لن يحل هذا.</string>
+    <string name="sync_settings_enabled_title">مزامنة الإعدادات</string>
 </resources>

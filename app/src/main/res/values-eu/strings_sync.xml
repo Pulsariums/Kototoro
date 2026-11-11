@@ -16,4 +16,10 @@
     <string name="google_drive_authorization_pending">Google baimenaren zain arakatzailean...</string>
     <string name="google_drive_client_configuration_failed">Google-k OAuth bezeroaren konfigurazioa baztertu du. Egiaztatu mahaigaineko bezero mota, Google Cloud proiektua eta baimen-ezarpenak.</string>
     <string name="google_drive_client_secret_required">Build honetan Google mahaigaineko OAuth bezeroaren gako sekretua falta da. Konfiguratu eta berreraiki; berriro saioa hasteak ez du konponduko.</string>
+    <string name="sync_settings_enabled_summary">Irakurle, erreproduzitzaile eta itxura ezarpenak. Pasahitzak, tokenak eta bideak ez dira inoiz sinkronizatzen.</string>
+    <string name="sync_remote_delete_incomplete">Ezin %1$d fitxategi ezabatu. Tokiko egoera gorde da; saiatu berriro.</string>
+    <string name="sync_enable_required">Aktibatu Google Drive sinkronizazioa.</string>
+    <string name="google_drive_conflict_failed">Beste gailu batzuk datuak eguneratzen ari dira. Saiatu geroago.</string>
+    <string name="google_drive_desktop_scope">Liburutegia, kategoriak, aurrerapena eta estatistikak sinkronizatzen ditu. Ezarpenak eta luzapenak hodeian gordetzen dira, baina mahaigainean ez. Sinkronizazio automatikoa Kototoro irekita dagoenean dabil.</string>
+    <string name="sync_settings_enabled_title">Sinkronizatu ezarpenak</string>
 </resources>

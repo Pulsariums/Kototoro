@@ -98,4 +98,5 @@
     <string name="source_groups_updated">समूह अपडेट</string>
     <string name="source_groups_newer_schema">यह ग्रुप फ़ाइल नए संस्करण की है। ऐप अपडेट करें।</string>
     <string name="source_groups_confirm_domains">डोमेन ओवरराइड (%1$d सोर्स):</string>
+    <string name="source_groups_confirm_title">\"%1$s\" लगाएं?</string>
 </resources>

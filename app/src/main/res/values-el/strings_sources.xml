@@ -97,4 +97,6 @@
     <string name="source_groups_updated">Ενημερώθηκε</string>
     <string name="source_groups_newer_schema">Αυτό το αρχείο είναι από νεότερη έκδοση. Ενημερώστε την εφαρμογή.</string>
     <string name="source_groups_confirm_domains">Παρακάμψεις τομέα (%1$d πηγές):</string>
+    <string name="source_test_all">Δοκιμή όλα</string>
+    <string name="source_test_msg_count">%1$d στοιχ.</string>
 </resources>

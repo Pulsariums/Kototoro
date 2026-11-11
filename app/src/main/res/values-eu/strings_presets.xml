@@ -12,4 +12,6 @@
     <string name="no_presets">Aurrer. gabekoak</string>
     <string name="no_presets_text">Sortu aurrehautapen bat iturri-konfigurazioen artean azkar aldatzeko</string>
     <string name="manage_preset_sources">Kudeatu iturriak</string>
+    <string name="source_presets">Aurrezarpenak</string>
+    <string name="create_preset">Berria</string>
 </resources>

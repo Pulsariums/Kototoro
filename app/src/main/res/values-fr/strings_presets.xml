@@ -13,4 +13,5 @@
     <string name="no_presets">Aucun préréglage</string>
     <string name="no_presets_text">Créez un préréglage pour basculer rapidement entre différentes configurations</string>
     <string name="manage_preset_sources">Gérer les sources</string>
+    <string name="source_presets">Profils source</string>
 </resources>

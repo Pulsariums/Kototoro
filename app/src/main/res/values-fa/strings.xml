@@ -4071,4 +4071,10 @@
     <string name="source_preferences_browsing">مرور</string>
     <string name="extension_settings">تنظیمات افزونه</string>
     <string name="cloudstream_plugin_reloaded">برای اعمال تنظیمات، %1$s بارگذاری مجدد شد</string>
+    <string name="loading_circle_style_thin_wavy">موجی باریک</string>
+    <string name="novel_excerpt_background_dusk">آبی غروب</string>
+    <string name="video_note_title">یادداشت فیلم</string>
+    <string name="sort_by_last_read">آخرین خوانش</string>
+    <string name="card_progress_percent_read">%1$d%% خوانده</string>
+    <string name="card_progress_percent_left">%1$d%% مانده</string>
 </resources>

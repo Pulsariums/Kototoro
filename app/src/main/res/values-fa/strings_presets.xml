@@ -13,4 +13,5 @@
     <string name="no_presets">پیش‌فرضی نیست</string>
     <string name="no_presets_text">برای جابه‌جایی سریع بین پیکربندی‌های مختلف منابع، یک پیش‌فرض بسازید</string>
     <string name="manage_preset_sources">مدیریت منابع</string>
+    <string name="preset_saved">ذخیره پیش‌تنظیم</string>
 </resources>

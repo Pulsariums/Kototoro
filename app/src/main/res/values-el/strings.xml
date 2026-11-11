@@ -4065,4 +4065,21 @@
     <string name="source_preferences_browsing">Περιήγηση</string>
     <string name="extension_settings">Ρυθμίσεις επέκτασης</string>
     <string name="cloudstream_plugin_reloaded">Το %1$s επαναφορτώθηκε για τις ρυθμίσεις</string>
+    <string name="reader_translation_task_bench_dist_total">Σύν. χρόνος</string>
+    <string name="loading_circle_style_thick_wavy">Παχύ κυματ.</string>
+    <string name="loading_circle_style_thin_wavy">Λεπτό κυμ.</string>
+    <string name="pref_expressive_app_font_preset">Γραμ. iOS</string>
+    <string name="space_switcher_position_top_left">Πάνω αριστ</string>
+    <string name="settings_section_accounts_data">Λογαρ. &amp; δεδομένα</string>
+    <string name="novel_marking_tab_bookmarks">Σελιδοδείκ.</string>
+    <string name="crop_and_annotate">Κοπή &amp; σημ.</string>
+    <string name="video_note_title">Σημ. βίντεο</string>
+    <string name="sort_by_added_date">Προστέθηκε</string>
+    <string name="sort">Ταξινόμ.</string>
+    <string name="dictionary_rule_url_label">Κανών URL</string>
+    <string name="settings_source_cleared">Καθαρίστηκε</string>
+    <string name="untitled_content">Άτιτλο</string>
+    <string name="migration_clear_visible">Εκκαθ. ορατών</string>
+    <string name="update_read_completed">Ανάγνωση</string>
+    <string name="kitsu_section_staff_works">Έργα συντελ.</string>
 </resources>

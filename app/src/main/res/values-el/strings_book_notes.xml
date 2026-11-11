@@ -54,4 +54,8 @@
     <string name="book_notes_markdown_thought">💭 **Σκέψη**: %1$s</string>
     <string name="book_notes_markdown_bookmark">🔖 **Σελιδοδείκτη**: Σελίδα %1$d%2$s</string>
     <string name="book_notes_markdown_progress"> (πρόοδος %1$d%%)</string>
+    <string name="book_notes_count_bookmarks">%1$d σελιδοδείκ.</string>
+    <string name="book_notes_total_count">%1$d σημ.</string>
+    <string name="book_notes_overview_empty">Καμία σημείωση</string>
+    <string name="book_notes_copy_content">Αντιγρ. περιεχ.</string>
 </resources>

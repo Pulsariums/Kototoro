@@ -2266,12 +2266,7 @@
     <string name="translation_settings">翻譯</string>
     <string name="trust_and_add">信任並添加</string>
     <string name="trust_extension_repository">信任倉庫指紋</string>
-    <string name="trust_extension_repository_message">倉庫: %1$s
-網站: %2$s
-SHA-256 指紋:
-%3$s
-
-請在信任此倉庫前與發佈者覈實該指紋。</string>
+    <string name="trust_extension_repository_message">倉庫: %1$s\n網站: %2$s\nSHA-256 指紋:\n%3$s\n\n請在信任此倉庫前與發佈者覈實該指紋。</string>
     <string name="tts_audio_cache">TTS 音頻緩存</string>
     <string name="tts_audio_cache_limit">TTS 音頻緩存限制</string>
     <string name="tts_clipboard_empty">剪貼板爲空</string>
@@ -2342,9 +2337,7 @@ SHA-256 指紋:
     <string name="unified_sources_delete_selected_message">刪除選中的 %1$d 個擴展包？</string>
     <string name="unified_sources_delete_selected_no_packages">當前選擇中未找到可刪除的擴展包。</string>
     <string name="unified_sources_delete_selected_only_skipped_jars">選擇中包含 JAR 源。爲避免意外刪除，已跳過其擴展包: %1$s</string>
-    <string name="unified_sources_delete_selected_with_skipped_jars">刪除選中的 %1$d 個擴展包？
-
-已跳過 JAR 擴展包以避免意外刪除: %2$s</string>
+    <string name="unified_sources_delete_selected_with_skipped_jars">刪除選中的 %1$d 個擴展包？\n\n已跳過 JAR 擴展包以避免意外刪除: %2$s</string>
     <string name="unified_sources_empty_response_body">響應內容爲空</string>
     <string name="unified_sources_http_error">HTTP %1$d</string>
     <string name="unified_sources_imported_plugin">已導入插件: %1$s</string>
@@ -2380,11 +2373,7 @@ SHA-256 指紋:
     <string name="unsupported_novel_source">不支持此小說源</string>
     <string name="unsupported_video_source">不支持此視頻源</string>
     <string name="untrusted_extension">未信任</string>
-    <string name="untrusted_extension_message">%1$s（%2$s）已安裝，但其簽名與所選倉庫指紋不匹配。
-
-倉庫指紋: %3$s
-
-請先移除已安裝的擴展包，再從該倉庫重新安裝。</string>
+    <string name="untrusted_extension_message">%1$s（%2$s）已安裝，但其簽名與所選倉庫指紋不匹配。\n\n倉庫指紋: %3$s\n\n請先移除已安裝的擴展包，再從該倉庫重新安裝。</string>
     <string name="untrusted_section">未信任</string>
     <string name="update_all_extensions">全部更新</string>
     <string name="update_all_packages">全部更新</string>

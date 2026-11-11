@@ -258,6 +258,41 @@ final class VideoSourceTests: XCTestCase {
 
     /// Native search covers local favourites, pinned sources, toolbar search and query handoff to More.
     @MainActor
+    /// A network episode downloads through the system's background session (the fixture serves HLS, which becomes an
+    /// offline package) and the player then reports it as downloaded.
+    func testCmsEpisodeDownloadsThroughTheBackgroundSession() throws {
+        try requireFixture()
+        let app = XCUIApplication()
+        app.launch()
+        // A site of its own, so no earlier run has the episode already.
+        let siteName = "后台下载 \(UUID().uuidString.prefix(6))"
+        importVideoSite(app, url: api + "?download=\(siteName.suffix(6))", title: siteName)
+        resetBrowseFilters(app)
+        let sourceSearch = app.pageSearchField()
+        XCTAssertTrue(sourceSearch.waitForExistence(timeout: 10))
+        sourceSearch.tap(); sourceSearch.typeText(siteName)
+        let source = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
+                                                      "source.JSON_TVBOX_", siteName)).firstMatch
+        XCTAssertTrue(source.waitForExistence(timeout: 10), app.debugDescription)
+        let sourceName = String(source.identifier.dropFirst("source.".count))
+        source.tap()
+        let work = element(app, "source.content.\(contentId(101, sourceName))")
+        XCTAssertTrue(work.waitForExistence(timeout: 30), app.debugDescription)
+        work.tap()
+        let episode = revealChapter(in: app, timeout: 30)
+        XCTAssertTrue(episode.exists, app.debugDescription)
+        episode.tap()
+        let download = playerControl(app, "player.download")
+        XCTAssertTrue(download.waitForExistence(timeout: 30), app.debugDescription)
+        XCTAssertNotEqual(download.label, "本集已下载")
+        download.tap()
+        let downloaded = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "本集已下载"),
+                                                   object: download)
+        XCTAssertEqual(XCTWaiter().wait(for: [downloaded], timeout: 120), .completed,
+                       "Episode did not finish: \(app.debugDescription)")
+        attach(app, "Background session episode download")
+    }
+
     func testGlobalAndPerSourceSearchReturnFixtureResults() throws {
         continueAfterFailure = false
         try requireFixture()
@@ -529,6 +564,76 @@ final class VideoSourceTests: XCTestCase {
         XCTAssertTrue(header("置顶 · ").waitForNonExistence(timeout: 10))
         choose("分组", "按来源类型")
         XCTAssertTrue(header("苹果 CMS / TVBox 影视 · ").waitForExistence(timeout: 10), app.debugDescription)
+    }
+
+    /// Returning from a source or from the background keeps a deep grid position; one lazy grid with sections (even
+    /// with scrollPosition(id:)) moved it about eight rows up here.
+    @MainActor
+    func testBrowseGridScrollPositionSurvivesNavigationAndBackground() throws {
+        try requireFixture()
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-sources.layout", "grid", "-sources.grouping", "ecosystem", "-sources.sort", "manual",
+                               "-sources.hiddenKinds", "", "-sources.hiddenEcosystems", "", "-sources.newOnly", "NO",
+                               "-space.enabled", "YES", "-space.kind", "",
+                               "-suggestions", "YES", "-suggestions_preferred_tags", "动画",
+                               "-browse.recommendations.feed", "personal", "-browse.recommendations.collapsed", "NO"]
+        app.launch()
+        app.mainTab("浏览").tap()
+        let list = app.scrollViews.firstMatch
+        XCTAssertTrue(list.waitForExistence(timeout: 30))
+        let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "source."))
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 30), app.debugDescription)
+        func visible() -> [String] {
+            let bar = app.navigationBars.firstMatch.frame.maxY
+            let bottom = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.frame.minY : app.frame.maxY
+            return rows.allElementsBoundByIndex
+                .filter { $0.exists && $0.frame.minY >= bar && $0.frame.maxY <= bottom }
+                .sorted { $0.frame.minY < $1.frame.minY }
+                .map(\.identifier)
+        }
+        list.swipeUp(velocity: .slow)
+        sleep(1)
+        for _ in 0..<4 { list.swipeUp(velocity: .fast) }
+        sleep(2)
+        func expectSmallStep(_ event: String) {
+            let start = visible()
+            let from = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+            from.press(forDuration: 0.05, thenDragTo: list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)),
+                       withVelocity: .slow, thenHoldForDuration: 0.5)
+            sleep(1)
+            let after = visible()
+            print("SCROLL-PROBE \(event): overlap \(Set(start).intersection(after).count)/\(start.count)")
+            XCTAssertFalse(Set(start).isDisjoint(with: after), "\(event): \(start) -> \(after)")
+        }
+        expectSmallStep("baseline")
+        for round in 0..<3 {
+            let before = visible()
+            guard let target = before.first(where: { $0.hasPrefix("source.JSON_TVBOX_") }) else { return XCTFail(app.debugDescription) }
+            app.buttons[target].tap()
+            XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(
+                format: "identifier BEGINSWITH %@", "source.content.")).firstMatch.waitForExistence(timeout: 30))
+            sleep(2)
+            app.navigationBars.buttons.firstMatch.tap()
+            XCTAssertTrue(app.buttons[target].waitForExistence(timeout: 10))
+            sleep(2)
+            let back = visible()
+            print("SCROLL-PROBE return \(round): restored \(Set(before).intersection(back).count)/\(before.count)")
+            XCTAssertGreaterThan(Set(before).intersection(back).count * 2, before.count)
+            expectSmallStep("return \(round)")
+        }
+        for round in 0..<3 {
+            let before = visible()
+            XCUIDevice.shared.press(.home)
+            sleep(3)
+            app.activate()
+            XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+            sleep(2)
+            let back = visible()
+            print("SCROLL-PROBE foreground \(round): restored \(Set(before).intersection(back).count)/\(before.count)")
+            XCTAssertGreaterThan(Set(before).intersection(back).count * 2, before.count)
+            expectSmallStep("foreground \(round)")
+        }
     }
 
     @MainActor

@@ -1,5 +1,9 @@
 package org.skepsun.kototoro.core.jsonsource
 
+import org.skepsun.kototoro.core.parser.legado.BoundedRegex
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
 import java.net.URI
 import java.net.URISyntaxException
 
@@ -70,43 +74,84 @@ object SecurityValidator {
     }
 
     /**
-     * Checks if a hostname is a local address
+     * Checks if a hostname is a local address.
+     *
+     * IP literals are classified by address (IPv6, IPv4-mapped IPv6, link-local, CGNAT and the shorthand
+     * numeric forms such as `2130706433` or `0x7f.1` that resolvers accept). Names are not resolved: a
+     * source can already request any URL through its own rules, so DNS checks here would not close that.
      *
      * @param host The hostname to check
      * @return true if the host is a local address
      */
-    private fun isLocalAddress(host: String): Boolean {
-        val lowerHost = host.lowercase()
+    internal fun isLocalAddress(host: String): Boolean {
+        val lowerHost = host.lowercase().removePrefix("[").removeSuffix("]").trimEnd('.')
 
-        // Check for localhost variants
-        if (lowerHost in listOf("localhost", "127.0.0.1", "0.0.0.0", "::1")) {
+        if (lowerHost == "localhost" || lowerHost.endsWith(".localhost")) {
             return true
         }
 
-        // Check for private network ranges
-        // 192.168.0.0/16
-        if (lowerHost.startsWith("192.168.")) {
-            return true
+        val address = when {
+            lowerHost.contains(':') -> parseIpv6Literal(lowerHost) ?: return true
+            NUMERIC_HOST.matches(lowerHost) -> parseIpv4Literal(lowerHost) ?: return false
+            else -> return false
         }
-
-        // 10.0.0.0/8
-        if (lowerHost.startsWith("10.")) {
-            return true
-        }
-
-        // 172.16.0.0/12 (172.16.0.0 - 172.31.255.255)
-        if (lowerHost.startsWith("172.")) {
-            val parts = lowerHost.split(".")
-            if (parts.size >= 2) {
-                val secondOctet = parts[1].toIntOrNull()
-                if (secondOctet != null && secondOctet in 16..31) {
-                    return true
-                }
-            }
-        }
-
-        return false
+        return isLocalAddress(address)
     }
+
+    private fun isLocalAddress(address: InetAddress): Boolean {
+        if (address.isAnyLocalAddress || address.isLoopbackAddress || address.isLinkLocalAddress ||
+            address.isSiteLocalAddress || address.isMulticastAddress
+        ) {
+            return true
+        }
+        val bytes = address.address
+        return when (address) {
+            // 100.64.0.0/10 carrier-grade NAT
+            is Inet4Address -> bytes[0].toInt() and 0xFF == 100 && bytes[1].toInt() and 0xC0 == 64
+            // fc00::/7 unique local; ::ffff:a.b.c.d is normalized to Inet4Address by the parser
+            is Inet6Address -> bytes[0].toInt() and 0xFE == 0xFC
+            else -> false
+        }
+    }
+
+    /** Parses a literal only; [InetAddress.getByName] does no lookup for strings that contain ':'. */
+    private fun parseIpv6Literal(host: String): InetAddress? = runCatching {
+        InetAddress.getByName(host.substringBefore('%'))
+    }.getOrNull()
+
+    /**
+     * Parses the inet_aton forms: 1 to 4 parts, each decimal, octal (leading 0) or hex (0x), the last part
+     * filling the remaining bytes. Returns null for strings that are not a valid address in that grammar.
+     */
+    private fun parseIpv4Literal(host: String): InetAddress? {
+        val parts = host.split('.')
+        if (parts.size > 4) return null
+        val values = parts.map { part ->
+            when {
+                part.startsWith("0x") -> part.drop(2).ifEmpty { "0" }.toLongOrNull(16)
+                part.length > 1 && part.startsWith("0") -> part.drop(1).toLongOrNull(8)
+                else -> part.toLongOrNull()
+            } ?: return null
+        }
+        var value = 0L
+        for (i in 0 until values.lastIndex) {
+            if (values[i] > 0xFF) return null
+            value = value or (values[i] shl (8 * (3 - i)))
+        }
+        val lastBytes = 4 - values.lastIndex
+        if (values.last() >= 1L shl (8 * lastBytes)) return null
+        value = value or values.last()
+        return InetAddress.getByAddress(
+            byteArrayOf(
+                (value shr 24).toByte(),
+                (value shr 16).toByte(),
+                (value shr 8).toByte(),
+                value.toByte(),
+            ),
+        )
+    }
+
+    private val NUMERIC_HOST = Regex("^[0-9a-fx.]+$")
 
     /**
      * Validates a regular expression for security concerns
@@ -157,6 +202,25 @@ object SecurityValidator {
             ValidationResult(isValid = false, errors = errors)
         }
     }
+
+    /** Runs source-supplied regular expressions with the shared execution deadline. */
+    fun findBounded(regex: Regex, input: CharSequence, timeoutMs: Long = REGEX_TIMEOUT_MS): MatchResult? =
+        BoundedRegex.findBounded(regex, input, timeoutMs)
+
+    fun replaceBounded(
+        regex: Regex, input: CharSequence, replacement: String, timeoutMs: Long = REGEX_TIMEOUT_MS,
+    ): String? = BoundedRegex.replaceBounded(regex, input, replacement, timeoutMs)
+
+    fun replaceFirstBounded(
+        regex: Regex, input: CharSequence, replacement: String, timeoutMs: Long = REGEX_TIMEOUT_MS,
+    ): String? = BoundedRegex.replaceFirstBounded(regex, input, replacement, timeoutMs)
+
+    fun regexDeadline(timeoutMs: Long = REGEX_TIMEOUT_MS): Long = BoundedRegex.regexDeadline(timeoutMs)
+
+    fun <T> withRegexDeadline(input: CharSequence, deadline: Long, block: (CharSequence) -> T): T? =
+        BoundedRegex.withRegexDeadline(input, deadline, block)
+
+    private const val REGEX_TIMEOUT_MS = 2_000L
 
     /**
      * Sanitizes HTML content to prevent XSS attacks

@@ -90,10 +90,25 @@ class DesktopSession private constructor(
     }
     @Volatile private var jsonSourceCache = jsonSources.all()
     private val tvboxRuntime = org.skepsun.kototoro.tvbox.MacCmsSourceRuntime(jsonHttp) {
-        jsonSourceCache.map {
+        jsonSourceCache.filterNot { DesktopLegadoSourceRuntime.owns(it.id) }.map {
             org.skepsun.kototoro.tvbox.TvBoxSource(it.id, it.name, it.config, it.iconUrl)
         }
     }
+    /** Legado book sources share the JSON store; only novel sources (`bookSourceType` 0) are decoded into this list. */
+    @Volatile private var legadoSourceCache = jsonSourceCache.mapNotNull(DesktopLegadoCatalog::source)
+    /** Android's `legado_source_store` and `legado_book_store`, each in its own preference file. */
+    private val legadoPlatform = DesktopLegadoScriptPlatform(
+        client = jsonClient,
+        root = storage.paths.root.resolve("cache/legado"),
+        stores = { name -> storage.preferences.open("desktop_$name") },
+    )
+    private val legadoVariables = DesktopLegadoVariableStore(legadoPlatform.store("legado_source_store"))
+    private val legadoRuntime = DesktopLegadoSourceRuntime(
+        sources = { legadoSourceCache },
+        createEngine = { org.skepsun.kototoro.core.javascript.RhinoJavaScriptEngine(legadoPlatform) },
+        createExecutor = { desktopLegadoExecutor(jsonClient, it.config, legadoVariables) },
+        variableStore = legadoVariables,
+    )
 
     /** Sites the JSON runtime serves right now; the runtime reads the same list. */
     internal fun jsonSourceList(): List<org.skepsun.kototoro.desktop.runtime.DesktopJsonSource> = jsonSourceCache
@@ -153,6 +168,7 @@ class DesktopSession private constructor(
     /** Re-reads the stored documents after an import or a removal; read failures stay in [startupErrors]. */
     internal suspend fun reloadJsonSources() {
         jsonSourceCache = jsonSources.all()
+        legadoSourceCache = jsonSourceCache.mapNotNull(DesktopLegadoCatalog::source)
         startupErrors.clear()
         startupErrors += jsonSources.errors
         tvboxRuntime.invalidate()
@@ -161,6 +177,8 @@ class DesktopSession private constructor(
     /** Follows the shared TVBox import rules: multi-repository links, CMS APIs and documents all land here. */
     internal suspend fun importJsonSources(url: String, title: String?) =
         org.skepsun.kototoro.tvbox.TvBoxImport.importFromUrl(jsonHttp, url, title)
+    /** The document behind an import link, so the caller can tell a Legado catalog from a TVBox one. */
+    internal suspend fun fetchJsonDocument(url: String): String = jsonHttp.get(url, emptyMap())
     internal suspend fun importJsonDocument(content: String, locator: String, title: String?) =
         org.skepsun.kototoro.tvbox.TvBoxImport.importDocument(jsonHttp, content, locator, title)
 
@@ -172,6 +190,7 @@ class DesktopSession private constructor(
                 RoutedSourceRuntime.Route(parsers::owns, parserRuntime),
                 RoutedSourceRuntime.Route(cloudstreamRuntime::owns, cloudstreamRuntime),
                 RoutedSourceRuntime.Route(org.skepsun.kototoro.tvbox.MacCmsSourceRuntime::owns, tvboxRuntime),
+                RoutedSourceRuntime.Route(DesktopLegadoSourceRuntime::owns, legadoRuntime),
             )),
             sourceDiagnostics::record,
         ),
@@ -185,8 +204,7 @@ class DesktopSession private constructor(
         registry.installed().flatMap { it.sources }.firstOrNull { it.source.name == name }?.source
             ?: parsers.sources().firstOrNull { it.source.name == name }?.source
             ?: cloudstream.sources().firstOrNull { it.name == name }?.let(CloudstreamSourceRuntime::sourceRef)
-            ?: jsonSourceCache.firstOrNull { it.id == name }
-                ?.let { SourceRef(it.id, "", org.skepsun.kototoro.tvbox.MacCmsSourceRuntime.CONTENT_TYPE) }
+            ?: jsonSourceCache.firstOrNull { it.id == name }?.let(::jsonSourceRef)
     }
     /** New-chapter tracking with Android's rules; details refresh through the normal source protocol. */
     val tracker = org.skepsun.kototoro.desktop.runtime.DesktopTracker(
@@ -196,6 +214,11 @@ class DesktopSession private constructor(
         preferredBranch = { content ->
             org.skepsun.kototoro.core.ui.chapters.resolvePreferredChapterBranch(content.chapters.orEmpty(),
                 SourceChapter::branch, SourceChapter::id, null, desktopChapterBranchLocales())
+        },
+        fetchChapters = { content ->
+            if (mihonRuntime.owns(content.source.name)) {
+                sources.getDetails(content, SourceDetailsFetchMode.CHAPTERS_REFRESH)
+            } else null
         },
     )
 
@@ -340,10 +363,13 @@ class DesktopSession private constructor(
         return downloadRequest { readerImages.load(page, readerRevision(chapter.source.name)) }
     }
 
-    /** Every installed source of every ecosystem, as the UI lists them. */
-    fun sourceListings(includeBroken: Boolean = showBrokenSources()): List<SourceListing> =
+    /**
+     * Every installed source of every ecosystem, as the UI lists them. Parsers marked `@Broken` are listed like any
+     * other: [reconcileBrokenSources] switches them off when they first appear, and the user can switch one on.
+     */
+    fun sourceListings(): List<SourceListing> =
         registry.installed().flatMap { extension -> extension.sources.map { mihonListing(it, extension.metadata.ecosystem) } } +
-            parsers.sources().filter { includeBroken || !it.broken }.map(::parserListing) +
+            parsers.sources().map(::parserListing) +
             cloudstream.sources().map(::cloudstreamListing) +
             jsonSourceCache.map(::jsonListing)
 
@@ -411,15 +437,29 @@ class DesktopSession private constructor(
     }
 
     /**
-     * Android's `show_broken_sources`: the parsers a plugin marks `@Broken` stay installed and callable, the switch
-     * only decides whether the source lists offer them. Default off, exactly like Android.
+     * The retired `show_broken_sources` switch (default off). Only [reconcileBrokenSources] reads it, once, so that the
+     * people who had it on keep the broken parsers they could see.
      */
-    fun showBrokenSources(): Boolean =
+    private fun showBrokenSources(): Boolean =
         (installed.snapshot()[SHOW_BROKEN_SOURCES_KEY] as? SourcePreferenceValue.Toggle)?.value ?: false
 
-    fun setShowBrokenSources(show: Boolean) {
+    /**
+     * Android's explicit-enable rule for parsers marked `@Broken`: such a parser is offered only after the user
+     * switches it on in extension management. Each one is switched off the first time it shows up (recorded in
+     * `broken_sources_seen`, so a later switch-on sticks); the first run instead keeps what the retired switch showed,
+     * so nothing visible disappears and nothing hidden appears.
+     */
+    fun reconcileBrokenSources() {
+        val broken = parsers.sources().filter { it.broken }.mapTo(LinkedHashSet()) { it.source.name }
+        val stored = installed.snapshot()[SEEN_BROKEN_SOURCES_KEY] as? SourcePreferenceValue.TextSet
+        val seen = stored?.values.orEmpty()
+        val fresh = broken - seen
+        if (fresh.isEmpty()) return
+        val keepVisible = stored == null && showBrokenSources()
+        val disabled = disabledSources().toMutableSet().apply { if (!keepVisible) addAll(fresh) }
         installed.edit(SourcePreferenceEdit(changes = mapOf(
-            SHOW_BROKEN_SOURCES_KEY to SourcePreferenceValue.Toggle(show),
+            "disabled_sources" to SourcePreferenceValue.TextSet(disabled),
+            SEEN_BROKEN_SOURCES_KEY to SourcePreferenceValue.TextSet(LinkedHashSet(seen + fresh)),
         )))
     }
 
@@ -600,12 +640,14 @@ class DesktopSession private constructor(
             context.ensureActive()
             val plugin = parsers.replace(managed.path, managed.id, managed.sha256) {
                 context.ensureActive()
-                val record = DesktopParserRecord(managed.id, managed.path.toString(), managed.sha256)
+                val record = DesktopParserRecord(managed.id, managed.path.toString(), managed.sha256, managed.versionCode)
                 persistRepositoryPreference(installed, PARSER_KEY_PREFIX + managed.id,
                     SourcePreferenceValue.Text(SourceProtocolJson.encodeToString(record)))
             }
             val listings = plugin.sources.map(::parserListing)
             applyInstallPolicy(listings.map { it.source.name }, enableSources)
+            // After the policy, so "install and enable" does not switch on a parser marked broken.
+            reconcileBrokenSources()
             InstalledExtension(desktopText("extensions.installedSummary", plugin.id, plugin.sources.size), listings)
         }
 
@@ -638,10 +680,13 @@ class DesktopSession private constructor(
             DesktopInstalledEntry(DesktopInstalledKind.EXTENSION, metadata.packageName, metadata.displayName,
                 metadata.ecosystem, metadata.versionName, metadata.versionCode, extension.sources.size,
                 extension.sources.map { it.source.name })
-        } + parsers.installed().map { plugin ->
+        } + parsers.installed().let { plugins ->
+            val versions = parserVersions()
+            plugins.map { plugin -> plugin to versions[plugin.id] }
+        }.map { (plugin, versionCode) ->
             DesktopInstalledEntry(DesktopInstalledKind.PARSER, plugin.id, plugin.id,
                 plugin.sources.firstOrNull()?.let { parserListing(it).ecosystem } ?: SourceEcosystem.KOTOTORO,
-                plugin.metadata.sha256.take(8), null, plugin.sources.size,
+                versionCode?.let { "v$it" } ?: plugin.metadata.sha256.take(8), versionCode, plugin.sources.size,
                 plugin.sources.map { it.source.name })
         } + cloudstream.installed().map { plugin ->
             DesktopInstalledEntry(DesktopInstalledKind.CLOUDSTREAM, plugin.id, plugin.manifest.name ?: plugin.id,
@@ -671,16 +716,22 @@ class DesktopSession private constructor(
         cleanupArtifacts()
     }
 
-    /** Forgets switch entries whose source is gone with the package, so the set cannot grow across reinstalls. */
+    /**
+     * Forgets switch entries whose source is gone with the package, so the set cannot grow across reinstalls. The seen
+     * broken parsers go with them: a reinstalled broken parser starts switched off again instead of enabled.
+     */
     private fun pruneDisabledSources() {
-        // Hidden broken sources still own their switch, so the prune sees everything the plugins declare.
-        val known = sourceListings(includeBroken = true).mapTo(mutableSetOf()) { it.source.name }
+        val known = sourceListings().mapTo(mutableSetOf()) { it.source.name }
+        val snapshot = installed.snapshot()
         val disabled = disabledSources()
         val kept = disabled.filterTo(mutableSetOf()) { it in known }
-        if (kept.size == disabled.size) return
-        installed.edit(SourcePreferenceEdit(changes = mapOf(
-            "disabled_sources" to SourcePreferenceValue.TextSet(kept),
-        )))
+        val seen = (snapshot[SEEN_BROKEN_SOURCES_KEY] as? SourcePreferenceValue.TextSet)?.values
+        val keptSeen = seen?.filterTo(LinkedHashSet()) { it in known }
+        if (kept.size == disabled.size && keptSeen?.size == seen?.size) return
+        installed.edit(SourcePreferenceEdit(changes = buildMap {
+            put("disabled_sources", SourcePreferenceValue.TextSet(kept))
+            if (keptSeen != null) put(SEEN_BROKEN_SOURCES_KEY, SourcePreferenceValue.TextSet(keptSeen))
+        }))
     }
 
     /** Artifacts of earlier versions and removed extensions; the files records still point at are kept. */
@@ -725,7 +776,18 @@ class DesktopSession private constructor(
     /** Installed versions by package name (Cloudstream: plugin id and manifest version), for repository listings. */
     fun installedVersions(): Map<String, Long> =
         registry.installed().associate { it.metadata.packageName to it.metadata.versionCode } +
-            cloudstream.installed().associate { it.id to it.manifest.version.toLong() }
+            cloudstream.installed().associate { it.id to it.manifest.version.toLong() } +
+            // A parser plugin without a recorded version (file import, older record) counts as 0: the repository's
+            // build is offered as an update instead of the row claiming the listed version is installed.
+            parserVersions().let { versions -> parsers.installed().associate { it.id to (versions[it.id] ?: 0L) } }
+
+    /** Recorded repository versions of the installed parser plugins, by plugin id. */
+    private fun parserVersions(): Map<String, Long> = installed.snapshot().mapNotNull { (key, value) ->
+        if (!key.startsWith(PARSER_KEY_PREFIX)) return@mapNotNull null
+        val text = (value as? SourcePreferenceValue.Text)?.value ?: return@mapNotNull null
+        runCatching { SourceProtocolJson.decodeFromString<DesktopParserRecord>(text) }.getOrNull()
+            ?.let { record -> record.versionCode?.let { record.id to it } }
+    }.toMap()
 
     private fun restoreJars() {
         for ((key, value) in installed.snapshot()) {
@@ -799,6 +861,7 @@ class DesktopSession private constructor(
                 parsers = ParserPluginRegistry(parserPlatform, priority = parserPluginPriority(jarPriorityOrder))
                 return DesktopSession(storage, platform, registry, parserPlatform, parsers, proxy, githubMirror).also {
                     it.restoreJars()
+                    it.reconcileBrokenSources()
                     // Superseded and removed versions are deleted once nothing has them open.
                     runCatching { it.cleanupArtifacts() }
                 }
@@ -849,9 +912,15 @@ private const val PROXY_TEST_URL = "http://neverssl.com"
 private fun cloudstreamListing(source: org.skepsun.kototoro.cloudstream.model.CloudstreamSource) =
     SourceListing(CloudstreamSourceRuntime.sourceRef(source), source.displayName, SourceEcosystem.CLOUDSTREAM, supportsLatest = false)
 
+private fun jsonSourceRef(source: org.skepsun.kototoro.desktop.runtime.DesktopJsonSource) = SourceRef(
+    source.id, "",
+    if (DesktopLegadoSourceRuntime.owns(source.id)) "NOVEL" else org.skepsun.kototoro.tvbox.MacCmsSourceRuntime.CONTENT_TYPE,
+)
+
 private fun jsonListing(source: org.skepsun.kototoro.desktop.runtime.DesktopJsonSource) = SourceListing(
-    SourceRef(source.id, "", org.skepsun.kototoro.tvbox.MacCmsSourceRuntime.CONTENT_TYPE),
-    source.name, SourceEcosystem.TVBOX, supportsLatest = false,
+    jsonSourceRef(source), source.name,
+    if (DesktopLegadoSourceRuntime.owns(source.id)) SourceEcosystem.LEGADO else SourceEcosystem.TVBOX,
+    supportsLatest = false,
     // Android's TVBox/JSON sources carry their own icon; the site address answers when the document had none.
     iconUrl = source.iconUrl?.takeIf(String::isNotBlank),
     siteUrl = source.api?.takeIf(String::isNotBlank),

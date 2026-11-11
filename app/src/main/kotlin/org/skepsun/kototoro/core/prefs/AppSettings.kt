@@ -71,6 +71,8 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.skepsun.kototoro.list.ui.compose.GridSizeRange
+import org.skepsun.kototoro.core.ui.chapters.ChapterGridSizeRange
 
 private const val PAGE_THUMBNAIL_ASPECT_RATIO_DEFAULT = 0.7f
 private const val PAGE_THUMBNAIL_ASPECT_RATIO_MIN = 0.35f
@@ -307,16 +309,16 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         set(value) = prefs.edit { putEnumValue(KEY_HOME_SECTION_LIST_MODE_RECOMMENDATIONS, value) }
 
     var homeSectionGridSizeHistory: Int
-        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_HISTORY, gridSize).coerceIn(50, 150)
-        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_HISTORY, value.coerceIn(50, 150)) }
+        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_HISTORY, gridSize).coerceIn(GridSizeRange)
+        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_HISTORY, value.coerceIn(GridSizeRange)) }
 
     var homeSectionGridSizeUpdates: Int
-        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_UPDATES, gridSize).coerceIn(50, 150)
-        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_UPDATES, value.coerceIn(50, 150)) }
+        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_UPDATES, gridSize).coerceIn(GridSizeRange)
+        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_UPDATES, value.coerceIn(GridSizeRange)) }
 
     var homeSectionGridSizeRecommendations: Int
-        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_RECOMMENDATIONS, gridSize).coerceIn(50, 150)
-        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_RECOMMENDATIONS, value.coerceIn(50, 150)) }
+        get() = prefs.getSafeInt(KEY_HOME_SECTION_GRID_SIZE_RECOMMENDATIONS, gridSize).coerceIn(GridSizeRange)
+        set(value) = prefs.edit { putInt(KEY_HOME_SECTION_GRID_SIZE_RECOMMENDATIONS, value.coerceIn(GridSizeRange)) }
 
     /** Rows per list-mode rail page (1..3); only meaningful for LIST modes. */
     var homeSectionRailRowsHistory: Int
@@ -466,6 +468,19 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_NAV_LABELS_ALWAYS_VISIBLE, true)
         set(value) = prefs.edit { putBoolean(KEY_NAV_LABELS_ALWAYS_VISIBLE, value) }
 
+    /**
+     * Put the tablet's vertical navigation bar on the left edge. The bar follows the hardware edge like
+     * iPhone Duo's, so it stays on the chosen physical side in right-to-left languages too.
+     */
+    var isTabletNavBarOnLeft: Boolean
+        get() = prefs.getBoolean(KEY_TABLET_NAV_BAR_LEFT, false)
+        set(value) = prefs.edit { putBoolean(KEY_TABLET_NAV_BAR_LEFT, value) }
+
+    /** Show labels under the destinations of the tablet's vertical bar (symbol-only by default). */
+    var isTabletNavLabelsVisible: Boolean
+        get() = prefs.getBoolean(KEY_TABLET_NAV_LABELS, false)
+        set(value) = prefs.edit { putBoolean(KEY_TABLET_NAV_LABELS, value) }
+
     var isNavBarPinned: Boolean
         get() = prefs.getBoolean(KEY_NAV_PINNED, true)
         set(value) = prefs.edit { putBoolean(KEY_NAV_PINNED, value) }
@@ -571,8 +586,8 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         set(value) = prefs.edit { putInt(KEY_NAV_FLOATING_HEIGHT, value.coerceIn(48, 84)) }
 
     var gridSize: Int
-        get() = prefs.getSafeInt(KEY_GRID_SIZE, 100).coerceIn(50, 150)
-        set(value) = prefs.edit { putInt(KEY_GRID_SIZE, value.coerceIn(50, 150)) }
+        get() = prefs.getSafeInt(KEY_GRID_SIZE, 100).coerceIn(GridSizeRange)
+        set(value) = prefs.edit { putInt(KEY_GRID_SIZE, value.coerceIn(GridSizeRange)) }
 
     var gridSizePages: Int
         get() = prefs.getSafeInt(KEY_GRID_SIZE_PAGES, 100).coerceIn(50, 150)
@@ -580,8 +595,8 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
 
     /** The chapter grid's own size; until first changed it follows the page grid it used to share. */
     var gridSizeChapters: Int
-        get() = prefs.getSafeInt(KEY_GRID_SIZE_CHAPTERS, gridSizePages).coerceIn(50, 150)
-        set(value) = prefs.edit { putInt(KEY_GRID_SIZE_CHAPTERS, value.coerceIn(50, 150)) }
+        get() = prefs.getSafeInt(KEY_GRID_SIZE_CHAPTERS, gridSizePages).coerceIn(ChapterGridSizeRange)
+        set(value) = prefs.edit { putInt(KEY_GRID_SIZE_CHAPTERS, value.coerceIn(ChapterGridSizeRange)) }
 
     var pageThumbnailAspectRatio: Float
         get() = prefs.getSafeFloat(KEY_PAGE_THUMBNAIL_ASPECT_RATIO, PAGE_THUMBNAIL_ASPECT_RATIO_DEFAULT)
@@ -1121,6 +1136,15 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getEnumValue(KEY_TRACKING_METADATA_SOURCE_STRATEGY, TrackingMetadataSourceStrategy.LOCAL_THEN_API)
         set(value) = prefs.edit { putEnumValue(KEY_TRACKING_METADATA_SOURCE_STRATEGY, value) }
 
+    /** Leaves titles their source marks as finished out of background and full new-chapter checks. */
+    var isTrackerSkipCompleted: Boolean
+        get() = prefs.getBoolean(KEY_TRACKER_SKIP_COMPLETED, false)
+        set(value) = prefs.edit { putBoolean(KEY_TRACKER_SKIP_COMPLETED, value) }
+
+    var isTrackerMarkDuplicatesRead: Boolean
+        get() = prefs.getBoolean(KEY_TRACKER_MARK_DUPLICATES_READ, false)
+        set(value) = prefs.edit { putBoolean(KEY_TRACKER_MARK_DUPLICATES_READ, value) }
+
     var isTrackerNsfwDisabled: Boolean
         get() = prefs.getBoolean(KEY_TRACKER_NO_NSFW, false)
         set(value) = prefs.edit { putBoolean(KEY_TRACKER_NO_NSFW, value) }
@@ -1316,6 +1340,15 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_VIDEO_LANDSCAPE_SENSOR, false)
         set(value) = prefs.edit { putBoolean(KEY_VIDEO_LANDSCAPE_SENSOR, value) }
 
+    var videoOrientation: VideoOrientation
+        get() = prefs.getEnumValue(KEY_VIDEO_ORIENTATION, VideoOrientation.AUTO)
+        set(value) = prefs.edit { putEnumValue(KEY_VIDEO_ORIENTATION, value) }
+
+    /** The rotate button's last state, which [VideoOrientation.LAST_USED] reopens the player in. */
+    var videoLastOrientationLandscape: Boolean
+        get() = prefs.getBoolean(KEY_VIDEO_LAST_ORIENTATION_LANDSCAPE, true)
+        set(value) = prefs.edit { putBoolean(KEY_VIDEO_LAST_ORIENTATION_LANDSCAPE, value) }
+
     var videoCacheSizeMb: Int
         get() = prefs.getSafeInt(KEY_VIDEO_CACHE_MB, 1024)
         set(value) = prefs.edit { putInt(KEY_VIDEO_CACHE_MB, value) }
@@ -1323,6 +1356,10 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     var thumbsCacheSizeMb: Int
         get() = prefs.getSafeInt(KEY_THUMBS_CACHE_MB, 256)
         set(value) = prefs.edit { putInt(KEY_THUMBS_CACHE_MB, value.coerceIn(32, 2048)) }
+
+    var chapterThumbsCacheSizeMb: Int
+        get() = prefs.getSafeInt(KEY_CHAPTER_THUMBS_CACHE_MB, 64)
+        set(value) = prefs.edit { putInt(KEY_CHAPTER_THUMBS_CACHE_MB, value.coerceIn(16, 1024)) }
 
     var faviconCacheSizeMb: Int
         get() = prefs.getSafeInt(KEY_FAVICON_CACHE_MB, 8)
@@ -1486,10 +1523,6 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_FEED_HEADER, true)
         set(value) = prefs.edit { putBoolean(KEY_FEED_HEADER, value) }
 
-    var showAllUpdates: Boolean
-        get() = prefs.getBoolean(KEY_SHOW_ALL_UPDATES, false)
-        set(value) = prefs.edit { putBoolean(KEY_SHOW_ALL_UPDATES, value) }
-
     var feedLimit: Int
         get() = prefs.getSafeInt(KEY_FEED_LIMIT, 200)
         set(value) = prefs.edit { putInt(KEY_FEED_LIMIT, value) }
@@ -1559,6 +1592,29 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         ).coerceIn(0, 100)
         set(value) = prefs.edit { putInt(KEY_GLASS_IMMERSIVE_STRENGTH, value.coerceIn(0, 100)) }
 
+    /** Resolution of the backdrop that glass and edge blurs are computed from; lower is cheaper on the GPU. */
+    var glassBlurQuality: GlassBlurQuality
+        get() = prefs.getEnumValue(KEY_GLASS_BLUR_QUALITY, GlassBlurQuality.BALANCED)
+        set(value) = prefs.edit { putEnumValue(KEY_GLASS_BLUR_QUALITY, value) }
+
+    /** Whether the main shell draws its top immersive layer (tint and blur under the status bar and top bar). */
+    var isGlassImmersiveTopEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GLASS_IMMERSIVE_TOP, true)
+        set(value) = prefs.edit { putBoolean(KEY_GLASS_IMMERSIVE_TOP, value) }
+
+    /** Whether the main shell draws its bottom immersive layer; the floating glass bottom bar does not need it. */
+    var isGlassImmersiveBottomEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GLASS_IMMERSIVE_BOTTOM, false)
+        set(value) = prefs.edit { putBoolean(KEY_GLASS_IMMERSIVE_BOTTOM, value) }
+
+    /** Blur radius (dp) of the main shell's top/bottom immersive edges; 0 keeps the plain tint gradient. */
+    var glassEdgeBlurRadiusDp: Int
+        get() = prefs.getSafeInt(
+            KEY_GLASS_EDGE_BLUR,
+            GLASS_EDGE_BLUR_DEFAULT_DP,
+        ).coerceIn(0, GLASS_EDGE_BLUR_MAX_DP)
+        set(value) = prefs.edit { putInt(KEY_GLASS_EDGE_BLUR, value.coerceIn(0, GLASS_EDGE_BLUR_MAX_DP)) }
+
     var isGlassEffectEnabled: Boolean
         get() = prefs.getBoolean(KEY_GLASS_EFFECT_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_GLASS_EFFECT_ENABLED, value) }
@@ -1623,6 +1679,14 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     var isChapterTranslateButtonVisible: Boolean
         get() = prefs.getBoolean(KEY_CHAPTER_TRANSLATE_BUTTON, true)
         set(value) = prefs.edit { putBoolean(KEY_CHAPTER_TRANSLATE_BUTTON, value) }
+
+    /**
+     * First-page thumbnails for chapters of image sources whose chapters carry no artwork of their own. Off by
+     * default: each visible chapter costs a page-list request. The panel more menu toggles it.
+     */
+    var isChapterThumbnailsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CHAPTER_THUMBNAILS, false)
+        set(value) = prefs.edit { putBoolean(KEY_CHAPTER_THUMBNAILS, value) }
 
     var zoomMode: ZoomMode
         get() = prefs.getEnumValue(KEY_ZOOM_MODE, ZoomMode.FIT_CENTER)
@@ -1746,6 +1810,13 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
             prefs.edit { putBoolean(KEY_SHOW_SOURCE_ON_CARDS, value) }
         }
 
+    /** Whether the favourites screen warns about sources that look broken. */
+    var isSourceHealthBannerEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SOURCE_HEALTH_BANNER, true)
+        set(value) {
+            prefs.edit { putBoolean(KEY_SOURCE_HEALTH_BANNER, value) }
+        }
+
     var showExtraInfoOnCards: Boolean
         get() = prefs.getBoolean(KEY_SHOW_EXTRA_INFO_ON_CARDS, false)
         set(value) {
@@ -1786,9 +1857,13 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_EXTENSIONS_GRID, false)
         set(value) = prefs.edit { putBoolean(KEY_EXTENSIONS_GRID, value) }
 
-    var isShowBrokenSources: Boolean
+    /** The retired "show broken sources" switch; only read once to migrate broken source rows. */
+    val isShowBrokenSources: Boolean
         get() = prefs.getBoolean(KEY_SHOW_BROKEN_SOURCES, false)
-        set(value) = prefs.edit { putBoolean(KEY_SHOW_BROKEN_SOURCES, value) }
+
+    var isBrokenSourceVisibilityMigrated: Boolean
+        get() = prefs.getBoolean(KEY_BROKEN_SOURCE_VISIBILITY_MIGRATED, false)
+        set(value) = prefs.edit { putBoolean(KEY_BROKEN_SOURCE_VISIBILITY_MIGRATED, value) }
 
     var isSearchHideEmptySourcesEnabled: Boolean
         get() = prefs.getBoolean(KEY_SEARCH_HIDE_EMPTY_SOURCES, false)
@@ -2630,6 +2705,10 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_PAGES_SAVE_ASK, true)
         set(value) = prefs.edit { putBoolean(KEY_PAGES_SAVE_ASK, value) }
 
+    var isPagesSavePerMangaFolder: Boolean
+        get() = prefs.getBoolean(KEY_PAGES_SAVE_PER_MANGA_FOLDER, false)
+        set(value) = prefs.edit { putBoolean(KEY_PAGES_SAVE_PER_MANGA_FOLDER, value) }
+
     var isStatsEnabled: Boolean
         get() = prefs.getBoolean(KEY_STATS_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_STATS_ENABLED, value) }
@@ -2742,9 +2821,11 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     }
 
     fun upsertAll(m: Map<String, *>) {
+        val local = prefs.all.filterKeys { !BackupSettingsFilter.isBackupableKey(it) }
         prefs.edit {
             removeAll(prefs)
-            putAll(m)
+            putAll(m.filterKeys { BackupSettingsFilter.isBackupableKey(it) })
+            putAll(local)
         }
         migrateLegacyUiPreferences()
     }
@@ -2788,6 +2869,10 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
             putBoolean(KEY_DETAILS_PANORAMA_SCROLL_LINKED, isDetailsPanoramaScrollLinkedEnabled)
             putString(KEY_POPUP_RADIUS, popupRadius.toString())
             putInt(KEY_GLASS_IMMERSIVE_STRENGTH, glassImmersiveStrengthPercent)
+            putInt(KEY_GLASS_EDGE_BLUR, glassEdgeBlurRadiusDp)
+            putBoolean(KEY_GLASS_IMMERSIVE_TOP, isGlassImmersiveTopEnabled)
+            putBoolean(KEY_GLASS_IMMERSIVE_BOTTOM, isGlassImmersiveBottomEnabled)
+            putEnumValue(KEY_GLASS_BLUR_QUALITY, glassBlurQuality)
             putBoolean(KEY_GLASS_EFFECT_ENABLED, isGlassEffectEnabled)
             putBoolean(KEY_REDUCED_VISUAL_EFFECTS, isReducedVisualEffectsEnabled)
             // Glass Finish Tuner scope configs (Global + 5 roles).
@@ -2971,6 +3056,7 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_TABLET_LIST_FILTER_PANEL_DEFAULT = "tablet_list_filter_panel_default"
         const val KEY_OFFLINE_DISABLED = "no_offline"
         const val KEY_PAGES_CACHE_CLEAR = "pages_cache_clear"
+        const val KEY_CHAPTER_THUMBS_CACHE_CLEAR = "chapter_thumbs_cache_clear"
         const val KEY_NOVEL_CACHE_CLEAR = "novel_cache_clear"
         const val KEY_VIDEO_CACHE_CLEAR = "video_cache_clear"
             const val KEY_VIDEO_PROXY_CACHE_CLEAR = "video_proxy_cache_clear"
@@ -3027,6 +3113,8 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_TRACKER_NOTIFICATIONS = "tracker_notifications"
         const val KEY_PREFERRED_TRACKING_SITE = "preferred_tracking_site"
         const val KEY_TRACKER_NO_NSFW = "tracker_no_nsfw"
+        const val KEY_TRACKER_SKIP_COMPLETED = "tracker_skip_completed"
+        const val KEY_TRACKER_MARK_DUPLICATES_READ = "tracker_mark_duplicates_read"
         const val KEY_TRACKER_DOWNLOAD = "tracker_download"
         const val KEY_NOTIFICATIONS_SETTINGS = "notifications_settings"
         const val KEY_NOTIFICATIONS_SOUND = "notifications_sound"
@@ -3051,6 +3139,13 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val EINK_REFRESH_EVERY_DEFAULT = 1
         const val EINK_REFRESH_EVERY_MIN = 1
         const val EINK_REFRESH_EVERY_MAX = 10
+        const val KEY_AVAILABLE_SOURCES = "available_sources"
+        const val KEY_EMPTY_SOURCES = "empty_sources"
+        const val KEY_CLOUDFLARE_SOURCES = "cloudflare_sources"
+
+        /** Keys that describe this device only: excluded from backups and sync, kept on restore. */
+        val DEVICE_LOCAL_KEYS: Set<String> = setOf(KEY_AVAILABLE_SOURCES, KEY_EMPTY_SOURCES, KEY_CLOUDFLARE_SOURCES)
+
         const val KEY_APP_PASSWORD = "app_password"
         const val KEY_APP_PASSWORD_NUMERIC = "app_password_num"
         const val KEY_PROTECT_APP = "protect_app"
@@ -3073,6 +3168,7 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_MERGE_REPEATED_CHAPTERS = "merge_repeated_chapters"
         const val KEY_CHAPTER_DOWNLOAD_BUTTON = "chapter_download_button"
         const val KEY_CHAPTER_TRANSLATE_BUTTON = "chapter_translate_button"
+        const val KEY_CHAPTER_THUMBNAILS = "chapter_thumbnails"
         const val KEY_INCOGNITO_NSFW = "incognito_nsfw"
         const val KEY_PAGES_NUMBERS = "pages_numbers"
         const val KEY_READER_TRANSLATION_ENABLED = "reader_translation_enabled"
@@ -3243,10 +3339,13 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_VIDEO_VOLUME_BOOST = "video_volume_boost"
         const val KEY_VIDEO_AUTO_NEXT = "video_auto_next"
         const val KEY_VIDEO_LANDSCAPE_SENSOR = "video_landscape_sensor"
+        const val KEY_VIDEO_ORIENTATION = "video_orientation"
+        const val KEY_VIDEO_LAST_ORIENTATION_LANDSCAPE = "video_last_orientation_landscape"
         const val KEY_VIDEO_CACHE_MB = "video_cache_mb"
             const val KEY_VIDEO_PROXY_CACHE_MB = "video_proxy_cache_mb"
             const val KEY_TORRENT_CACHE_MB = "torrent_cache_mb"
         const val KEY_THUMBS_CACHE_MB = "thumbs_cache_mb"
+        const val KEY_CHAPTER_THUMBS_CACHE_MB = "chapter_thumbs_cache_mb"
         const val KEY_FAVICON_CACHE_MB = "favicon_cache_mb"
         const val KEY_PAGES_CACHE_MB = "pages_cache_mb"
         const val KEY_NOVEL_CACHE_MB = "novel_cache_mb"
@@ -3293,6 +3392,7 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_GITHUB_MIRROR = "github_mirror"
         const val KEY_GITHUB_MIRROR_SYNC_URL = "github_mirror_sync_url"
         const val KEY_APP_UPDATE_SOURCE = "app_update_source"
+        const val KEY_SOURCE_HEALTH_BANNER = "source_health_banner"
         const val KEY_SHOW_EXTRA_INFO_ON_CARDS = "show_extra_info_on_cards"
         const val KEY_HUGGINGFACE_MIRROR = "huggingface_mirror"
         const val KEY_BANGUMI_MIRROR = "bangumi_mirror"
@@ -3337,6 +3437,8 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_NAV_MAIN_LEGACY_THREE_MIGRATED = "nav_main_legacy_three_migrated"
         const val KEY_NAV_LABELS = "nav_labels"
         const val KEY_NAV_LABELS_ALWAYS_VISIBLE = "nav_labels_always_visible"
+        const val KEY_TABLET_NAV_BAR_LEFT = "tablet_nav_bar_left"
+        const val KEY_TABLET_NAV_LABELS = "tablet_nav_labels"
         const val KEY_NAV_PINNED = "nav_pinned"
         const val KEY_NAV_FLOATING = "nav_floating"
         const val KEY_NAV_LAYERED_SURFACE = "nav_layered_surface"
@@ -3353,6 +3455,12 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_LOADING_CIRCLE_STYLE = "loading_circle_style"
         const val KEY_POPUP_RADIUS = "popup_radius"
         const val KEY_GLASS_IMMERSIVE_STRENGTH = "glass_immersive_strength"
+        const val KEY_GLASS_EDGE_BLUR = "glass_edge_blur"
+        const val KEY_GLASS_IMMERSIVE_TOP = "glass_immersive_top"
+        const val KEY_GLASS_IMMERSIVE_BOTTOM = "glass_immersive_bottom"
+        const val KEY_GLASS_BLUR_QUALITY = "glass_blur_quality"
+        const val GLASS_EDGE_BLUR_DEFAULT_DP = 16
+        const val GLASS_EDGE_BLUR_MAX_DP = 40
         const val KEY_GLASS_EFFECT_ENABLED = "glass_effect_enabled"
         const val KEY_REDUCED_VISUAL_EFFECTS = "reduced_visual_effects"
         const val KEY_DETAILS_PANORAMA_SCROLL_LINKED = "details_panorama_scroll_linked"
@@ -3372,13 +3480,13 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_READING_TIME = "reading_time"
         const val KEY_PAGES_SAVE_DIR = "pages_dir"
         const val KEY_PAGES_SAVE_ASK = "pages_dir_ask"
+        const val KEY_PAGES_SAVE_PER_MANGA_FOLDER = "pages_dir_per_manga"
         const val KEY_PAGES_SAVE_MANGA_TITLE_LENGTH = "pages_save_manga_title_length"
         const val DEFAULT_PAGES_SAVE_MANGA_TITLE_LENGTH = 24
         const val PAGES_SAVE_MANGA_TITLE_LENGTH_MIN = 12
         const val PAGES_SAVE_MANGA_TITLE_LENGTH_MAX = 64
         const val KEY_STATS_ENABLED = "stats_on"
         const val KEY_FEED_HEADER = "feed_header"
-        const val KEY_SHOW_ALL_UPDATES = "show_all_updates"
         const val KEY_FEED_LIMIT = "feed_limit"
         const val KEY_FEED_LAST_OPEN_TIME = "feed_last_open_time"
         const val KEY_SEARCH_SUGGESTION_TYPES = "search_suggest_types"
@@ -3386,6 +3494,7 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_SOURCES_ENABLED_ALL = "sources_enabled_all"
         const val KEY_EXTENSIONS_GRID = "extensions_grid"
         const val KEY_SHOW_BROKEN_SOURCES = "show_broken_sources"
+        const val KEY_BROKEN_SOURCE_VISIBILITY_MIGRATED = "broken_source_visibility_migrated"
         const val KEY_SEARCH_HIDE_EMPTY_SOURCES = "search_hide_empty_sources"
         const val KEY_JAR_PRIORITY_ORDER = "jar_priority_order"
         const val KEY_EXTENSIONS = "extensions"

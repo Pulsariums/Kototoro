@@ -2,9 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>KototoroBuildConfiguration</key>
+	<string>$(CONFIGURATION)</string>
+	<key>KototoroUpdateChannel</key>
+	<string>$(KOTOTORO_UPDATE_CHANNEL)</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>org.skepsun.kototoro.updates</string>
+		<string>org.skepsun.kototoro.ios.continued.*</string>
+		<string>org.skepsun.kototoro.ios.sync</string>
+		<string>org.skepsun.kototoro.ios.updates</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
@@ -84,6 +91,7 @@
 	<array>
 		<string>audio</string>
 		<string>fetch</string>
+		<string>processing</string>
 	</array>
 	<key>UTImportedTypeDeclarations</key>
 	<array>

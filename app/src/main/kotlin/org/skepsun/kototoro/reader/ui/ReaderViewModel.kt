@@ -81,7 +81,10 @@ import org.skepsun.kototoro.core.model.getMergeKey
 import org.skepsun.kototoro.core.model.mergeRepeated
 import org.skepsun.kototoro.core.model.isManga
 import org.skepsun.kototoro.core.model.getContentType
+import org.skepsun.kototoro.core.model.LocalNovelSource
+import org.skepsun.kototoro.core.model.looksLikeLocalNovelContent
 import org.skepsun.kototoro.core.model.looksLikeLocalVideoContent
+import org.skepsun.kototoro.core.model.looksLikeNovelUrl
 import org.skepsun.kototoro.parsers.model.ContentType
 import org.skepsun.kototoro.reader.domain.PageLoader
 import org.skepsun.kototoro.reader.domain.ReaderPageEnhancementController
@@ -663,10 +666,10 @@ class ReaderViewModel @Inject constructor(
     }
 
     private fun createPageSaveTask(explicitPage: ReaderPage?): PageSaveHelper.Task {
+        val pages = content.value.pages
         val page = explicitPage ?: run {
             val state = checkNotNull(getCurrentState())
             val targetPage = targetPagePosition.value ?: state.page
-            val pages = content.value.pages
             pages.find { it.chapterId == state.chapterId && it.index == targetPage }
                 ?: pages.find { it.chapterId == state.chapterId && it.index == state.page }
                 ?: throw IllegalStateException("Cannot find current page")
@@ -676,6 +679,14 @@ class ReaderViewModel @Inject constructor(
             chapterId = page.chapterId,
             pageNumber = page.index + 1,
             page = page.toContentPage(),
+            previousPage = pages.find { it.chapterId == page.chapterId && it.index == page.index - 1 }
+                ?.toContentPage(),
+            nextPage = pages.find { it.chapterId == page.chapterId && it.index == page.index + 1 }
+                ?.toContentPage(),
+            stitchDirection = StitchDirection.forReaderMode(
+                mode = readerMode.value,
+                isContinuousHorizontalReversed = settings.isContinuousHorizontalReversed,
+            ),
         )
     }
 
@@ -1064,10 +1075,10 @@ class ReaderViewModel @Inject constructor(
                         val reversed = dataRepository.isChaptersReversed(manga.id)
                         chaptersLoader.isChaptersReversed = reversed
                         isChapterOrderReversed.value = reversed
-                        val contentType = if (manga.looksLikeLocalVideoContent()) {
-                            ContentType.VIDEO
-                        } else {
-                            manga.source.getContentType()
+                        val contentType = when {
+                            manga.looksLikeLocalVideoContent() -> ContentType.VIDEO
+                            manga.looksLikeLocalNovelContent() -> ContentType.NOVEL
+                            else -> manga.source.getContentType()
                         }
                         if (contentType == ContentType.NOVEL || contentType == ContentType.HENTAI_NOVEL ||
                             contentType == ContentType.VIDEO || contentType == ContentType.HENTAI_VIDEO
@@ -1100,6 +1111,11 @@ class ReaderViewModel @Inject constructor(
                                 exception = e.mergeWith(exception)
                                 return@collect
                             }
+                            val initialPages = chaptersLoader.getPages(newState.chapterId)
+                            if (initialPages.isNotEmpty() && initialPages.all { it.url.looksLikeNovelUrl() }) {
+                                onRedirectToReader.call(manga.copy(source = LocalNovelSource))
+                                return@collect
+                            }
                         } else {
                             val state = readingState.value!!
                             if (chaptersLoader.isChapterLocal(state.chapterId)) {
@@ -1108,7 +1124,8 @@ class ReaderViewModel @Inject constructor(
                                     val uri = android.net.Uri.parse(it.url)
                                     val scheme = uri.scheme
                                     scheme != "file" && scheme != "zip" && scheme != "file+zip" &&
-                                    scheme != "content" && scheme != "epub" && scheme != "localepub"
+                                        scheme != "content+zip" && scheme != "file+pdf" && scheme != "content+pdf" &&
+                                        scheme != "content" && scheme != "epub" && scheme != "localepub"
                                 }
                                 if (hasRemotePages) {
                                     android.util.Log.d("ReaderViewModel", "Reloading chapter ${state.chapterId} pages from local storage")

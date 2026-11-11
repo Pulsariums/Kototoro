@@ -16,9 +16,11 @@ import org.skepsun.kototoro.parsers.network.CloudFlareProtection
 import org.skepsun.kototoro.favourites.data.FavouriteCategoryEntity
 import org.skepsun.kototoro.list.domain.ListSortOrder
 import org.skepsun.kototoro.core.library.SourceLibrary
+import org.skepsun.kototoro.core.library.SourceStateEdits
 import org.skepsun.kototoro.core.library.SourceTracker
 import org.skepsun.kototoro.history.domain.recoverHistoryChapterId
 import org.skepsun.kototoro.core.source.SourceRef
+import org.skepsun.kototoro.tracker.domain.completeAllPendingUpdates
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -38,8 +40,17 @@ data class IosSourceSetting(
 @OptIn(ExperimentalAtomicApi::class)
 class IosLibrary {
     internal val database: MangaDatabase
+    /** When each source switch/pin/order was last changed, so Google Drive sync knows which device's wins. */
+    internal val sourceEdits: SourceStateEdits
     private val sourceRefs = AtomicReference<Map<String, SourceRef>>(emptyMap())
     internal val records by lazy { SourceLibrary(database) { sourceRefs.load()[it] } }
+    private val trackerSources = AtomicReference<IosSources?>(null)
+    private val tracker by lazy {
+        SourceTracker(database, records,
+            { requireNotNull(trackerSources.load()).refreshDetails(IosSourceContent(it)).value },
+            { it.chapters?.firstOrNull()?.branch },
+            fetchChapters = { requireNotNull(trackerSources.load()).refreshChaptersIfSupported(it) })
+    }
     val tracking by lazy { IosTracking(this) }
     /** Novel text replacement rules in the shared `replace_rules` table. */
     /** WebDAV backups (Android's uploader format), over the shared `WebDavLibrarySync`. */
@@ -74,10 +85,12 @@ class IosLibrary {
             .addMigrations(*sharedDatabaseMigrations())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()
+        sourceEdits = iosSourceStateEdits(databasePath)
     }
 
     internal constructor(database: MangaDatabase) {
         this.database = database
+        sourceEdits = SourceStateEdits({ emptyMap() }, {})
     }
 
     val schemaVersion: Int get() = DATABASE_VERSION
@@ -220,8 +233,9 @@ class IosLibrary {
     }
 
     @Throws(Exception::class)
-    suspend fun setSourcePinned(name: String, pinned: Boolean) =
+    suspend fun setSourcePinned(name: String, pinned: Boolean) = sourceEdits.localChange(database) {
         database.getSourcesDao().setPinned(name, pinned, SOURCE_APP_VERSION)
+    }
 
     /**
      * Saves a manual order. Sources without a row yet get one carrying [enabled] (their current effective state),
@@ -230,7 +244,7 @@ class IosLibrary {
     @Throws(Exception::class)
     suspend fun setSourceOrder(names: List<String>, enabled: List<Boolean>) {
         require(names.size == enabled.size && names.distinct().size == names.size)
-        database.useWriterConnection { connection ->
+        sourceEdits.localChange(database) { database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val dao = database.getSourcesDao()
                 dao.insertIfAbsent(names.mapIndexed { index, name ->
@@ -239,17 +253,17 @@ class IosLibrary {
                 })
                 names.forEachIndexed { index, name -> dao.setSortKey(name, index) }
             }
-        }
+        } }
     }
 
     @Throws(Exception::class)
     suspend fun setSourcesEnabled(names: List<String>, enabled: Boolean) {
-        database.useWriterConnection { connection ->
+        sourceEdits.localChange(database) { database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val dao = database.getSourcesDao()
                 for (name in names.distinct()) dao.setEnabled(name, enabled, SOURCE_APP_VERSION)
             }
-        }
+        } }
     }
 
     @Throws(Exception::class)
@@ -366,6 +380,12 @@ class IosLibrary {
         }
     }
 
+    /** The records page's "mark all read": every unread update and new-chapter counter completes at once. */
+    @Throws(Exception::class)
+    suspend fun markAllUpdatesRead() = database.useWriterConnection { connection ->
+        connection.immediateTransaction { database.completeAllPendingUpdates(kotlin.time.Clock.System.now().toEpochMilliseconds()) }
+    }
+
     @Throws(Exception::class)
     suspend fun position(content: IosSourceContent): IosReadingPosition? {
         val history = records.progress(content.value.id) ?: return null
@@ -436,17 +456,34 @@ class IosLibrary {
         }
     }
 
+    /** The same unseen-work query as Android's records/feed badge, independent of pending chapter counts. */
     @Throws(Exception::class)
-    suspend fun checkUpdates(sources: IosSources): IosUpdateReport {
-        val tracker = SourceTracker(database, records,
-            { sources.refreshDetails(IosSourceContent(it)).value }, { it.chapters?.firstOrNull()?.branch })
-        val result = tracker.checkAll()
-        return IosUpdateReport(result.checked, result.withUpdates, result.failed, result.newChapters)
+    suspend fun unseenUpdates(): List<IosSourceContent> = database.useReaderConnection { connection ->
+        connection.deferredTransaction {
+            records.findMany(database.getTracksDao().findUnreadWorkIds()).map(::IosSourceContent)
+        }
     }
 
     @Throws(Exception::class)
-    suspend fun markUpdatesSeen(content: IosSourceContent) = SourceTracker(database, records,
-        { it }, { it.chapters?.firstOrNull()?.branch }).markSeen(content.value.id)
+    suspend fun checkUpdates(
+        sources: IosSources,
+        respectSchedule: Boolean = false,
+        skipCompleted: Boolean = false,
+        listener: IosUpdateProgressListener? = null,
+    ): IosUpdateReport {
+        trackerSources.store(sources)
+        val result = tracker.checkAll(respectSchedule = respectSchedule, skipCompleted = skipCompleted,
+            onCounts = { counts, total ->
+                listener?.onUpdateProgress(IosUpdateProgress(counts.checked, total, counts.withUpdates,
+                    counts.newChapters, counts.failed, counts.skipped))
+            })
+        return IosUpdateReport(result.checked, result.withUpdates, result.failed, result.newChapters, result.skipped)
+    }
+
+    fun setMarkDuplicateChaptersRead(enabled: Boolean) { records.markDuplicateChaptersRead = enabled }
+
+    @Throws(Exception::class)
+    suspend fun markUpdatesSeen(content: IosSourceContent) = tracker.markSeen(content.value.id)
 
     private val backups by lazy { IosBackupService(this) }
 
@@ -456,11 +493,13 @@ class IosLibrary {
 
     /** Merges in one transaction; local rows are never cleared and newer local state wins. */
     @Throws(Exception::class)
-    suspend fun restoreBackup(preview: IosBackupPreview): Int = backups.restore(preview)
+    suspend fun restoreBackup(preview: IosBackupPreview, listener: IosProgressListener? = null): Int =
+        backups.restore(preview, listener)
 
     /** Writes the Android-compatible library sections; [path] must not exist yet. */
     @Throws(Exception::class)
-    suspend fun exportBackup(path: String) = backups.export(path, kotlin.time.Clock.System.now().toEpochMilliseconds())
+    suspend fun exportBackup(path: String, listener: IosProgressListener? = null) =
+        backups.export(path, kotlin.time.Clock.System.now().toEpochMilliseconds(), ProgressThrottle(listener))
 
     private val externalBackups by lazy { IosExternalBackupService(this) }
 

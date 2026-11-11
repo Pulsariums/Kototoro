@@ -5,6 +5,9 @@ import SwiftUI
 /// Owns the routed source runtime for the app's lifetime: Apple CMS sites run natively, extensions use the JVM.
 @MainActor
 final class SourcesModel: ObservableObject {
+    /// The app's one runtime: the scene and the background update check share it, so the JVM session opens once.
+    static let shared = SourcesModel()
+
     @Published private(set) var sources: [IosSource] = [] {
         didSet {
             byName = Dictionary(sources.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
@@ -206,6 +209,14 @@ final class SourcesModel: ObservableObject {
         ownedRuntime = runtime
     }
 
+    /// The runtime with its catalog, for work without the UI (a background launch builds it on its own).
+    func prepared(_ library: IosLibrary) async -> IosSources? {
+        attach(library)
+        while isLoading { try? await Task.sleep(for: .milliseconds(100)) }
+        if catalogRevision == 0 { await load() }
+        return catalogRevision > 0 ? runtime : nil
+    }
+
     func load() async {
         guard let runtime, !isLoading else { return }
         isLoading = true
@@ -311,6 +322,9 @@ struct SourcesView: View {
     @State private var reordering = false
     @State private var migration: LibraryMigrationRequest?
     @State private var trackingPreview: TrackingPreviewSelection?
+    /// The grid page's content width, measured once at the page rather than by every grid or tile.
+    @State private var contentWidth: CGFloat = 0
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.openGlobalSearch) private var openGlobalSearch
 
     private struct DisplaySources {
@@ -512,6 +526,22 @@ struct SourcesView: View {
         }
     }
 
+    private static let tileMinimum: CGFloat = 92
+    private static let tileSpacing: CGFloat = 10
+
+    /// Side insets of each section's grid.
+    private static let gridInset: CGFloat = 16
+
+    /// Matches the adaptive grid's column count, so the frame equals the rows the grid lays out.
+    private func gridHeight(count: Int) -> CGFloat? {
+        let gridWidth = contentWidth - 2 * Self.gridInset
+        guard gridWidth >= Self.tileMinimum, count > 0 else { return nil }
+        let tileHeight = SourceTile.height(dynamicTypeSize)
+        let columns = max(1, Int((gridWidth + Self.tileSpacing) / (Self.tileMinimum + Self.tileSpacing)))
+        let rows = (count + columns - 1) / columns
+        return CGFloat(rows) * tileHeight + CGFloat(rows - 1) * Self.tileSpacing
+    }
+
     private func grid(_ display: DisplaySources) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -537,7 +567,8 @@ struct SourcesView: View {
                         Text("\(section.title) · \(section.sources.count)")
                             .font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
                             .padding(.horizontal, 20)
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: Self.tileMinimum), spacing: Self.tileSpacing)],
+                                  spacing: Self.tileSpacing) {
                             ForEach(section.sources, id: \.name) { source in
                                 NavigationLink(value: SourceRoute(source: source)) {
                                     SourceTile(runtime: model.runtime, source: source)
@@ -547,13 +578,23 @@ struct SourcesView: View {
                                     .contextMenu { sourceActions(source) }
                             }
                         }
-                        .padding(.horizontal, 16)
+                        // Lazy grids report estimated heights for rows out of view, and returning from a source or
+                        // the background re-estimates them, moving a deep position into another group. Neither one
+                        // grid with sections nor scrollPosition(id:) keeps it (both reproduced the jump), so each
+                        // section takes its exact height: every tile has the same height from its fonts, and rows
+                        // follow the column count of the page's measured width.
+                        .frame(height: gridHeight(count: section.sources.count), alignment: .top)
+                        .padding(.horizontal, Self.gridInset)
                     }
                 }
                 emptyState(hasSections: !display.sections.isEmpty).padding(.top, 40)
                 if disabledCount > 0 { disabledFooter.padding(.horizontal, 20) }
             }
             .padding(.vertical, 8)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+                // A zero or collapsed report during a transition must not size every grid from it.
+                if width >= Self.tileMinimum + 2 * Self.gridInset, abs(contentWidth - width) > 0.5 { contentWidth = width }
+            }
         }
         .background(Color(uiColor: .systemGroupedBackground))
     }

@@ -131,7 +131,7 @@ import org.skepsun.kototoro.core.ui.compose.TvModalBottomSheet
 import org.skepsun.kototoro.core.ui.compose.KototoroLoadingIndicator
 import org.skepsun.kototoro.core.ui.compose.KototoroMotion
 import org.skepsun.kototoro.core.ui.compose.ImmersiveEdgeGradient
-import org.skepsun.kototoro.core.ui.compose.toTransparentImmersiveColor
+import org.skepsun.kototoro.core.ui.compose.ImmersiveEdge
 import org.skepsun.kototoro.reader.ui.compose.design.ReaderChapterTitleChip
 import org.skepsun.kototoro.reader.ui.compose.design.ReaderChromeTopBar
 import org.skepsun.kototoro.reader.ui.compose.design.ReaderInfoBarAlignment
@@ -184,8 +184,6 @@ private val ReaderInfoBarItemSpacing = 10.dp
  */
 private val ReaderFloatingControlInset = 62.dp
 private val ReaderFloatingControlHeight = 44.dp
-private val ReaderTopImmersiveStops = listOf(0f, 0.24f, 0.50f, 0.70f, 0.86f, 1f)
-private val ReaderBottomImmersiveStops = listOf(0f, 0.18f, 0.38f, 0.70f, 1f)
 
 @Immutable
 internal data class ComposeReaderChromeState(
@@ -245,28 +243,6 @@ internal data class ReaderMessage(
     val text: String,
     val durationMillis: Long?,
     val actionLabel: String? = null,
-)
-
-@Immutable
-internal data class ReaderAutoScrollUiState(
-    val visible: Boolean = false,
-    val active: Boolean = false,
-    val manuallyPaused: Boolean = false,
-    val speed: Float = AppSettings.DEFAULT_READER_AUTOSCROLL_SPEED,
-    val fabVisible: Boolean = false,
-    val pauseOnUi: Boolean = true,
-    val showPageDelay: Boolean = false,
-    val pageDelaySeconds: Long = 0L,
-)
-
-internal data class ReaderAutoScrollCallbacks(
-    val onOpen: () -> Unit = {},
-    val onClose: () -> Unit = {},
-    val onActiveChanged: (Boolean) -> Unit = {},
-    val onPausedChanged: (Boolean) -> Unit = {},
-    val onSpeedChanged: (Float) -> Unit = {},
-    val onFabChanged: (Boolean) -> Unit = {},
-    val onPauseOnUiChanged: (Boolean) -> Unit = {},
 )
 
 internal data class ComposeReaderChromeCallbacks(
@@ -437,6 +413,14 @@ private fun ReaderChapterPanelMoreMenu(
                 rowActions.setShowTranslate(!rowActions.showTranslate)
             },
         )
+        ReaderChapterPanelMenuItem(
+            text = stringResource(R.string.chapter_show_thumbnails),
+            selected = rowActions.showThumbnails,
+            onClick = {
+                onDismissRequest()
+                rowActions.setShowThumbnails(!rowActions.showThumbnails)
+            },
+        )
     }
 }
 
@@ -522,7 +506,6 @@ internal fun ComposeReaderActivityScaffold(
     BackHandler { callbacks.onBackPressed() }
     val isIosStyle = LocalInterfaceStyle.current == InterfaceStyle.IOS
     val immersiveBaseColor = if (isSystemInDarkTheme()) Color.Black else Color.White
-    val immersiveTransparent = immersiveBaseColor.toTransparentImmersiveColor()
     val topImmersiveHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 76.dp
     val bottomImmersiveHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 84.dp
     val readerBackdrop = if (isIosStyle && !state.eInkModeEnabled) {
@@ -553,29 +536,16 @@ internal fun ComposeReaderActivityScaffold(
             Box(modifier = Modifier.fillMaxSize()) {
                 ImmersiveEdgeGradient(
                     height = topImmersiveHeight + ReaderTopImmersiveFeatherExtension,
-                    colors = listOf(
-                        immersiveBaseColor.copy(alpha = 0.86f),
-                        immersiveBaseColor.copy(alpha = 0.62f),
-                        immersiveBaseColor.copy(alpha = 0.32f),
-                        immersiveBaseColor.copy(alpha = 0.12f),
-                        immersiveBaseColor.copy(alpha = 0.035f),
-                        immersiveTransparent,
-                    ),
-                    stops = ReaderTopImmersiveStops,
+                    color = immersiveBaseColor.copy(alpha = 0.86f),
+                    edge = ImmersiveEdge.TOP,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .fillMaxWidth(),
                 )
                 ImmersiveEdgeGradient(
                     height = bottomImmersiveHeight + ReaderBottomImmersiveFeatherExtension,
-                    colors = listOf(
-                        immersiveTransparent,
-                        immersiveBaseColor.copy(alpha = 0.035f),
-                        immersiveBaseColor.copy(alpha = 0.16f),
-                        immersiveBaseColor.copy(alpha = 0.42f),
-                        immersiveBaseColor.copy(alpha = 0.78f),
-                    ),
-                    stops = ReaderBottomImmersiveStops,
+                    color = immersiveBaseColor.copy(alpha = 0.78f),
+                    edge = ImmersiveEdge.BOTTOM,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth(),
@@ -858,29 +828,13 @@ internal fun ComposeReaderActivityScaffold(
         )
 
         if (state.autoScroll.active && state.autoScroll.fabVisible && !state.controlsVisible && !state.autoScroll.visible) {
-            // Auto-scroll affordance: a floating glass pill (like the reader's
-            // other pill chrome) — uniform hairline + press gloss, no resting
-            // highlight.
-            GlassSurface(
+            ReaderAutoScrollFab(
+                onClick = callbacks.autoScroll.onOpen,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
-                    .padding(end = 16.dp, bottom = 16.dp)
-                    .size(48.dp),
-                shape = CircleShape,
-                style = GlassDefaults.topBarChromeStyle(),
-                componentRole = GlassComponentRole.PillControl,
-            ) {
-                IconButton(
-                    onClick = callbacks.autoScroll.onOpen,
-                    modifier = Modifier.fillMaxSize().tvIconButtonRing(),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_timer_run),
-                        contentDescription = stringResource(R.string.automatic_scroll),
-                    )
-                }
-            }
+                    .padding(end = 16.dp, bottom = 16.dp),
+            )
         }
 
         EInkRefreshOverlay(state.eInkRefresh, callbacks.onEInkRefreshConsumed)
@@ -933,72 +887,6 @@ private fun ReaderProgressControl(
         nextEnabled = state.nextEnabled,
         isIosStyle = isIosStyle,
     )
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun ReaderAutoScrollPanel(state: ReaderAutoScrollUiState, callbacks: ReaderAutoScrollCallbacks) {
-    var startSwitchHasFocus by remember { mutableStateOf(false) }
-    val startSwitchRequester = rememberTvSheetStartFocus { startSwitchHasFocus }
-    Column(
-        // A television draws this sheet in landscape, where the stack of rows is taller than the
-        // screen: without a scroll the last switches are off-screen and a remote cannot drag the
-        // sheet up. Focus inside the column brings its row into view on its own.
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.reader_autoscroll), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            IconButton(
-                onClick = callbacks.onClose,
-                modifier = Modifier.tvFocusable(shape = CircleShape, addFocusTarget = false),
-            ) { Text("×", style = MaterialTheme.typography.titleLarge) }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.reader_autoscroll), modifier = Modifier.weight(1f))
-            Switch(
-                checked = state.active,
-                onCheckedChange = callbacks.onActiveChanged,
-                modifier = Modifier
-                    .focusRequester(startSwitchRequester)
-                    .onFocusChanged { startSwitchHasFocus = it.isFocused }
-                    .tvFocusable(shape = CircleShape, addFocusTarget = false),
-            )
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (state.manuallyPaused) stringResource(R.string.play) else stringResource(R.string.pause), modifier = Modifier.weight(1f))
-            Switch(
-                checked = !state.manuallyPaused,
-                onCheckedChange = { callbacks.onPausedChanged(!it) },
-                modifier = Modifier.tvFocusable(shape = CircleShape, addFocusTarget = false),
-            )
-        }
-        ReaderAutoScrollSpeedControl(
-            speed = state.speed,
-            onSpeedChange = callbacks.onSpeedChanged,
-            commitOnRelease = false,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.reader_autoscroll_fab), modifier = Modifier.weight(1f))
-            Switch(
-                checked = state.fabVisible,
-                onCheckedChange = callbacks.onFabChanged,
-                modifier = Modifier.tvFocusable(shape = CircleShape, addFocusTarget = false),
-            )
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.reader_autoscroll_pause_on_ui), modifier = Modifier.weight(1f))
-            Switch(
-                checked = state.pauseOnUi,
-                onCheckedChange = callbacks.onPauseOnUiChanged,
-                modifier = Modifier.tvFocusable(shape = CircleShape, addFocusTarget = false),
-            )
-        }
-        if (state.showPageDelay) {
-            Text(stringResource(R.string.page_switch_timer, state.pageDelaySeconds), style = MaterialTheme.typography.bodySmall)
-        }
-    }
 }
 
 @Composable

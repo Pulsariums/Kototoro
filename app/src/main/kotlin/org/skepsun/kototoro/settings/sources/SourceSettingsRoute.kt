@@ -1,5 +1,7 @@
 package org.skepsun.kototoro.settings.sources
 
+import androidx.appcompat.app.AppCompatActivity
+import org.skepsun.kototoro.core.util.ext.findActivity
 import android.content.Context
 import android.content.SharedPreferences
 import android.widget.Toast
@@ -171,6 +173,13 @@ fun SourceSettingsRoute(
         viewModel.onResume()
     }
 
+    // Configuration changes must reach the parsers without an app restart: cached repository
+    // instances (extension sources in particular, which snapshot their preferences when
+    // constructed) are dropped and rebuilt from the updated settings on the next request.
+    LaunchedEffect(controller, viewModel) {
+        controller.sourcePrefs.observeChanges().collect { viewModel.invalidateRepository() }
+    }
+
     val sourcePrefChanges = remember(controller) { controller.sourcePrefs.observeChanges().map { Any() } }
     val legadoSourcePrefChanges = remember(controller) { controller.legadoSourcePrefs.observeChanges().map { Any() } }
     val legadoBookPrefChanges = remember(controller) { controller.legadoBookPrefs.observeChanges().map { Any() } }
@@ -281,6 +290,22 @@ private class SourceSettingsRouteController(
         }
 
         buildExternalPreferenceSection(externalPreferenceScreen)?.let(sections::add)
+
+        if (viewModel.hasCloudstreamPluginSettings) {
+            sections += SourceSettingsSectionUiState(
+                id = "cloudstream_plugin",
+                title = context.getString(R.string.source_type_cloudstream),
+                rows = listOf(
+                    SourceSettingsActionRowUiState(
+                        id = "cloudstream_plugin_settings",
+                        title = context.getString(R.string.extension_settings),
+                        onClick = {
+                            (context.findActivity() as? AppCompatActivity)?.let(viewModel::openCloudstreamPluginSettings)
+                        },
+                    ),
+                ),
+            )
+        }
 
         buildTvBoxRows(repository).takeIf { it.isNotEmpty() }?.let { rows ->
             sections += SourceSettingsSectionUiState(

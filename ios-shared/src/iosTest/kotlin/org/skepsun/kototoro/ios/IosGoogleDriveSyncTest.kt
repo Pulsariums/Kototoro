@@ -22,6 +22,80 @@ import kotlin.test.*
 
 class IosGoogleDriveSyncTest {
     @Test
+    fun staleUnrecordedCountersDoNotReturnAfterMarkAllReadAndSync() = runBlocking {
+        withLibrary { library ->
+            val original = IosGoogleDriveSync.decode(ANDROID.encodeToByteArray())
+            fun remote(checkedOffset: Long) = GoogleDriveSyncSnapshot(deviceId = "android",
+                content = original.content, categories = original.categories, favourites = original.favourites,
+                history = original.history, feed = SyncFeedState(tracks = original.feed.tracks.map {
+                    SyncTrack(mangaId = it.mangaId, lastChapterId = it.lastChapterId, newChapters = 900,
+                        lastCheckTime = it.lastCheckTime + checkedOffset, lastChapterDate = it.lastChapterDate,
+                        lastResult = it.lastResult, lastError = it.lastError)
+                }))
+            val store = LibraryDriveSync(library.database)
+            store.merge(remote(0), "ios", 1000)
+            library.markAllUpdatesRead()
+            // Another device checks later and re-uploads its pre-identity counter without update records.
+            val upload = store.merge(remote(1000), "ios", 2000)
+            assertEquals(0, upload.feed.tracks.single().newChapters)
+            assertTrue(library.updates().isEmpty())
+        }
+    }
+
+    @Test
+    fun completedUpdateChaptersStayReadAfterStaleSyncAndNewDiscoveriesStillCount() = runBlocking {
+        withLibrary { library ->
+            val original = IosGoogleDriveSync.decode(ANDROID.encodeToByteArray())
+            val id = original.content.single().id
+            fun chapter(number: Long) = org.skepsun.kototoro.tracker.domain.UpdateChapter(
+                "chapter/$number", number, "Chapter $number", null, 100, 200)
+            fun remote(newChapter: Boolean = false): GoogleDriveSyncSnapshot {
+                val chapters = if (newChapter) listOf(chapter(1), chapter(2)) else listOf(chapter(1))
+                return GoogleDriveSyncSnapshot(deviceId = "android", content = original.content,
+                    categories = original.categories, favourites = original.favourites,
+                    feed = SyncFeedState(tracks = listOf(SyncTrack(mangaId = id, newChapters = chapters.size,
+                        lastCheckTime = if (newChapter) 400 else 250)),
+                        logs = listOf(SyncTrackLog(mangaId = id, chapters = chapters.joinToString("\n") { it.title },
+                            createdAt = if (newChapter) 400 else 250, isUnread = true,
+                            chapterMetadata = org.skepsun.kototoro.tracker.domain.encodeUpdateChapters(chapters)))))
+            }
+            val store = LibraryDriveSync(library.database)
+            store.merge(remote(), "ios", 1000)
+            assertEquals(1, library.updates().single().newChapters)
+            library.markAllUpdatesRead()
+            repeat(2) {
+                val upload = store.merge(remote(), "ios", 2000)
+                assertEquals(0, upload.feed.tracks.single().newChapters)
+                assertTrue(upload.feed.logs.none { it.isUnread })
+            }
+            val upload = store.merge(remote(newChapter = true), "ios", 3000)
+            assertEquals(1, upload.feed.tracks.single().newChapters)
+        }
+    }
+
+    @Test
+    fun recordsBadgeCountsUnseenWorksInsteadOfPendingChapters() = runBlocking {
+        withLibrary { library ->
+            val original = IosGoogleDriveSync.decode(ANDROID.encodeToByteArray())
+            val id = original.content.single().id
+            fun remote(unseen: Boolean) = GoogleDriveSyncSnapshot(deviceId = "android", content = original.content,
+                categories = original.categories, favourites = original.favourites,
+                feed = SyncFeedState(tracks = listOf(SyncTrack(mangaId = id, newChapters = 900)),
+                    logs = listOf(SyncTrackLog(mangaId = id, chapters = "Legacy chapter", createdAt = 100,
+                        isUnread = unseen))))
+            val store = LibraryDriveSync(library.database)
+            store.merge(remote(unseen = true), "ios", 900)
+            assertEquals(1, library.unseenUpdates().size)
+            store.merge(remote(unseen = false), "ios", 1000)
+            assertEquals(900, library.updates().single().newChapters, "Seeing a reminder is not reading its chapters")
+            assertTrue(library.unseenUpdates().isEmpty())
+            library.markAllUpdatesRead()
+            assertTrue(library.updates().isEmpty())
+            assertTrue(library.unseenUpdates().isEmpty())
+        }
+    }
+
+    @Test
     fun iosCreatedFavouritesAndReadingPositionUseAndroidProtocol() = runBlocking {
         withLibrary { library ->
             val source = SourceRef("MIHON_123", "zh", "MANGA")
@@ -72,6 +146,46 @@ class IosGoogleDriveSyncTest {
             assertEquals(1, second.favourites.size)
             assertEquals(1, second.stats.size)
             assertEquals(1, second.feed.logs.size)
+        }
+    }
+
+    @Test
+    fun sourcePinsSyncBothWaysWithTheNewestEditWinning() = runBlocking {
+        withLibrary { library ->
+            val store = LibraryDriveSync(library.database, library.sourceEdits)
+            fun remote(vararg states: SyncSourceState) = GoogleDriveSyncSnapshot(deviceId = "android", sourceStates = states.toList())
+            // An Android pin reaches a source iOS has never stored, then one it has.
+            library.setSourceOrder(listOf("MIHON_2"), listOf(true))
+            store.merge(remote(SyncSourceState("MIHON_1", true, isPinned = true, sortKey = 3, modifiedAt = 100),
+                SyncSourceState("MIHON_2", true, isPinned = true, modifiedAt = Long.MAX_VALUE / 2)), "ios", 1000)
+            val settings = library.sourceSettings().associateBy { it.name }
+            assertTrue(settings.getValue("MIHON_1").pinned)
+            assertEquals(3, settings.getValue("MIHON_1").sortKey)
+            assertTrue(settings.getValue("MIHON_2").pinned)
+            // An iOS unpin made after Android's edit survives the stale remote copy and is uploaded with its time.
+            library.setSourcePinned("MIHON_1", false)
+            val upload = store.merge(remote(SyncSourceState("MIHON_1", true, isPinned = true, sortKey = 3,
+                modifiedAt = 100)), "ios", 2000)
+            assertFalse(library.sourceSettings().single { it.name == "MIHON_1" }.pinned)
+            val uploaded = upload.sourceStates.single { it.source == "MIHON_1" }
+            assertFalse(uploaded.isPinned)
+            assertTrue(uploaded.modifiedAt > 100)
+            // Android's merger prefers that newer state over the old remote one.
+            val android = GoogleDriveSyncMerger.mergeSnapshots(upload,
+                remote(SyncSourceState("MIHON_1", true, isPinned = true, sortKey = 3, modifiedAt = 100)))
+            assertFalse(android.sourceStates.single { it.source == "MIHON_1" }.isPinned)
+            // A later Android pin wins again, and the edit times survive reopening the library.
+            library.close()
+            val reopened = IosLibrary(path)
+            try {
+                LibraryDriveSync(reopened.database, reopened.sourceEdits).merge(remote(SyncSourceState("MIHON_1", true,
+                    isPinned = true, modifiedAt = uploaded.modifiedAt + 1)), "ios", 3000)
+                assertTrue(reopened.sourceSettings().single { it.name == "MIHON_1" }.pinned)
+                reopened.setSourcePinned("MIHON_2", false)
+                val kept = LibraryDriveSync(reopened.database, reopened.sourceEdits).merge(remote(SyncSourceState(
+                    "MIHON_2", true, isPinned = true, modifiedAt = 100)), "ios", 4000)
+                assertFalse(kept.sourceStates.single { it.source == "MIHON_2" }.isPinned)
+            } finally { reopened.close() }
         }
     }
 

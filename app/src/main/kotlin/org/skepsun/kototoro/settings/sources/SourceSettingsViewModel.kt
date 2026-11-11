@@ -1,7 +1,10 @@
 package org.skepsun.kototoro.settings.sources
 
 import android.content.SharedPreferences
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.skepsun.kototoro.R
+import org.skepsun.kototoro.cloudstream.runtime.CloudstreamContentRepository
+import org.skepsun.kototoro.cloudstream.runtime.CloudstreamRuntimeManager
 import org.skepsun.kototoro.core.model.ContentSource
 import org.skepsun.kototoro.core.nav.AppRouter
 import org.skepsun.kototoro.core.network.cookies.MutableCookieJar
@@ -51,22 +57,34 @@ import org.skepsun.kototoro.core.model.jsonsource.TVBoxStoredConfig
 @HiltViewModel
 class SourceSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    mangaRepositoryFactory: ContentRepository.Factory,
+    private val mangaRepositoryFactory: ContentRepository.Factory,
     private val cookieJar: MutableCookieJar,
     private val mangaSourcesRepository: ContentSourcesRepository,
     private val jsonSourceManager: JsonSourceManager,
     private val jsSourceParser: JSSourceParser,
     private val webViewExecutor: WebViewExecutor,
+    private val cloudstreamRuntimeManager: CloudstreamRuntimeManager,
 ) : BaseViewModel(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val initialSource = ContentSource(savedStateHandle.get<String>(AppRouter.KEY_SOURCE))
     val repository = mangaRepositoryFactory.create(initialSource)
     val source = repository.source
 
+    /**
+     * Drop the cached repository (and its content cache) so that configuration changes —
+     * domains, user agents, extension preferences — reach the parsers without an app restart.
+     */
+    fun invalidateRepository() = mangaRepositoryFactory.invalidate(source)
+
     val onActionDone = MutableEventFlow<ReversibleAction>()
     val username = MutableStateFlow<String?>(null)
     val isAuthorized = MutableStateFlow<Boolean?>(null)
     val browserUrl = MutableStateFlow<String?>(null)
+
+    /** The Cloudstream plugin providing this source has a settings screen of its own. */
+    val hasCloudstreamPluginSettings: Boolean =
+        (repository as? CloudstreamContentRepository)?.let { cloudstreamRuntimeManager.hasPluginSettings(it.source) } == true
+    private var cloudstreamPluginSettingsOpened = false
     val isEnabled = mangaSourcesRepository.observeIsEnabled(source)
         .map<Boolean, Boolean?> { it }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -132,6 +150,20 @@ class SourceSettingsViewModel @Inject constructor(
                 val httpSource = repository.aniyomiSource as? eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
                 browserUrl.value = httpSource?.baseUrl
             }
+            is org.skepsun.kototoro.tsundoku.TsundokuNovelRepository -> {
+                browserUrl.value = runCatching { (repository.source as? org.skepsun.kototoro.tsundoku.model.TsundokuNovelSource)?.baseUrlOrNull }.getOrNull()?.takeIf { it.isNotBlank() }
+            }
+            is org.skepsun.kototoro.ireader.IReaderMangaRepository -> {
+                val httpSource = repository.source.catalogueSource as? ireader.core.source.HttpSource
+                browserUrl.value = runCatching { httpSource?.baseUrl }.getOrNull()?.takeIf { it.isNotBlank() }
+            }
+            is org.skepsun.kototoro.core.lnreader.LNReaderContentRepository -> {
+                val config = (repository.source as? JsonContentSource)?.entity?.config.orEmpty()
+                browserUrl.value = runCatching {
+                    org.skepsun.kototoro.core.lnreader.LNReaderPluginMetadata.extractFromCode(config, repository.source.name)
+                        ?.site
+                }.getOrNull()?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            }
             is org.skepsun.kototoro.cloudstream.runtime.CloudstreamContentRepository -> {
                 browserUrl.value = repository.source.api.mainUrl.takeIf { it.isNotBlank() }
             }
@@ -142,7 +174,30 @@ class SourceSettingsViewModel @Inject constructor(
         }
     }
 
+    /** Opens the Cloudstream plugin's own settings over [activity], loading the plugin with it first if needed. */
+    fun openCloudstreamPluginSettings(activity: AppCompatActivity) {
+        val repository = repository as? CloudstreamContentRepository ?: return
+        launchJob(Dispatchers.Default) {
+            val open = withContext(Dispatchers.IO) {
+                cloudstreamRuntimeManager.preparePluginSettings(repository.source, activity)
+            } ?: return@launchJob
+            withContext(Dispatchers.Main) {
+                if (activity.isFinishing || activity.isDestroyed) return@withContext
+                cloudstreamPluginSettingsOpened = true
+                open(activity)
+            }
+        }
+    }
+
     override fun onCleared() {
+        if (cloudstreamPluginSettingsOpened) {
+            // Plugins read their settings when they load (CNC Verse picks its catalogs then) and ask Cloudstream to
+            // restart; loading the plugin again applies them should the person decline.
+            val source = (repository as CloudstreamContentRepository).source
+            ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+                runCatching { cloudstreamRuntimeManager.reloadPlugin(source) }
+            }
+        }
         when (repository) {
             is ParserContentRepository -> {
                 repository.getConfig().unsubscribe(this)

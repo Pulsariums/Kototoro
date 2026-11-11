@@ -122,9 +122,9 @@ npm run docs:build
 ## 技术栈
 
 - **Kotlin** 2.4.0 / **AGP** 9.3.1 / **Gradle** 9.7.0（使用 `gradle/libs.versions.toml` 版本目录）
-- **compileSdk** 37 / **minSdk** 26 / **targetSdk** 37
+- **compileSdk** 37.1（app；Compose ui 1.13 要求该小版本 SDK）/ **minSdk** 26 / **targetSdk** 37
 - **JVM 目标**: Java 11（开启 desugaring 以使用现代 API）
-- **UI**: Jetpack Compose（BOM 2026.08.00，ui 1.12.0）+ Material3（1.5.0-alpha26 覆盖 BOM 的 1.4.0）+ ViewBinding（混合过渡期）
+- **UI**: Jetpack Compose（BOM 2026.08.00；ui/runtime 1.13.0-rc01 覆盖 BOM 的 1.12.x，用于边缘渐进模糊的 `BlurRadiusSpec`）+ Material3（1.5.0-alpha26 覆盖 BOM 的 1.4.0）+ ViewBinding（混合过渡期）
 - **数据库**: Room 2.8.4，KSP 代码生成
 - **DI**: Hilt/Dagger（dagger 2.60.1，androidx.hilt 1.3.0）
 - **网络**: OkHttp 5.4.0
@@ -218,6 +218,20 @@ Android 与桌面的 UI 按 CMP 共享呈现演进；Windows 与 macOS 始终共
   成员/哈希变化，按编号维持打包后的类优先级。Compose 资源目录可定位随包桥，S3 待完成，见计划 §33–52。
 - `source-tvbox/` - 苹果 CMS / TVBox type 0/1 的共享 `SourceRuntime`（KMP 纯 Kotlin，HTTP 由平台注入）：配置导入、
   JSON/XML 解析，存储格式、`JSON_TVBOX_` ID、`tvbox://` URL 与 ID 哈希同 Android；iOS 默认构建经 Ktor Darwin 原生执行，见计划 §93。
+- `source-legado/` - Legado 书源运行时（KMP：`jvmAndroidMain` 由 Android 与桌面 JVM 共用，包名仍是
+  `org.skepsun.kototoro.core.parser.legado` 与 `core.javascript`）：规则解析（JSoup/JSONPath/XPath/正则）、URL 请求计划、
+  搜索/详情/目录/正文解析、发现分类 `LegadoExploreKinds`，以及脚本宿主——`RhinoJavaScriptEngine`、`LegadoJavaAPI`
+  （脚本里的 `java`）、`LegadoCookieAPI`、`SharedJsScope`。平台能力经 `LegadoScriptPlatform` 注入：Android 是 `app` 的
+  `AndroidLegadoScriptPlatform`（同文件里保留原参数的 `RhinoJavaScriptEngine(...)`/`LegadoJavaAPI(...)` 工厂函数，调用点不变），
+  桌面是 `desktop-app` 的 `DesktopLegadoScriptPlatform`。Android 脚本可触达任意类；桌面脚本跑在
+  `DesktopLegadoRhino`（30 s 超时）与白名单 `DesktopLegadoClassShutter` 里，未放行的类一经包装即报错，
+  WebView、内置浏览器、字体表、7z/rar、繁简转换在桌面直接失败。桌面入口是 `DesktopLegadoSourceRuntime`
+  （只收 `bookSourceType` 0 的小说书源，存在 `desktop_json_sources`）。请求规则（请求头/Cookie 合并、重试、限流、编码判定）
+  是共享的 `LegadoPlanHttpExecutor`，平台网络经 `LegadoPlanTransport` 注入：Android 的 `KototoroLegadoHttpExecutor` 只剩
+  网络/WebView/Cloudflare 适配，桌面的 `DesktopLegadoTransport` 用会话的共享客户端（网页验证由该客户端的拦截器处理），
+  并把剩下的 4xx/5xx 报成 `HTTP <code>`（Android 是解析成空列表）。真实书源探针：`-PrealLegadoCatalog=<file>` 跑
+  `DesktopLegadoSourceRuntimeTest`（用裸 OkHttp，不含会话客户端的验证与代理）；应用级回归是 `DesktopAppTest` 的
+  `legado-sources` 探针。
 - `parser-host/` - JVM 上加载 kototoro-parsers / kotatsu-parsers / UMA（Tsuki）插件 JAR：子优先 classloader、
   宿主共享 ABI、`ParserSourceRuntime`（OFFSET 分页、小说 `getChapterContent`）；真实插件用 `-PkototoroParsersJar`、
   `-PdexPluginJar`、`-PparserHostOnline` 选择性验证。
@@ -672,8 +686,8 @@ KMP/iOS 方案与进度见 `docs/architecture/kmp-ios-plan-2026-10.md`。KMP 模
 - 自动回退到完整 APK 下载
 
 **数据库**：
-- Room 数据库（`MangaDatabase`）在 KMP 模块 `core-db/`，DATABASE_VERSION = 85（`core-db/src/commonMain/.../core/db/MangaDatabase.kt`）；导出的 schema 仍位于 `app/schemas/org.skepsun.kototoro.core.db.MangaDatabase/`（已提交，由 `core-db` 的 Room 插件导出，`app` 的 androidTest 以 assets 读取）
-- 迁移文件 `core-db/src/androidMain/kotlin/org/skepsun/kototoro/core/db/migrations/Migration1To2.kt` 到 `Migration83To84.kt`（另含历史遗留的降级迁移 `Migration24To23.kt`，仍保留在 `getDatabaseMigrations` 列表中，位于 `core-db` 的 `MangaDatabaseMigrations.kt`）；84→85 起的迁移在 commonMain（`Migration84To85.kt` 与 `sharedDatabaseMigrations()`），Android/Windows/iOS 三端共用
+- Room 数据库（`MangaDatabase`）在 KMP 模块 `core-db/`，DATABASE_VERSION = 87（`core-db/src/commonMain/.../core/db/MangaDatabase.kt`）；导出的 schema 仍位于 `app/schemas/org.skepsun.kototoro.core.db.MangaDatabase/`（已提交，由 `core-db` 的 Room 插件导出，`app` 的 androidTest 以 assets 读取）
+- 迁移文件 `core-db/src/androidMain/kotlin/org/skepsun/kototoro/core/db/migrations/Migration1To2.kt` 到 `Migration83To84.kt`（另含历史遗留的降级迁移 `Migration24To23.kt`，仍保留在 `getDatabaseMigrations` 列表中，位于 `core-db` 的 `MangaDatabaseMigrations.kt`）；84→85 起的迁移在 commonMain（`Migration84To85.kt` 到 `Migration86To87.kt`，注册在 `sharedDatabaseMigrations()`），Android/Windows/iOS 三端共用
 - Android 必须继续使用框架 SQLite 驱动：旧迁移实现的是 `migrate(SupportSQLiteDatabase)`，换成 `BundledSQLiteDriver` 会抛 `NotImplementedError`
 - DAO 的过滤条件使用数据类型 `ListFilterCriteria`（`core-db`）；应用层的 `ListFilterOption`（带资源 id 与图标）在 Repository 边界用 `toCriteria()` 转换
 - 用户状态（收藏/历史/统计/偏好/追踪）直接挂在 `manga` 行上；实体图谱与 work 表已在 v84 移除（`Migration83To84` → `ProjectionOwnershipMigrationResolver`）
@@ -710,7 +724,7 @@ RELEASE_KEY_PASSWORD=***
 - `dandanplay.appId` / `dandanplay.appSecret` - 弹弹 Play API 凭证
 
 ### 版本管理
-当前版本：`versionName 1.9.9` / `versionCode 1212`（`app/build.gradle`）。
+当前版本：`versionName 2.4.3` / `versionCode 1260`（`app/build.gradle`）。
 在 `app/build.gradle` 中更新：
 - `versionCode` - 每次发布递增
 - `versionName` - 语义化版本号（如 "1.0.0.prev"）
@@ -733,7 +747,7 @@ RELEASE_KEY_PASSWORD=***
 - `chore: ...` - 杂项
 
 ### 翻译
-翻译内容通过 Weblate 管理，避免手动批量修改字符串资源。
+项目不使用 Weblate：翻译直接修改 `app/src/main/res/values-*/strings.xml`（社区 PR 也是这样提交的），改动时保持占位符的序号与类型不变。桌面端文案由 `prepareDesktopStrings` 从同一份资源导出，会一起生效。
 
 ### 发布流程
 参考 `.github/RELEASE_GUIDE.md`：
@@ -741,6 +755,30 @@ RELEASE_KEY_PASSWORD=***
 2. 创建 Git 标签（如 `v1.0.0`）
 3. 推送标签触发 GitHub Actions 自动构建
 4. CI 自动生成 APK 和增量补丁并创建 Release
+
+### 更新日志格式
+GitHub Release 正文按最近版本（如 v2.4.0）的固定格式手写，CI 自动生成的提交列表只作为末尾附录：
+
+1. 标题 `## Kototoro X.Y.Z`（不带 `v`）。
+2. 按平台分 `###` 节，节名一律“中文 / English”，没有内容的节省略，顺序固定：
+   `跨平台 / Across platforms`（Android、桌面、iOS 都生效）→ `Android 与桌面 / Android & desktop` →
+   `Android` → `桌面 / Desktop`（Windows/macOS/Linux 共用 `desktop-app`；仅单个桌面系统时写具体系统名）→
+   `iOS / iPadOS` → `下载与安装 / Downloads & installation`（永远最后）。
+3. 每条变更是一项双语条目：先中文，换行后两个空格缩进写英文，二者内容对等：
+   ```markdown
+   - **中文短标题（#652）**：中文说明。
+     **English short title (#652):** English description.
+   ```
+   中文用全角冒号/括号，界面名称用「」；英文标题以 `:` 结尾放在粗体内，界面名称用 `*斜体*`，路径用 `→`。
+   有关联 issue 时把编号放进标题括号里。
+4. 写给用户看：说明可感知的行为、修复后的效果、新设置的位置与默认值（默认关闭要写明原因），不写类名、模块名或实现细节；
+   同一功能的多个提交合并为一条；纯 `docs`/`chore`/`refactor`/`test` 不单列；不得夸大，未完成或有前提的要如实注明。
+5. `下载与安装` 节固定为五行表格（Android、Windows x64、Linux x64、macOS、iOS / iPadOS），沿用上一版措辞并替换版本号；
+   某平台产物未发布时在该行如实说明原因。
+6. 表格后依次是 `**完整变更 / Full changelog:** [vPREV...vCUR](https://github.com/Kototoro-app/Kototoro/compare/vPREV...vCUR)`，
+   以及折叠的提交列表：`<details><summary>完整提交列表 / Full commit list</summary>`，内容为
+   `git log --no-merges --pretty='- %s (%h)' vPREV..vCUR`（新→旧，含版本号提交）。
+7. 写之前用 `gh release view <上一版本>` 对照最近一版的措辞与表格，保持一致。
 
 ## 重要文档
 

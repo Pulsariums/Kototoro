@@ -15,6 +15,41 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
     @Query("SELECT * FROM tracks ORDER BY last_check_time ASC LIMIT :limit OFFSET :offset")
     abstract suspend fun findAll(offset: Int, limit: Int): List<TrackEntity>
 
+    /** Like [findAll], leaving out titles whose source reports [skippedState] (a `ContentState` name). */
+    @Query(
+        "SELECT tracks.* FROM tracks LEFT JOIN manga ON manga.manga_id = tracks.manga_id " +
+            "WHERE manga.state IS NULL OR manga.state != :skippedState " +
+            "ORDER BY tracks.last_check_time ASC LIMIT :limit OFFSET :offset",
+    )
+    abstract suspend fun findAllExceptState(skippedState: String, offset: Int, limit: Int): List<TrackEntity>
+
+    /** Every track, least recently checked first, with its title's source; the run picks its batch from it. */
+    @Query(
+        "SELECT tracks.manga_id AS manga_id, manga.source AS source, " +
+            "IFNULL(track_schedule.next_check_time, 0) AS next_check_time FROM tracks " +
+            "LEFT JOIN manga ON manga.manga_id = tracks.manga_id " +
+            "LEFT JOIN track_schedule ON track_schedule.manga_id = tracks.manga_id " +
+            "ORDER BY tracks.last_check_time ASC",
+    )
+    abstract suspend fun findQueue(): List<TrackQueueEntry>
+
+    /** Like [findQueue], leaving out titles whose source reports [skippedState] (a `ContentState` name). */
+    @Query(
+        "SELECT tracks.manga_id AS manga_id, manga.source AS source, " +
+            "IFNULL(track_schedule.next_check_time, 0) AS next_check_time FROM tracks " +
+            "LEFT JOIN manga ON manga.manga_id = tracks.manga_id " +
+            "LEFT JOIN track_schedule ON track_schedule.manga_id = tracks.manga_id " +
+            "WHERE manga.state IS NULL OR manga.state != :skippedState " +
+            "ORDER BY tracks.last_check_time ASC",
+    )
+    abstract suspend fun findQueueExceptState(skippedState: String): List<TrackQueueEntry>
+
+    @Query(
+        "SELECT COUNT(*) FROM tracks LEFT JOIN manga ON manga.manga_id = tracks.manga_id " +
+            "WHERE manga.state IS NULL OR manga.state != :skippedState",
+    )
+    abstract suspend fun getTracksCountExceptState(skippedState: String): Int
+
     @Query("SELECT * FROM tracks ORDER BY last_check_time DESC")
     abstract fun observeAll(): Flow<List<TrackEntity>>
 
@@ -45,22 +80,11 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
     @Query("SELECT COUNT(*) FROM tracks WHERE chapters_new > 0")
     abstract fun observeUpdateContentCount(): Flow<Int>
 
-    @Query(
-        """
-        SELECT COUNT(*)
-        FROM (
-            SELECT manga_id
-            FROM track_logs
-            WHERE unread = 1
-            UNION
-            SELECT manga_id
-            FROM tracks
-            WHERE chapters_new > 0
-                AND NOT EXISTS (SELECT 1 FROM track_logs WHERE track_logs.manga_id = tracks.manga_id)
-        )
-        """,
-    )
+    @Query("SELECT COUNT(*) FROM (" + UNREAD_WORK_IDS_QUERY + ")")
     abstract fun observeUnreadWorkCount(): Flow<Int>
+
+    @Query(UNREAD_WORK_IDS_QUERY)
+    abstract suspend fun findUnreadWorkIds(): List<Long>
 
     @Query("SELECT IFNULL(chapters_new, 0) FROM tracks WHERE manga_id = :mangaId LIMIT 1")
     abstract fun observeNewChapters(mangaId: Long): Flow<Int>
@@ -97,6 +121,19 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
 
     @Query("UPDATE tracks SET chapters_new = 0 WHERE manga_id = :mangaId")
     abstract suspend fun clearCounter(mangaId: Long)
+
+    /**
+     * Clears pending counters that no update record backs, except for titles from [localSources]. A remote title's
+     * counter is written together with its records, so such a counter is left over from versions that did not keep
+     * records; a local copy's counter may still be live, since reading it counts down by position.
+     */
+    @Query(
+        "UPDATE tracks SET chapters_new = 0 WHERE chapters_new > 0 " +
+            "AND NOT EXISTS (SELECT 1 FROM track_logs WHERE track_logs.manga_id = tracks.manga_id) " +
+            "AND NOT EXISTS (SELECT 1 FROM manga WHERE manga.manga_id = tracks.manga_id " +
+            "AND manga.source IN (:localSources))",
+    )
+    abstract suspend fun clearUnrecordedCounters(localSources: List<String>): Int
 
     @Query("UPDATE tracks SET chapters_new = :count WHERE manga_id = :mangaId AND chapters_new != :count")
     abstract suspend fun updateCounter(mangaId: Long, count: Int)
@@ -196,3 +233,12 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
             "), 0)"
     }
 }
+
+/** Reminder badges count distinct unseen works; pending chapters only stand in when no event exists. */
+private const val UNREAD_WORK_IDS_QUERY = """
+    SELECT manga_id FROM track_logs WHERE unread = 1
+    UNION
+    SELECT manga_id FROM tracks
+    WHERE chapters_new > 0
+        AND NOT EXISTS (SELECT 1 FROM track_logs WHERE track_logs.manga_id = tracks.manga_id)
+"""

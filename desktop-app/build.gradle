@@ -23,7 +23,7 @@ def desktopIcons = ['ic_bookmark', 'ic_explore_normal', 'ic_history', 'ic_downlo
     'ic_sync',
     'ic_storage', 'ic_pin', 'ic_unpin', 'ic_content_video', 'ic_code', 'ic_delete_all', 'ic_expand_more', 'ic_tag', 'ic_sort', 'ic_error_large',
     'ic_state_finished', 'ic_state_abandoned', 'ic_action_pause', 'ic_timer', 'ic_disable', 'ic_info_outline',
-    'ic_grid', 'ic_list', 'ic_list_detailed']
+    'ic_grid', 'ic_grid_compact', 'ic_list', 'ic_list_detailed']
 def desktopIconResources = layout.buildDirectory.dir('generated/android-icons')
 def prepareDesktopIcons = tasks.register('prepareDesktopIcons') {
     def vectors = desktopIcons.collect { rootProject.file("app/src/main/res/drawable/${it}.xml") }
@@ -111,12 +111,29 @@ def prepareDesktopAppIcons = tasks.register('prepareDesktopAppIcons') {
             }
             images.each { ico.put(it) }
             new File(root, 'Kototoro.ico').bytes = ico.array()
-            def entries = ['icp4': 16, 'icp5': 32, 'icp6': 64, 'ic07': 128, 'ic08': 256, 'ic09': 512]
-                .collect { type, size ->
-                    byte[] data = png(size)
-                    java.nio.ByteBuffer.allocate(data.length + 8).put(type.getBytes('US-ASCII'))
-                        .putInt(data.length + 8).put(data).array()
+            // Same element types iconutil writes. Finder garbles PNG data in icp4/icp5/icp6 (icp6 is also 48 px, not
+            // 64), so 16/32 px use ic04/ic05: 'ARGB' + per-channel icns RLE, here as literal runs only.
+            def argb = { int size ->
+                def image = javax.imageio.ImageIO.read(new ByteArrayInputStream(png(size)))
+                def bytes = new ByteArrayOutputStream()
+                bytes.write('ARGB'.getBytes('US-ASCII'))
+                int[] pixels = image.getRGB(0, 0, size, size, null, 0, size)
+                [24, 16, 8, 0].each { shift ->
+                    for (int start = 0; start < pixels.length; start += 128) {
+                        int count = Math.min(128, pixels.length - start)
+                        bytes.write(count - 1)
+                        for (int i = start; i < start + count; i++) bytes.write((pixels[i] >>> shift) & 0xFF)
+                    }
                 }
+                bytes.toByteArray()
+            }
+            def entries = [
+                ic04: argb(16), ic05: argb(32), ic11: png(32), ic12: png(64), ic07: png(128),
+                ic13: png(256), ic08: png(256), ic14: png(512), ic09: png(512),
+            ].collect { type, byte[] data ->
+                java.nio.ByteBuffer.allocate(data.length + 8).put(type.getBytes('US-ASCII'))
+                    .putInt(data.length + 8).put(data).array()
+            }
             def icns = java.nio.ByteBuffer.allocate(8 + entries.sum { it.length })
             icns.put('icns'.getBytes('US-ASCII')).putInt(icns.capacity())
             entries.each { icns.put(it) }
@@ -353,6 +370,10 @@ dependencies {
     implementation project(':mihon-desktop-compat')
     implementation project(':cloudstream-desktop')
     implementation project(':source-tvbox')
+    implementation project(':source-legado')
+    implementation libs.rhino
+    // AppDirs in the supplied compatibility runtime needs the Windows JNA platform classes at startup.
+    runtimeOnly libs.jna.platform
     implementation project(':core-domain')
     implementation project(':reader-core')
     // Novel paging reuses the shared line splitter Android paginates with, not a Windows-only rewrite.
@@ -387,6 +408,8 @@ def compatibilityFiles = configurations.create('suppliedCompatibilityRuntime') {
 }
 dependencies.add(compatibilityFiles.name,
     dependencies.project(path: ':mihon-desktop-compat', configuration: 'suppliedCompatibilityRuntime'))
+// The test JVM itself needs the same pinned APIs as the app, including during JUnit test discovery.
+sourceSets.test.runtimeClasspath += compatibilityFiles
 def runtimeJavaVersion = providers.gradleProperty('mihonCompatibilityJavaVersion').map { it.toInteger() }.getOrElse(21)
 def desktopLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(runtimeJavaVersion) }
 def bundleWindowsRuntime = providers.gradleProperty('withWindowsDistribution').isPresent()
@@ -803,7 +826,7 @@ tasks.withType(Test).configureEach {
     // The UI tests assert the text the app ships in Chinese, so the language is pinned instead of following the
     // machine's locale (`--lang`/DesktopStrings.pin); without this, the same tests fail on an English CI machine.
     systemProperty 'kototoro.desktop.locale', 'zh-CN'
-    systemProperty 'kototoro.desktop.test.classpath', (sourceSets.test.runtimeClasspath + compatibilityFiles).asPath
+    systemProperty 'kototoro.desktop.test.classpath', sourceSets.test.runtimeClasspath.asPath
     systemProperty 'kototoro.desktop.fixture.jar', project(':mihon-desktop-compat').layout.buildDirectory.file('fixtures/offline-desktop-fixture.jar').get().asFile
     systemProperty 'kototoro.desktop.challenge.fixture.jar', project(':mihon-desktop-compat').layout.buildDirectory.file('fixtures/interactive-desktop-fixture.jar').get().asFile
     systemProperty 'kototoro.desktop.reader.fixture.jar', project(':mihon-desktop-compat').layout.buildDirectory.file('fixtures/reader-desktop-fixture.jar').get().asFile
@@ -822,6 +845,8 @@ tasks.withType(Test).configureEach {
     providers.gradleProperty('realApkDirectory').orNull?.with { systemProperty 'kototoro.dex.real.apks', it }
     providers.gradleProperty('realNovelApk').orNull?.with { systemProperty 'kototoro.real.novel', it }
     providers.gradleProperty('realAnimeApk').orNull?.with { systemProperty 'kototoro.real.anime', it }
+    providers.gradleProperty('realLegadoCatalog').orNull?.with { systemProperty 'kototoro.real.legado', it }
+    providers.gradleProperty('realLegadoQuery').orNull?.with { systemProperty 'kototoro.real.legado.query', it }
     providers.gradleProperty('realDirect').orNull?.with { systemProperty 'kototoro.real.direct', it }
     providers.gradleProperty('mpvOptions').orNull?.with { systemProperty 'kototoro.real.mpvoptions', it }
     providers.gradleProperty('ncnnDirectory').orNull?.with { systemProperty 'kototoro.ncnn.dir', it }

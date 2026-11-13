@@ -368,7 +368,7 @@ jobs:
             echo ""
             if [ -s "$NESTED_LIST" ]; then
               echo "| Size (MB) | Bytes | File |"
-              echo "|---:|---:|---|"
+              echo "|---|---:|---:|---|"
               awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$NESTED_LIST"
             else
               echo "_No nested archives._"
@@ -378,7 +378,7 @@ jobs:
 
       - name: Show size summary in job log
         if: always()
-        run: cat "$GITHUB_STEP_SUMMARY"
+        run: for f in size-lists/*.txt; do echo "##### $f"; head -n 60 "$f"; done
 
       - name: Upload size lists
         uses: actions/upload-artifact@v6

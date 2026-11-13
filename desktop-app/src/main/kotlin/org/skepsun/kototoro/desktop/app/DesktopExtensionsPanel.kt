@@ -94,6 +94,7 @@ internal fun DesktopExtensionsPanel(controller: DesktopController, closing: Bool
                     ExtensionManagementTab(
                         AndroidStrings.format("packages_tab_title", state.installedEntries.size), state.installedEntries.size,
                         state.extensionUpdates.size),
+                    ExtensionManagementTab("Groups", 0),
                 ),
                 selectedTab = tab,
                 onTabClick = { tab = it },
@@ -132,6 +133,7 @@ internal fun DesktopExtensionsPanel(controller: DesktopController, closing: Bool
                         Modifier.weight(1f))
                 }
             }
+            3 -> DesktopSourceGroupsTab()
         }
     }
     state.installPrompt?.let { request ->
@@ -217,7 +219,7 @@ private fun ExtensionCatalog(
                         val anime = !parserPlugin && extension.packageName.contains(".animeextension.")
                         val compatible = parserPlugin || cloudstreamPlugin || extension.extensionLib.matches(
                             // Mihon 1.4-1.6, Tsundoku 1.4/1.6 (checked again on install), Aniyomi generations 12-16.
-                            if (anime) Regex("1[2-6](?:\\.\\d+)*") else Regex("1\\.[456](?:\\.\\d+)*"),
+                            if (anime) Regex("1[2-6](?:\\.\d+)*") else Regex("1\\.[456](?:\\.\d+)*"),
                         )
                         val hasPackage = extension.resources.jarUrl.isNotBlank() ||
                             extension.resources.apkUrl.isNotBlank()

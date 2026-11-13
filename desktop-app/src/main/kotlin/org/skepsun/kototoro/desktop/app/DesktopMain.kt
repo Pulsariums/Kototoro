@@ -104,6 +104,8 @@ internal fun runDesktop(args: Array<String>) {
         ) {
             window.minimumSize = Dimension(920, 620)
             val owner = controller
+            val appearance = owner?.state?.collectAsState()?.value?.appearance ?: DesktopAppearance.SYSTEM
+            DesktopWindowChrome(window, appearance)
             val fullscreen = rememberDesktopFullscreen(window, windowState)
             if (owner == null) DesktopStartup(startupError) else DesktopApp(owner, closing,
                 fullscreen = fullscreen.active, onToggleFullscreen = fullscreen::toggle, onExitRequest = requestExit)

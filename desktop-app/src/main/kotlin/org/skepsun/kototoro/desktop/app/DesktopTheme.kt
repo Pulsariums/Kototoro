@@ -50,27 +50,33 @@ internal val Muted: Color @Composable get() = MaterialTheme.colorScheme.onSurfac
 /** Android's `R.color.warning` (#E65100), lifted for dark surfaces so the warn-list tint stays readable. */
 internal val Warn: Color @Composable get() = if (LocalDesktopDark.current) Color(0xFFFFB74D) else Color(0xFFE65100)
 
+@Composable
+internal fun DesktopAppearance.isDark(): Boolean = when (this) {
+    DesktopAppearance.SYSTEM -> isSystemInDarkTheme()
+    DesktopAppearance.LIGHT -> false
+    DesktopAppearance.DARK -> true
+}
+
+/** The window frame (DesktopWindowChrome) resolves the scheme before the theme's own composition exists. */
+internal fun desktopColorScheme(dark: Boolean): ColorScheme = if (dark) darkColorScheme(
+    primary = Color(0xFFA9C7FF), onPrimary = Color(0xFF003062),
+    secondary = Color(0xFF82D3EB), onSecondary = Color(0xFF003441),
+    background = Color(0xFF10131B), onBackground = Color(0xFFE8E6EF),
+    surface = Color(0xFF242733), onSurface = Color(0xFFE8E6EF),
+) else lightColorScheme(
+    // Android's iOS primary is #007AFF. The darker blue keeps small desktop labels legible on light surfaces.
+    primary = Color(0xFF0066D6), onPrimary = Color.White,
+    secondary = Color(0xFF007C9E), onSecondary = Color.Black,
+    background = Color(0xFFFFF8FF), onBackground = Color(0xFF1C1B20),
+    surface = Color(0xFFFCF9FF), onSurface = Color(0xFF1C1B20),
+)
+
 /** Shared Android colour scheme, typography and shapes, so desktop screens and core-ui components agree. */
 @Composable
 internal fun DesktopTheme(appearance: DesktopAppearance = DesktopAppearance.SYSTEM,
     interfaceStyle: DesktopInterfaceStyle = DesktopInterfaceStyle.MATERIAL, content: @Composable () -> Unit) {
-    val dark = when (appearance) {
-        DesktopAppearance.SYSTEM -> isSystemInDarkTheme()
-        DesktopAppearance.LIGHT -> false
-        DesktopAppearance.DARK -> true
-    }
-    val colorScheme = if (dark) darkColorScheme(
-        primary = Color(0xFFA9C7FF), onPrimary = Color(0xFF003062),
-        secondary = Color(0xFF82D3EB), onSecondary = Color(0xFF003441),
-        background = Color(0xFF10131B), onBackground = Color(0xFFE8E6EF),
-        surface = Color(0xFF242733), onSurface = Color(0xFFE8E6EF),
-    ) else lightColorScheme(
-        // Android's iOS primary is #007AFF. The darker blue keeps small desktop labels legible on light surfaces.
-        primary = Color(0xFF0066D6), onPrimary = Color.White,
-        secondary = Color(0xFF007C9E), onSecondary = Color.Black,
-        background = Color(0xFFFFF8FF), onBackground = Color(0xFF1C1B20),
-        surface = Color(0xFFFCF9FF), onSurface = Color(0xFF1C1B20),
-    )
+    val dark = appearance.isDark()
+    val colorScheme = desktopColorScheme(dark)
     val typography = kototoroTypography(isExpressiveStyle = true, defaultFontFamily = null)
     val tokens = if (interfaceStyle == DesktopInterfaceStyle.IOS) InterfaceStyleTokens.Ios
         else InterfaceStyleTokens.Material3Expressive

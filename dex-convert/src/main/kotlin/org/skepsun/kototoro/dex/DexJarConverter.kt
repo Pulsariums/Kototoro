@@ -80,10 +80,12 @@ object DexJarConverter {
 
     private fun convertLocked(source: Path, target: Path, extraEntries: Map<String, ByteArray>): DexConversionReport {
         val directory = target.toAbsolutePath().parent ?: Path.of(".")
-        val cache = directory.resolve("dex-${cacheKey(source)}.jar")
-        if (Files.isRegularFile(cache) && Files.size(cache) > 0L) {
-            copyAtomically(cache, target)
-            return DexConversionReport(dexEntries(source).count, classesIn(cache), emptyList())
+        val cached = directory.resolve("converted-${cacheKey(source)}.jar")
+        if (hasContent(cached)) {
+            if (!hasContent(target) || Files.size(target) != Files.size(cached)) {
+                copyAtomically(cached, target)
+            }
+            return DexConversionReport(dexEntries(source).count, classFilesIn(cached), emptyList())
         }
         val dexSources = dexEntries(source)
         val temporary = Files.createTempFile(directory, ".convert-", ".tmp")
@@ -109,8 +111,8 @@ object DexJarConverter {
                 }
             }
             if (classes == 0) throw DexConversionException(DexConversionFailure.NO_DEX)
+            runCatching { copyAtomically(temporary, cached) }
             moveAtomically(temporary, target)
-            runCatching { copyAtomically(target, cache) }
             return DexConversionReport(dexSources.count, classes, broken, repaired)
         } finally {
             Files.deleteIfExists(temporary)
@@ -119,13 +121,15 @@ object DexJarConverter {
 
     private fun cacheKey(source: Path): String {
         val attributes = Files.readAttributes(source, BasicFileAttributes::class.java)
-        val material = "$VERSION|${source.toAbsolutePath()}|${attributes.size()}|${attributes.lastModifiedTime().toMillis()}"
-        return MessageDigest.getInstance("SHA-256").digest(material.toByteArray())
+        val identity = "$VERSION|${source.toAbsolutePath()}|${attributes.size()}|${attributes.lastModifiedTime().toMillis()}"
+        return MessageDigest.getInstance("SHA-256").digest(identity.toByteArray())
             .joinToString("") { "%02x".format(it) }
             .take(32)
     }
 
-    private fun classesIn(jar: Path): Int = ZipFile(jar.toFile()).use { zip ->
+    private fun hasContent(path: Path): Boolean = Files.isRegularFile(path) && Files.size(path) > 0L
+
+    private fun classFilesIn(jar: Path): Int = ZipFile(jar.toFile()).use { zip ->
         zip.entries().asSequence().count { !it.isDirectory && it.name.endsWith(".class") }
     }
 

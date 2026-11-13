@@ -15,12 +15,22 @@ class IosLibraryEntry internal constructor(
     val progress = value.progressPercent ?: 0f
     val hasProgress = value.progressPercent != null
     /** History only: the chapter last read, named like the chapter list does. */
-    val lastChapterTitle: String? = value.lastChapter?.let { it.title.takeIf(String::isNotBlank) ?: localized("第 %@ 话", chapterNumber(it.number)) }
+    val lastChapterTitle: String? = value.lastChapter?.let {
+        localChapterTitle(value.content.source.name, it.title, it.sourceData)?.takeIf(String::isNotBlank)
+            ?: localized("第 %@ 话", chapterNumber(it.number))
+    }
 }
 
-data class IosReadingPosition(val chapterId: String, val index: Int, val scroll: Float, val progress: Float)
+data class IosReadingPosition(val chapterId: String, val index: Int, val scroll: Float, val progress: Float) {
+    /**
+     * The furthest chapter ever read, empty when none is recorded. Not part of equality, which is the resume point:
+     * reopening an earlier chapter moves the resume point back but leaves the chapters read further on read.
+     */
+    var furthestChapterId: String = ""
+        internal set
+}
 
-class IosBookmark internal constructor(internal val value: SourceBookmark) {
+class IosBookmark internal constructor(internal val value: SourceBookmark, private val source: String = "") {
     val id: String get() = value.pageId.toString()
     val chapterId: String get() = value.chapterId.toString()
     val index: Int get() = value.page
@@ -29,7 +39,7 @@ class IosBookmark internal constructor(internal val value: SourceBookmark) {
     val createdAt: Long get() = value.createdAt
     val percent: Float get() = value.percent
     /** The chapter's stored title; filled for bookmarks read across works (`IosLibrary.bookmarkGroups`). */
-    val chapterTitle: String get() = value.chapterTitle
+    val chapterTitle: String get() = localChapterTitle(source, value.chapterTitle, value.chapterSourceData).orEmpty()
     val textPreview: String = normalizeNovelBookmarkPreview(value.preview) { novelHtmlToText(it, keepImages = false) }
 }
 

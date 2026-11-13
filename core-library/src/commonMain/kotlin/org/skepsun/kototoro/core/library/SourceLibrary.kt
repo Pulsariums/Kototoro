@@ -1,5 +1,7 @@
 package org.skepsun.kototoro.core.library
 
+import org.skepsun.kototoro.history.domain.ChapterOrder
+import org.skepsun.kototoro.history.domain.furthestReadChapterId
 import androidx.room.immediateTransaction
 import androidx.room.deferredTransaction
 import androidx.room.useReaderConnection
@@ -104,7 +106,8 @@ class SourceLibrary(
                 SourceLibraryEntry(item, member.map { it.categoryId }.toSet(),
                     if (history) reading?.updatedAt ?: 0L else member.maxOfOrNull { it.updatedAt } ?: 0L,
                     reading?.updatedAt, reading?.percent,
-                    reading?.let { chapters[item.id to it.chapterId] }?.let { SourceLibraryChapter(it.title, it.number) },
+                    reading?.let { chapters[item.id to it.chapterId] }
+                        ?.let { SourceLibraryChapter(it.title, it.number, it.sourceData) },
                     item.id in nsfwIds, newChapters[item.id] ?: 0,
                     // A work can sit in several categories; Android's DAO reads MAX(pinned), i.e. any row may pin it.
                     isPinned = member.any { it.isPinned })
@@ -191,12 +194,15 @@ class SourceLibrary(
      */
     suspend fun bookmarkGroups(): List<SourceBookmarkGroup> {
         val rows = database.getBookmarksDao().observe().first()
-        val titles = database.getChaptersDao()
+        val chapters = database.getChaptersDao()
             .findByIds(rows.values.flatten().mapTo(HashSet()) { it.chapterId })
-            .associate { it.chapterId to it.title }
+            .associateBy { it.chapterId }
         return rows.map { (row, saved) ->
             SourceBookmarkGroup(content(row.manga, row.tags, withChapters = false),
-                saved.map { entity -> entity.desktopBookmark().copy(chapterTitle = titles[entity.chapterId].orEmpty()) })
+                saved.map { entity ->
+                    val chapter = chapters[entity.chapterId]
+                    entity.desktopBookmark().copy(chapterTitle = chapter?.title.orEmpty(), chapterSourceData = chapter?.sourceData)
+                })
         }
     }
 
@@ -238,7 +244,8 @@ class SourceLibrary(
                 val stored = dao.find(content.id, bookmark.pageId)
                 // A stale card must not delete a replacement bookmark at the same position. The chapter title is
                 // display data that `bookmarkGroups` fills in, not part of the stored bookmark.
-                require(stored?.desktopBookmark()?.copy(chapterTitle = bookmark.chapterTitle) == bookmark) {
+                require(stored?.desktopBookmark()?.copy(chapterTitle = bookmark.chapterTitle,
+                    chapterSourceData = bookmark.chapterSourceData) == bookmark) {
                     "Bookmark has changed or no longer exists"
                 }
                 dao.delete(requireNotNull(stored))
@@ -542,7 +549,8 @@ class SourceLibrary(
      * Android records EPUB chapters; the download is what the stored chapter list holds.
      */
     suspend fun recordPage(content: SourceContent, chapter: SourceChapter, page: Int, pageCount: Int,
-        lastVisiblePage: Int = page, scroll: Float = 0f, part: SourceChapterPart? = null) {
+        lastVisiblePage: Int = page, scroll: Float = 0f, part: SourceChapterPart? = null,
+        resetFurthest: Boolean = false) {
         // Android's StatsCollector upserts its row on every state change of an open reader; the row is written after
         // the history transaction closes, because a second writer connection cannot be opened from inside it.
         val stats = database.useWriterConnection { connection ->
@@ -569,6 +577,16 @@ class SourceLibrary(
                     chapterId = chapter.id, page = page, scroll = scroll,
                     percent = percent,
                     deletedAt = 0, chaptersCount = branch.size, parentChapterId = part?.parent?.id,
+                    // Reopening an earlier chapter must not mark the later ones unread again, as on Android.
+                    furthestChapterId = if (resetFurthest) {
+                        stored.id
+                    } else {
+                        furthestReadChapterId(
+                            previousFurthestId = previous?.takeIf { it.deletedAt == 0L }?.furthestChapterId ?: 0L,
+                            openedChapterId = stored.id,
+                            chapters = content.chapters?.map { ChapterOrder(it.id, it.number, it.volume) },
+                        )
+                    },
                 ))
                 val write = if (statsRecording) readingSessions.onPage(content.id, stored.id, page, percent, now) else null
                 if (lastVisiblePage == pageCount - 1 && (part == null || part.index == part.count - 1)) {

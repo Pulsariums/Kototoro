@@ -12,10 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 import org.skepsun.kototoro.core.ui.text.LocalUiStrings
 import org.skepsun.kototoro.core.ui.theme.*
+import java.util.concurrent.TimeUnit
 
 /** The label is resolved per access, so a language switch relabels the buttons without a restart. */
 enum class DesktopAppearance {
@@ -55,8 +54,19 @@ internal val Warn: Color @Composable get() = if (LocalDesktopDark.current) Color
 private const val PersonalizeKey = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
 private const val AccentKey = "HKCU\\Software\\Microsoft\\Windows\\DWM"
 
+/**
+ * Reads a REG_DWORD from the registry through `reg query`, since jna-platform is not a desktop dependency.
+ * Returns null when the query fails, times out or prints nothing parseable, so callers fall back to defaults.
+ */
 private fun registryInt(path: String, name: String): Int? = runCatching {
-    Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, path.removePrefix("HKCU\\"), name)
+    val process = ProcessBuilder("reg", "query", path, "/v", name)
+        .redirectErrorStream(true)
+        .start()
+    val finished = process.waitFor(3, TimeUnit.SECONDS)
+    if (!finished) process.destroyForcibly()
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    if (!finished || process.exitValue() != 0) return@runCatching null
+    Regex("0x([0-9a-fA-F]+)").find(output)?.groupValues?.get(1)?.toLongOrNull(16)?.toInt()
 }.getOrNull()
 
 internal fun resolveDark(mode: DesktopAppearance): Boolean = when (mode) {
@@ -111,7 +121,8 @@ internal fun DesktopTheme(appearance: DesktopAppearance = DesktopAppearance.SYST
     MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = shapes) {
         CompositionLocalProvider(LocalContentColor provides colorScheme.onSurface,
             LocalDesktopDark provides dark,
-            LocalDesktopInterfaceStyle provides interfaceStyle, LocalInterfaceStyleTokens provides tokens,
+            LocalDesktopInterfaceStyle provides interfaceStyle,
+            LocalInterfaceStyleTokens provides tokens,
             // The shared components' style switches: the desktop's Material style is Android's Expressive one.
             org.skepsun.kototoro.core.ui.theme.LocalIsIosInterfaceStyle provides
                 (interfaceStyle == DesktopInterfaceStyle.IOS),

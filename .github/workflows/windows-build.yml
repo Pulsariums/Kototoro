@@ -15,6 +15,11 @@ on:
         required: false
         default: 'nightly'
         type: string
+      trim_jre:
+        description: 'Bundle a jlink-trimmed JRE (size experiment)'
+        required: false
+        default: 'false'
+        type: string
   workflow_call:
     secrets:
       GOOGLE_DRIVE_DESKTOP_CLIENT_SECRET:
@@ -152,6 +157,7 @@ jobs:
         env:
           CHANNEL: ${{ inputs.channel }}
           VERSION_NAME: ${{ inputs.version-name }}
+          TRIM_JRE: ${{ inputs.trim_jre }}
           KOTOTORO_GOOGLE_DESKTOP_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_DESKTOP_CLIENT_SECRET }}
         run: |
           if ($env:CHANNEL -notin @('release', 'nightly')) { throw 'Unknown Windows channel.' }
@@ -177,6 +183,22 @@ jobs:
             } | Select-Object -First 1
             if (!$wixBin) { throw 'WiX 3 build tools are missing.' }
             $arguments += @("-PwindowsWixDirectory=$wixBin", ':desktop-app:windowsMsiContentsCheck')
+          }
+          if ($env:TRIM_JRE -eq 'true') {
+            $trimInitScript = @'
+allprojects { p ->
+    if (p.path == ':desktop-app') {
+        p.afterEvaluate {
+            p.compose.desktop.application.nativeDistributions {
+                includeAllModules = false
+                modules('java.base','java.desktop','java.logging','java.naming','java.net.http','java.sql','java.management','java.xml','java.xml.crypto','java.prefs','java.scripting','java.instrument','java.security.jgss','java.security.sasl','java.datatransfer','java.rmi','jdk.unsupported','jdk.crypto.ec','jdk.crypto.cryptoki','jdk.charsets','jdk.zipfs','jdk.localedata','jdk.management','jdk.net','jdk.jfr','jdk.naming.dns','jdk.xml.dom')
+            }
+        }
+    }
+}
+'@
+            [System.IO.File]::WriteAllText("$env:RUNNER_TEMP/trim-jre.init.gradle", $trimInitScript, [System.Text.UTF8Encoding]::new($false))
+            $arguments += @('--init-script', "$env:RUNNER_TEMP/trim-jre.init.gradle")
           }
           & "./gradlew.bat" @arguments
           if ($LASTEXITCODE -ne 0) { throw 'Windows packaging or distribution checks failed.' }
@@ -210,6 +232,33 @@ jobs:
             "$((Get-FileHash -LiteralPath "$($_.FullName)" -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
           }
           $checksums | Set-Content -LiteralPath "release-windows/$assetStem.sha256" -Encoding utf8
+
+      - name: Report package size
+        if: always()
+        shell: pwsh
+        run: |
+          $lines = @()
+          $zips = @(Get-ChildItem -Path 'desktop-app/build/compose/binaries/main/portable/*.zip' -File -ErrorAction SilentlyContinue)
+          if ($zips.Count -eq 0) { $lines += 'portable/*.zip: missing' }
+          foreach ($zip in $zips) {
+            $lines += ('portable/{0}: {1:N2} MB' -f $zip.Name, ($zip.Length / 1MB))
+          }
+          $modules = 'desktop-app/build/compose/binaries/main/app/Kototoro/runtime/lib/modules'
+          if (Test-Path -LiteralPath $modules) {
+            $lines += ('app/Kototoro/runtime/lib/modules: {0:N2} MB' -f ((Get-Item -LiteralPath $modules).Length / 1MB))
+          } else {
+            $lines += 'app/Kototoro/runtime/lib/modules: missing'
+          }
+          $appDir = 'desktop-app/build/compose/binaries/main/app/Kototoro'
+          if (Test-Path -LiteralPath $appDir) {
+            $appBytes = (Get-ChildItem -LiteralPath $appDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+            if (!$appBytes) { $appBytes = 0 }
+            $lines += ('app/Kototoro: {0:N2} MB' -f ($appBytes / 1MB))
+          } else {
+            $lines += 'app/Kototoro: missing'
+          }
+          $lines | ForEach-Object { Write-Output $_ }
+          $lines | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v6

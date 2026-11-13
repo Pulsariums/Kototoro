@@ -1,389 +1,457 @@
-name: Size Analysis
+common.close=Закрыть
+common.ok=OK
+common.cancel=Отмена
+common.save=Сохранить
+common.retry=Повторить
+common.clear=Очистить
+common.apply=Применить
+common.refresh=Обновить
+common.all=Все
+common.more=Ещё
+common.multilingual=Мультиязычный
+common.chaptersTotal=Всего глав: %d
+common.newChapters=Новых глав: %d
+common.chapterTitle=Глава %d
+common.episodeTitle=Серия %d
+common.pageOf=Страница %d · %d%%
 
-on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag (e.g. v2.3.6), or latest'
-        required: false
-        default: latest
-        type: string
+nav.home=Главная
+nav.favourites=Избранное
+nav.browse=Обзор
+nav.history=История
+screens.browseSource=Обзор источников
+screens.history=История чтения
+screens.downloads=Загрузки глав
+screens.backups=Резервное копирование и восстановление
+screens.extensions=Расширения и репозитории
+screens.details=Сведения о произведении
+screens.reader=Чтение
+screens.sourcePreferences=Настройки источника
+screens.browser=Отладка браузера
 
-permissions:
-  contents: read
+app.opening=Открытие локальных данных…
+app.startFailed=Не удалось запустить: %s
+app.extensionImportFailed=Не удалось импортировать расширение
+app.runtimeIncompatible=Несовместимый API среды выполнения: %s
 
-jobs:
-  size-analysis:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Download release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          set -euo pipefail
-          mkdir -p downloads
-          common=(--repo Kototoro-app/Kototoro --dir downloads --clobber)
-          if [ -z "${TAG:-}" ] || [ "${TAG}" = "latest" ]; then
-            gh release download "${common[@]}" --pattern '*arm64-v8a-release.apk'
-            gh release download "${common[@]}" --pattern '*windows-x64-release.zip'
-          else
-            gh release download "${TAG}" "${common[@]}" --pattern '*arm64-v8a-release.apk'
-            gh release download "${TAG}" "${common[@]}" --pattern '*windows-x64-release.zip'
-          fi
-          ls -l downloads
+more.servicesSummary=Рекомендации, статистика чтения и оценка времени чтения
+services.saveFailed=Не удалось сохранить настройку сервисов
+more.extensions=Расширения и репозитории
+more.downloads=Загрузки
+more.downloadsSummary=Просмотр офлайн-глав и задач загрузки
+more.backups=Резервное копирование и восстановление
+more.backupsSummary=Экспорт библиотеки, а также предварительный просмотр и объединение резервной копии
+more.appearance=Оформление
+more.interfaceStyle=Стиль интерфейса
+more.language=Язык
+more.languageSystem=Системный
+more.languageDetail=Все экраны следуют этому языку, включая даты и числа; выбор сохраняется для следующего запуска.
+error.languageSaveFailed=Не удалось сохранить язык
+more.advancedTools=Дополнительные инструменты
+more.browser=Отладка браузера
+more.browserSummary=Открывайте веб-страницы и проверяйте веб-проверку источника
 
-      - name: Extract archives
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          apks=(downloads/*arm64-v8a-release.apk)
-          zips=(downloads/*windows-x64-release.zip)
-          if [ ${#apks[@]} -ne 1 ]; then
-            echo "Expected exactly one '*arm64-v8a-release.apk', found ${#apks[@]}" >&2
-            exit 1
-          fi
-          if [ ${#zips[@]} -ne 1 ]; then
-            echo "Expected exactly one '*windows-x64-release.zip', found ${#zips[@]}" >&2
-            exit 1
-          fi
-          mkdir -p apk win
-          unzip -q -o "${apks[0]}" -d apk
-          unzip -q -o "${zips[0]}" -d win
-          du -sh apk win
+appearance.system=Как в системе
+appearance.light=Светлое
+appearance.dark=Тёмное
+interfaceStyle.material=Material 3
+interfaceStyle.glass=Стекло iOS
 
-      - name: Analyze APK
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          SUMMARY="${GITHUB_STEP_SUMMARY}"
-          mkdir -p size-lists
+browse.mySources=Мои источники
+browse.importExtension=Импортировать расширение
+browse.importFilter=Файлы расширений (JAR, APK, CS3)
+browse.sources=Источников: %d
+browse.findSource=Найти источник
+browse.sourcesEmpty=Здесь отображаются источники импортированных расширений
+browse.worksEmptyTitle=Ваше пространство для чтения в Windows
+browse.worksEmptyDetail=Установите источник в разделе «Расширения и репозитории» или импортируйте локальное расширение, затем выберите источник слева, чтобы начать обзор.
+browse.backToSources=Назад к списку источников
+browse.searchWorks=Поиск произведений
+browse.search=Поиск
+browse.popular=Популярное
+browse.latest=Новое
+browse.sort=Сортировка · %s
+browse.filters=Фильтры
+browse.filtersApplied=Фильтры · применены
+browse.sourceSettings=Настройки источника
+browse.noMorePages=Больше страниц нет
+browse.noWorks=Здесь пока нет произведений
+browse.noWorksDetail=Выберите источник и просмотрите его или добавьте произведения в избранное со страницы сведений.
+browse.backToBrowse=Назад к обзору
+sourceGrid.search=Поиск источников…
+sourceGrid.extensions=Управление расширениями
+sourceGrid.sources=Источников: %d
+sourceGrid.empty=Источники появятся здесь после установки или импорта расширения.
+source.type=Тип источника
+source.builtin=Встроенный
 
-          APK_LIST=size-lists/apk-files.txt
-          ( cd apk && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$APK_LIST"
+filters.title=Фильтры источника
+filters.empty=У этого источника нет фильтров
+filters.restoreDefaults=Восстановить настройки по умолчанию
+filters.triStateIgnore=Любое
+filters.triStateInclude=Включить
+filters.triStateExclude=Исключить
+filters.unselected=Не выбрано
+filters.ascending=По возрастанию
+filters.descending=По убыванию
+filters.unsupported=%s: этот элемент управления пока не поддерживается
 
-          APK_TOP=size-lists/apk-top-level.txt
-          : > "$APK_TOP"
-          while IFS= read -r -d '' entry; do
-            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$APK_TOP"
-          done < <(find apk -mindepth 1 -maxdepth 1 -print0)
-          sort -rn -o "$APK_TOP" "$APK_TOP"
+library.search=Поиск по названию или автору
+library.filterAndSort=Фильтр и сортировка
+library.filterWithCount=Фильтры · %d
+library.allCategories=Все
+library.categoriesTitle=Категории
+library.categoriesEmpty=Категорий пока нет: добавьте ниже.
+library.categoryName=Название категории
+library.categoryAdd=Добавить
+library.categoryRename=Переименовать
+library.categoryDelete=Удалить
+library.categoryUp=Вверх
+library.categoryDown=Вниз
+library.categoryCreated=Категория добавлена
+library.categoryDeleted=Категория удалена
+library.count=%d / %d произведений
+library.empty=Здесь пока нет произведений
+library.emptyFiltered=Нет произведений, подходящих под условия
+library.clearEmpty=Сбросить поиск и фильтры
+library.emptyHint=Откройте произведение из источника, чтобы прочитать его или добавить в избранное.
+library.sort=Сортировка
+library.displaySaveFailed=Не удалось сохранить параметры отображения
+library.progress=Прогресс чтения
+library.source=Источник
+library.resetFilters=Сбросить поиск и фильтры
+library.order.recent=Порядок по умолчанию
+library.order.title=Название
+library.order.lastRead=Недавно прочитанные
+library.order.progress=Прогресс чтения
+library.progress.all=Все
+library.progress.unread=Непрочитанные
+library.progress.reading=Читаю
+library.progress.finished=Прочитанные
+library.tags=Метки
+library.tagsChoose=Выбрать метки
+library.tagsSelected=Метки · %d
+library.tagSearch=Найти метку
+library.tagsEmpty=В этой библиотеке пока нет меток
+library.tagsNoMatch=Нет подходящих меток
+library.state=Статус публикации
+library.download=Загрузки
+library.download.all=Все
+library.download.only=Загруженные
+library.download.missing=Не загруженные
+library.newChapters=Новых глав: %d
+library.quick=Быстрые фильтры
+library.quick.newChapters=Новые главы
+library.quick.favorite=В избранном
+library.quick.notFavorite=Не в избранном
+library.quick.nsfw=18+
+library.quick.sfw=Для всех возрастов
 
-          ABI_LIST=size-lists/apk-libs.txt
-          : > "$ABI_LIST"
-          for abi in apk/lib/*/; do
-            printf '%s\t%s\n' "$(du -sb "$abi" | cut -f1)" "$(basename "$abi")" >> "$ABI_LIST"
-          done
-          sort -rn -o "$ABI_LIST" "$ABI_LIST"
+home.hero.resume=Продолжить чтение
+home.hero.history=Недавно прочитано
+home.hero.update=Недавно обновлено
+home.hero.recommendation=Рекомендуемое
+home.empty=Читайте произведения или добавляйте их в избранное, и главная страница покажет вашу историю и обновления.
+home.newChapters=Новых глав: %d
+home.readPercent=Прочитано %d%%
+home.sectionHistory=История
+home.sectionUpdates=Обновления
+home.sectionRecommendations=Рекомендуемое
+home.quick.favourites=Избранное
+home.quick.history=История
+home.quick.downloads=Загрузки
+home.quick.random=Случайное
+home.quick.extensions=Расширения
+home.quick.backups=Резервная копия
+home.quick.settings=Настройки
+home.quickAccess=Быстрый доступ
+home.refreshRecommendations=Обновить рекомендации
+home.suggestionsDetail=Произведения подбираются из установленных источников по меткам вашей истории и избранного.
+home.suggestionsOffDetail=Рекомендации отключены. После включения они создаются каждые 6 часов по меткам вашей истории и избранного.
+home.generateSuggestions=Создать рекомендации
+home.enableSuggestions=Включить рекомендации
 
-          DEX_LIST=size-lists/apk-dex.txt
-          : > "$DEX_LIST"
-          for dex in apk/classes*.dex; do
-            printf '%s\t%s\n' "$(stat -c %s "$dex")" "$(basename "$dex")" >> "$DEX_LIST"
-          done
-          sort -rn -o "$DEX_LIST" "$DEX_LIST"
+feed.checkUpdates=Проверить обновления
+feed.trackingOff=Пока ни одна категория избранного не отслеживает обновления. Как и в Android, новые главы проверяются только у произведений из отслеживаемой категории.
+feed.enableTracking=Включить для всех
+feed.updatesTitle=Обновления
+feed.emptyTitle=Обновлений пока нет
+feed.emptyDetail=Нажмите «Проверить обновления», чтобы проверить отслеживаемые произведения в избранном.
+feed.filteredTitle=Ничто не соответствует текущим фильтрам
+feed.filteredDetail=Сбросьте фильтры ленты или перестаньте скрывать контент 18+ в разделе «Ещё → Настройки источника».
+feed.continueReading=Продолжить чтение
+feed.timeNow=только что
+feed.timeToday=Сегодня
+feed.timeYesterday=Вчера
+feed.timeDaysAgo=Дней назад: %d
+feed.cleared=История обновлений очищена
+feed.displaySaveFailed=Не удалось сохранить настройку отображения ленты
 
-          MISC_LIST=size-lists/apk-misc.txt
-          : > "$MISC_LIST"
-          for item in assets res resources.arsc; do
-            if [ -e "apk/$item" ]; then
-              printf '%s\t%s\n' "$(du -sb "apk/$item" | cut -f1)" "$item" >> "$MISC_LIST"
-            fi
-          done
-          sort -rn -o "$MISC_LIST" "$MISC_LIST"
+details.chapters=Главы · %d
+details.chapterActions=Действия с главой
+details.selectChapters=Выбрать главы
+details.cancelSelection=Готово
+details.selectionCount=Выбрано: %d
+details.selectAll=Выбрать все
+details.clearSelection=Очистить
+details.markedReadCount=Глав отмечено как прочитанные: %d
+details.markRead=Отметить как прочитанное
+details.markUnread=Отметить как непрочитанное
+details.markedRead=%s отмечено как прочитанное
+details.markedUnread=%s отмечено как непрочитанное
+details.deleteDownload=Удалить загрузку
+details.chapterMissing=Обновите список глав, прежде чем менять эту главу
+details.latestChapters=Последние главы
+details.firstChapters=Первые главы
+details.chapterBranchDefault=По умолчанию
+details.status.ongoing=Выходит
+details.status.finished=Завершено
+details.status.abandoned=Заброшено
+details.status.paused=Приостановлено
+details.status.upcoming=Анонсировано
+details.status.restricted=Недоступно
+details.startReading=Начать / продолжить чтение
+details.startWatching=Начать / продолжить просмотр
+details.play=Воспроизвести
+details.info=Сведения
+details.statusLabel=Статус
+details.ratingLabel=Рейтинг
+details.altTitles=Альтернативные названия
+details.tags=Метки
+details.readingTime=Осталось времени
+details.readingTimeHoursMinutes=%1$d ч %2$d мин
+details.readingTimeMinutes=%d мин
+details.copyLink=Копировать ссылку
+details.copied=Ссылка скопирована
+details.favourite=Добавить в избранное
+details.favourited=В избранном
+details.unfavourite=Убрать из избранного
+details.loadFailed=Не удалось загрузить сведения
+details.synopsis=Описание
+details.authorsUnknown=Нет сведений об авторе
+details.tabBookmarks=Закладки · %d
+details.bookmarksClear=Удалить все
+details.selectBookmarks=Выбрать закладки
+details.bookmarksSelectedCount=Выбрано закладок: %d
+details.bookmarksDeleteSelected=Удалить выбранные (%1$d)
+details.bookmarksDeleted=Удалено закладок: %1$d
+details.chapterBookmarkAdd=Добавить закладку
+details.chapterBookmarkRemove=Удалить закладку
+details.chapterBookmarkLabel=Закладка главы
+details.cover=Обложка %s
+details.downloadChapters=Пакетная загрузка глав
+details.downloadWhole=Все главы (%d)
+details.downloadUnread=Непрочитанные главы (%d)
+details.downloadBranch=Все главы «%s» (%d)
+details.downloadFirst=Первые %d глав (%d)
 
-          APK_PATH=$(find downloads -maxdepth 1 -type f -name '*arm64-v8a-release.apk' -print -quit 2>/dev/null || true)
+reader.panel.chapters=Главы
+reader.panel.bookmarks=Закладки
+reader.panel.options=Настройки чтения
+reader.panel.more=Дополнительные настройки чтения
+reader.bookmarksCount=Закладок: %d
+reader.bookmarksEmpty=Нажмите «Добавить закладку» внизу, чтобы сохранить место.
+reader.chapterMissing=Эта глава пропала
+reader.incognito=Режим инкогнито: ничего не записывается
+reader.currentPosition=Позиция чтения
+reader.reload=Перезагрузить страницу
+reader.autoScrollSpeed=Скорость автоперелистывания / прокрутки
+reader.shortcuts=Горячие клавиши
+reader.shortcutsHelp=← / → страница\nPageUp / PageDown страница или прокрутка\nHome / End первая и последняя страница\nB добавить или удалить закладку\nПеретаскивание для листания (сначала панорамирование при увеличении)\nКнопка «Авто» внизу листает страницы или прокручивает и приостанавливается на 2 секунды при вводе\nНажмите слева или справа, чтобы листать, нажмите в середине, чтобы показать или скрыть панель (измените это в «Действия по нажатию»)\nДолгое нажатие или правый щелчок выполняют действие долгого нажатия (по умолчанию открывает настройки чтения в середине)\nКолесо листает страницы (прокручивает при увеличении)\nCtrl + колесо изменяет масштаб\nH показывает или скрывает панель\nF11 полноэкранный режим\nEsc закрывает панель или возвращает к сведениям
+reader.tapGridHint=Области нажатия задают действие нажатия; долгое нажатие или правый щелчок задают действие долгого нажатия.
+reader.tapArea.topLeft=Сверху слева
+reader.tapArea.topCenter=Сверху в середине
+reader.tapArea.topRight=Сверху справа
+reader.tapArea.centerLeft=Слева в середине
+reader.tapArea.center=В середине
+reader.tapArea.centerRight=Справа в середине
+reader.tapArea.bottomLeft=Снизу слева
+reader.tapArea.bottomCenter=Снизу в середине
+reader.tapArea.bottomRight=Снизу справа
+reader.animation.none=Нет
+reader.animation.default=Сдвиг
+reader.animation.advanced=Обложка
+reader.animation.simulation=Перелистывание
+reader.mode.single=Одна страница
+reader.mode.double=Две страницы
+reader.mode.continuous=Непрерывная прокрутка
+reader.upscale=Суперразрешение
+reader.upscaleOff=Выкл.
+reader.denoise=Шумоподавление
+reader.denoise.conservative=Осторожное
+reader.denoise.none=Нет
+reader.upscaleAnime4kReady=Anime4K обрабатывает страницы на GPU вне экрана, теми же шейдерами, что и улучшение видео.
+reader.upscaleAnime4kMissing=Для Anime4K нужен libmpv (как и для воспроизведения видео): поместите libmpv-2.dll в папку mpv каталога данных.
+reader.upscaleAnime4kMissingLinux=Для Anime4K нужен libmpv (как и для воспроизведения видео): установите пакет libmpv вашего дистрибутива (Debian/Ubuntu: libmpv2).
+reader.upscaleToolInstalled=Установлено: %s. Страницы обрабатываются на GPU; первый проход занимает несколько секунд на страницу, результаты кешируются.
+reader.upscaleToolNeeded=Требуется официальная программа %s (около 45 МБ).
+reader.downloadAndInstall=Скачать и установить
+reader.chooseArchive=Выбрать архив
+reader.upscaleFailed=Суперразрешение не удалось, показан оригинал: %s
+reader.chaptersCount=Глав: %d
+reader.pagePreparing=Подготовка страницы %d…
+reader.decodeFailed=Не удалось декодировать страницу, перезагрузите её
+reader.pageLoadRetry=Не удалось загрузить страницу, повторите попытку
+reader.pageLoadFailed=Не удалось загрузить страницу
+reader.pageLabel=Страница %d
+reader.zoom.fitCenter=По размеру страницы
+reader.zoom.fitWidth=По ширине
+reader.zoom.fitHeight=По высоте
+reader.zoom.original=Исходный размер
+reader.background.BLACK=Чёрный
+reader.background.WHITE=Белый
+reader.background.LIGHT=Светлый
+reader.background.DARK=Тёмный
+reader.background.DEFAULT=По умолчанию
+reader.background.AUTO=Как в системе
 
-          COMP_LIST=size-lists/apk-compressed.txt
-          : > "$COMP_LIST"
-          if [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
-            { unzip -v "$APK_PATH" 2>/dev/null || true; } | awk '
-              $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {
-                name = $8
-                for (i = 9; i <= NF; i++) name = name " " $i
-                if (name == "") next
-                printf "%s\t%s\t%s\n", $3, $1, name
-              }' | sort -rn > "$COMP_LIST" || true
-          fi
+novel.theme.LIGHT=Белая
+novel.theme.SEPIA=Сепия
+novel.theme.GREEN=Зелёная
+novel.theme.DARK=Ночь
+novel.serifFont=Шрифт с засечками
+novel.contentWidth=Ширина текста
+novel.pageIndicator=Страница %1$d / %2$d
+novel.shortcutsHelp=PageUp / PageDown / Пробел страница или прокрутка\nHome / End начало и конец главы\nH показывает или скрывает панель\nF11 полноэкранный режим\nEsc закрывает панель или возвращает к сведениям
+novel.previousChapter=Предыдущая глава
+novel.nextChapter=Следующая глава
+novel.imageFailed=Не удалось загрузить иллюстрацию
+novel.imageLoading=Загрузка иллюстрации…
+novel.chapterTitle=Глава %d
 
-          ABI64_LIST=size-lists/apk-lib-arm64-v8a.txt
-          : > "$ABI64_LIST"
-          if [ -d apk/lib/arm64-v8a ]; then
-            find apk/lib/arm64-v8a -type f -printf '%s\t%p\n' | sort -rn > "$ABI64_LIST" || true
-          fi
+video.backToDetails=Назад к сведениям
+video.casting=Трансляция
+video.cast=Транслировать
+video.episodes=Серии
+video.fullscreen=Полный экран
+video.exitFullscreen=Выйти из полноэкранного режима
+video.loading=Загрузка видео…
+video.buffering=Буферизация…
+video.previousEpisode=Предыдущая серия
+video.nextEpisode=Следующая серия
+video.play=Воспроизвести
+video.pause=Пауза
+video.quality=Качество · %s
+video.subtitles=Субтитры
+video.audio=Аудиодорожки
+video.mute=Без звука
+video.unmute=Включить звук
+video.enhancement=Улучшение
+video.fsrSharpness=Резкость FSR %d%%
+video.enhancementHint=Улучшение выполняется на GPU в реальном времени; более высокие уровни качества Anime4K сильно нагружают GPU.
+video.libmpvMissing=Для воспроизведения внутри приложения нужен libmpv
+video.externalRequired=Воспроизвести через mpv
+reader.upscalePlatformUnavailable=Встроенные средства суперразрешения пока недоступны в этой системе.
+video.externalHint=Встроенное воспроизведение в macOS пока недоступно. Установите mpv и выберите «Открыть в mpv» или скопируйте URL видео.
+video.libmpvHint=Kototoro воспроизводит видео через mpv, но не поставляет его. Скачайте libmpv для Windows (например, архив mpv-dev-lgpl-x86_64), поместите его libmpv-2.dll в папку ниже и нажмите «Найти снова».
+video.libmpvHintLinux=Kototoro воспроизводит видео через mpv, но не поставляет его. Установите libmpv менеджером пакетов (Debian/Ubuntu: sudo apt install libmpv2, Fedora: sudo dnf install mpv-libs, Arch: sudo pacman -S mpv) или поместите libmpv.so.2 в папку ниже и нажмите «Найти снова».
+video.openFolder=Открыть папку
+video.detectAgain=Найти снова
+video.copyUrl=Копировать адрес видео
+video.urlCopied=Адрес видео скопирован (некоторым источникам для воспроизведения также нужны заголовки запроса)
+video.playExternal=Воспроизвести во внешнем mpv
+video.externalOpened=Открыто во внешнем mpv
+video.externalFailed=Не удалось запустить mpv: %s
+video.openFolderFailed=Не удалось открыть папку: %s
+video.playerStartFailed=Не удалось запустить проигрыватель: %s
+video.openFailed=Не удалось открыть видео: %s
+video.enhancementUnavailable=Улучшение недоступно: %s
+video.line=Поток %d
+video.castDialogTitle=Трансляция на устройство DLNA
+video.castSearching=Поиск устройств в локальной сети…
+video.castNotFound=Устройства не найдены. Убедитесь, что телевизор или приставка находятся в той же сети, что и этот ПК, и что брандмауэр Windows разрешает Kototoro доступ к сети.
+video.castSearchAgain=Искать снова
+video.castTo=Трансляция на %s · %s
+video.castEnd=Остановить трансляцию (продолжить здесь)
+video.castState.PLAYING=Воспроизведение
+video.castState.PAUSED_PLAYBACK=Пауза
+video.castState.STOPPED=Остановлено
+video.castState.TRANSITIONING=Загрузка
+video.castState.NO_MEDIA_PRESENT=Нет медиа
 
-          DEXPKG_LIST=size-lists/apk-dex-packages.txt
-          : > "$DEXPKG_LIST"
-          APKANALYZER="${ANDROID_HOME:-}/cmdline-tools/latest/bin/apkanalyzer"
-          APKANALYZER_STATUS=missing
-          if [ -f "$APKANALYZER" ] && [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
-            APKANALYZER_STATUS=ok
-            { "$APKANALYZER" dex packages --defined-only "$APK_PATH" 2>/dev/null || true; } | awk '
-              $1 !~ /^[PCMF]$/ { next }
-              {
-                size = ""
-                for (i = 3; i <= NF; i++) {
-                  if ($i ~ /^[0-9]+$/) { size = $i; break }
-                }
-                if (size == "") next
-                name = ""
-                for (i = 3; i <= NF; i++) {
-                  if ($i ~ /^[0-9]+$/) continue
-                  if ($i ~ /^[0-9]+(\.[0-9]+)?%$/) continue
-                  name = (name == "") ? $i : name " " $i
-                }
-                if (name == "") next
-                printf "%s\t%s\n", size, name
-              }' | sort -rn | head -n 40 > "$DEXPKG_LIST" || true
-          else
-            echo "apkanalyzer yok"
-          fi
+downloads.storage=Хранилище загрузок / очистка старых записей
+downloads.empty=Загружайте главы со страницы сведений о произведении, чтобы сохранить целую главу для чтения офлайн.
+downloads.status.QUEUED=В очереди
+downloads.status.DOWNLOADING=Загрузка
+downloads.status.PAUSED=Приостановлено
+downloads.status.COMPLETE=Загружено
+downloads.status.FAILED=Не удалось загрузить
+downloads.pages=%d / %d страниц
+downloads.usage=Сохранено глав: %d (загружено %d, страниц %d), изображений: %d КБ
+downloads.selectAll=Выбрать все
+downloads.selectNone=Очистить выбор
+downloads.selected=Выбрано: %d
+downloads.batchPause=Приостановить выбранные (%d)
+downloads.batchResume=Продолжить выбранные (%d)
+downloads.batchRetry=Повторить неудачные (%d)
+downloads.batchRemove=Забыть выбранные (%d)
+downloads.batchPaused=Глав приостановлено: %d
+downloads.batchQueued=Глав поставлено в очередь: %d
+downloads.nothingToQueue=Нечего загружать
+downloads.batchRemoved=Забыто глав: %d; их блоки изображений стали доступны для очистки в хранилище загрузок
+downloads.chapterRemoved=%s забыто; его блоки изображений стали доступны для очистки
+downloads.chapterMissing=Эта глава больше не загружена
+downloads.autoCleanup=Автоматически очищать неиспользуемые блоки
+downloads.imageCache=Кеш изображений
+downloads.imageCacheUsage=Использовано %1$s, сохранено главами %2$s, лимит %3$s
+downloads.imageCacheBudget=Лимит: %1$s
+downloads.imageCacheUnlimited=Без лимита
+downloads.imageCacheClear=Очистить кеш
+downloads.imageCacheCleared=Удалено кешированных изображений: %1$d (%2$s)
+downloads.imageCacheClearKept=Нечего удалять: в кеше только изображения сохранённых глав
+downloads.cleanupAuto=Очищено неиспользуемых блоков: %d (%d КБ)
+downloads.export=Экспорт CBZ
+downloads.exportAll=Экспортировать все завершённые главы
+downloads.exportAllDone=Экспортировано глав: %1$d
+downloads.exportAllPartial=Экспортировано глав: %1$d, не удалось: %2$d
+downloads.exportNothing=Пока нет завершённых глав для экспорта
+downloads.exported=Экспортировано %s
+downloads.exportIncomplete=Экспортировать можно только полностью загруженную главу
+downloads.exportDirectory=Эта папка больше недоступна; выберите другую
+downloads.exportMissing=Изображение этой главы отсутствует или повреждено; сначала проверьте главу
+downloads.pause=Пауза
+downloads.verify=Проверить / продолжить
+downloads.resume=Продолжить
+downloads.readOffline=Читать офлайн
+downloads.failed=Не удалось загрузить
+downloads.cleanupTitle=Очистка старых записей загрузок
+downloads.cleanupText=Записи загрузок занимают %d КБ. Можно очистить %d старых записей (около %d КБ). Очищаются только неиспользуемые блоки метаданных; главы и изображения остаются.
+downloads.cleanupConfirm=Очистить
+downloads.cleanupDone=Очищено старых записей: %d (%d КБ)
+downloads.cleanupDoneSkipped=Очищено старых записей: %d (%d КБ), пропущено изменённых записей: %d
 
-          TOTAL=$(du -sb apk | cut -f1)
-          {
-            echo "## Android APK (arm64-v8a)"
-            echo ""
-            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
-            echo ""
-            echo "### Top 40 largest files"
-            echo ""
-            echo "| # | Size (MB) | Bytes | File |"
-            echo "|---:|---:|---:|---|"
-            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$APK_LIST"
-            echo ""
-            echo "### Size per top-level entry"
-            echo ""
-            echo "| Entry | Size (MB) | Bytes |"
-            echo "|---|---:|---:|"
-            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$APK_TOP"
-            echo ""
-            echo "### Size per ABI (lib/<abi>/)"
-            echo ""
-            if [ -s "$ABI_LIST" ]; then
-              echo "| ABI | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$ABI_LIST"
-            else
-              echo "_No lib/<abi>/ directories._"
-            fi
-            echo ""
-            echo "### Dex files"
-            echo ""
-            if [ -s "$DEX_LIST" ]; then
-              echo "| File | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$DEX_LIST"
-            else
-              echo "_No classes*.dex files._"
-            fi
-            echo ""
-            echo "### assets / res / resources.arsc"
-            echo ""
-            if [ -s "$MISC_LIST" ]; then
-              echo "| Item | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$MISC_LIST"
-            else
-              echo "_None present._"
-            fi
-            echo ""
-            echo "### Top 40 entries by compressed size (from .apk)"
-            echo ""
-            if [ -n "${APK_PATH:-}" ]; then
-              echo "_Source: \`$APK_PATH\`_"
-              echo ""
-            fi
-            if [ -s "$COMP_LIST" ]; then
-              echo "| # | Compressed (MB) | Compressed bytes | Uncompressed (MB) | Entry |"
-              echo "|---:|---:|---:|---:|---|"
-              awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | %.2f | `%s` |\n", NR, $1/1048576, $1, $2/1048576, $3}' "$COMP_LIST"
-            else
-              echo "_No compressed entries parsed._"
-            fi
-            echo ""
-            echo "### Files in lib/arm64-v8a/"
-            echo ""
-            if [ -s "$ABI64_LIST" ]; then
-              echo "| Size (MB) | Bytes | File |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$ABI64_LIST"
-            else
-              echo "_No files in lib/arm64-v8a/._"
-            fi
-            echo ""
-            echo "### apkanalyzer dex packages (top 40 by defined size)"
-            echo ""
-            if [ "$APKANALYZER_STATUS" = "ok" ]; then
-              if [ -s "$DEXPKG_LIST" ]; then
-                echo "| Defined size (bytes) | Package / Class / Member |"
-                echo "|---:|---|"
-                awk -F'\t' '{printf "| %s | `%s` |\n", $1, $2}' "$DEXPKG_LIST"
-              else
-                echo "_No apkanalyzer output._"
-              fi
-            else
-              echo "apkanalyzer yok"
-            fi
-            echo ""
-          } >> "$SUMMARY"
-
-      - name: Analyze Windows package
-        run: |
-          set -euo pipefail
-          SUMMARY="${GITHUB_STEP_SUMMARY}"
-          mkdir -p size-lists
-
-          WIN_LIST=size-lists/win-files.txt
-          ( cd win && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$WIN_LIST"
-
-          WIN_TOP=size-lists/win-top-level.txt
-          : > "$WIN_TOP"
-          while IFS= read -r -d '' entry; do
-            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$WIN_TOP"
-          done < <(find win -mindepth 1 -maxdepth 1 -print0)
-          sort -rn -o "$WIN_TOP" "$WIN_TOP"
-
-          EXT_LIST=size-lists/win-extensions.txt
-          awk -F'\t' '
-            {
-              p = tolower($2)
-              n = split(p, parts, "/")
-              f = parts[n]
-              e = (f ~ /\./) ? f : ""
-              if (e != "") sub(/.*\./, "", e)
-              if (e !~ /^(dll|jar|jmod|so|exe|dat)$/) e = "other"
-              size[e] += $1
-              count[e] += 1
-            }
-            END {
-              for (k in size) printf "%s\t%.0f\t%d\n", k, size[k], count[k]
-            }' "$WIN_LIST" | sort -k2,2nr > "$EXT_LIST"
-
-          BIG_LIST=size-lists/win-big-jar-dll.txt
-          awk -F'\t' '
-            {
-              p = tolower($2)
-              n = split(p, parts, "/")
-              f = parts[n]
-              if (f !~ /\./) next
-              e = f
-              sub(/.*\./, "", e)
-              if (e ~ /^(jar|dll|so|dylib|jmod)$/) print
-            }' "$WIN_LIST" | awk -F'\t' 'NR<=15' > "$BIG_LIST"
-
-          DIRS_LIST=size-lists/win-du-dirs.txt
-          : > "$DIRS_LIST"
-          if [ -d win ]; then
-            { du -b --max-depth=3 win 2>/dev/null || true; } | sort -rn > /tmp/win-du-sorted.txt || true
-            { head -n 30 /tmp/win-du-sorted.txt || true; } > "$DIRS_LIST" || true
-          fi
-
-          JAR_CONTENTS=size-lists/win-jar-contents.txt
-          : > "$JAR_CONTENTS"
-          while IFS= read -r -d '' jar; do
-            jar_size=$(stat -c %s "$jar" 2>/dev/null || echo 0)
-            if [ "${jar_size:-0}" -gt 5242880 ]; then
-              {
-                printf '=== %s (%s bytes) ===\n' "$jar" "$jar_size"
-                { unzip -l "$jar" 2>/dev/null || true; } | awk '
-                  $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
-                    name = $4
-                    for (i = 5; i <= NF; i++) name = name " " $i
-                    printf "%s\t%s\n", $1, name
-                  }' | sort -rn > /tmp/jar-entries-sorted.txt || true
-                { head -n 10 /tmp/jar-entries-sorted.txt || true; } | awk -F'\t' '{printf "  %s\t%s\n", $1, $2}' || true
-                printf '\n'
-              } >> "$JAR_CONTENTS" || true
-            fi
-          done < <(find win -type f -iname '*.jar' -print0 2>/dev/null || true)
-
-          NESTED_LIST=size-lists/win-nested-archives.txt
-          : > "$NESTED_LIST"
-          if [ -d win ]; then
-            find win -type f \( -iname '*.zip' -o -iname '*.jmod' -o -iname '*.msi' -o -iname '*.cab' \) -printf '%s\t%p\n' 2>/dev/null | sort -rn > "$NESTED_LIST" || true
-          fi
-
-          TOTAL=$(du -sb win | cut -f1)
-          {
-            echo "## Windows package (x64)"
-            echo ""
-            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
-            echo ""
-            echo "_Nested zip/jar/msi-like archives inside the package are not expanded._"
-            echo ""
-            echo "### Top 40 largest files"
-            echo ""
-            echo "| # | Size (MB) | Bytes | File |"
-            echo "|---:|---:|---:|---|"
-            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$WIN_LIST"
-            echo ""
-            echo "### Size per top-level entry"
-            echo ""
-            echo "| Entry | Size (MB) | Bytes |"
-            echo "|---|---:|---:|"
-            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$WIN_TOP"
-            echo ""
-            echo "### Size per extension"
-            echo ""
-            if [ -s "$EXT_LIST" ]; then
-              echo "| Extension | Size (MB) | Bytes | Files |"
-              echo "|---|---:|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s | %d |\n", $1, $2/1048576, $2, $3}' "$EXT_LIST"
-            else
-              echo "_No files._"
-            fi
-            echo ""
-            echo "### Biggest 15 .jar/.dll files"
-            echo ""
-            if [ -s "$BIG_LIST" ]; then
-              echo "| # | Size (MB) | Bytes | File |"
-              echo "|---:|---:|---:|---|"
-              awk -F'\t' '{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$BIG_LIST"
-            else
-              echo "_No .jar/.dll files._"
-            fi
-            echo ""
-            echo "### Top 30 directories (du, depth 3)"
-            echo ""
-            if [ -s "$DIRS_LIST" ]; then
-              echo "| Size (MB) | Bytes | Directory |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$DIRS_LIST"
-            else
-              echo "_No directories._"
-            fi
-            echo ""
-            echo "### .jar contents (> 5 MB, top 10 entries each)"
-            echo ""
-            if [ -s "$JAR_CONTENTS" ]; then
-              echo '```'
-              cat "$JAR_CONTENTS"
-              echo '```'
-            else
-              echo "_No .jar files larger than 5 MB._"
-            fi
-            echo ""
-            echo "### Nested archives (.zip/.jmod/.msi/.cab)"
-            echo ""
-            if [ -s "$NESTED_LIST" ]; then
-              echo "| Size (MB) | Bytes | File |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$NESTED_LIST"
-            else
-              echo "_No nested archives._"
-            fi
-            echo ""
-          } >> "$SUMMARY"
-
-      - name: Show size summary in job log
-        if: always()
-        run: cat "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload size lists
-        uses: actions/upload-artifact@v6
-        with:
-          name: size-lists
-          path: size-lists/*
-          if-no-files-found: error
-          retention-days: 14
+backups.title=Резервная копия библиотеки
+backups.exportDetail=Экспортирует категории избранного, избранное, историю чтения, закладки, статистику чтения, сведения о произведениях и порядок источников в формате ZIP Kototoro, который читает Android.
+backups.excluded=Расширения, загруженные изображения, настройки источников и настройки чтения не входят в эту резервную копию.
+backups.filterName=ZIP резервной копии Kototoro
+backups.filterNameBoth=ZIP резервной копии Kototoro / Kotatsu
+backups.export=Экспортировать резервную копию
+backups.choose=Выберите файл для восстановления
+backups.preview=Предварительный просмотр восстановления
+backups.file=Файл восстановления: %s
+backups.time=Время резервной копии: %s
+backups.sectionCount=%s: записей %d
+backups.otherEntries=Файл также содержит %d других записей, которые не восстанавливаются:
+backups.mergeDetail=Объединение сохраняет ваши существующие категории и более новые избранное, историю и закладки. Для статистики одного сеанса чтения берётся большее значение, поэтому повторное восстановление ничего не суммирует. Конфликт нумерации или повреждённые данные отменяют всё восстановление.
+backups.merge=Подтвердить объединение
+backups.section.CATEGORIES=Категории избранного
+backups.section.CONTENTS=Сведения о произведениях
+backups.section.FAVOURITES=Избранное
+backups.section.HISTORY=История чтения
+backups.section.SOURCES=Порядок источников
+backups.section.SETTINGS=Настройки приложения
+backups.section.SETTINGS_READER_GRID=Области нажатия при чтении
+backups.section.AUTH=Учётные записи и авторизация
+backups.section.BOOKMARKS=Закладки
+backups.section.STATS=Статистика чтения
+backups.section.SCROBBLING=Сервисы отслеживания
+backups.section.TRACKS=Отслеживание обновлений
+backups.section.EXTENSION_REPOS=Репозитории расширений
+backups.section.EXTENSION_GROUPS=Группы расширений
+backups.section.SOURCE_ORIGINS=Записи источников
+backups.section.SAVED_FILTERS=Сохранённые фильтры
+backups.section.LEGACY=Устаревшие данные сущностей
+backups.section.OTHER=Другие данные
+backups.saved=Резервная копия библиотеки сохранена: %s
+backups.expired=Срок действия предварительного просмотра истёк, выберите файл снова
+backups.merged=Объединение завершено, обработано записей: %d

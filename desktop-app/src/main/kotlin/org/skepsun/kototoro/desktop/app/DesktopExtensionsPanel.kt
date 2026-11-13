@@ -133,7 +133,7 @@ internal fun DesktopExtensionsPanel(controller: DesktopController, closing: Bool
                         Modifier.weight(1f))
                 }
             }
-            3 -> DesktopSourceGroupsTab()
+            3 -> DesktopSourceGroupsTab(controller)
         }
     }
     state.installPrompt?.let { request ->

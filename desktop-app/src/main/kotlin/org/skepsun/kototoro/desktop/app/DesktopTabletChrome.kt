@@ -165,103 +165,139 @@ internal fun desktopNavItemLabel(item: DesktopNavItem): String = when (item) {
 internal fun DesktopMorePanel(controller: DesktopController, enabled: Boolean, onExitRequest: () -> Unit = {}) {
     val state by controller.state.collectAsState()
     var dialog by remember { mutableStateOf<DesktopMoreDialog?>(null) }
-    Column(Modifier.widthIn(max = 720.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = LocalDesktopTopInset.current),
-        verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SettingsSectionHeader(desktopText("more.features"))
-        SettingsGroup {
-            SettingsValueRow(desktopText("screens.readerSettings"), desktopText("reader.settingsSummary"), null, enabled,
-                { controller.showReaderSettings() }, testTag = "reader-settings-open",
-                leadingIcon = painterResource("icons/ic_read.svg"))
-            SettingsRowDivider()
-            // Android's playback settings: the player's backdrop, decoder and overlay opacities.
-            SettingsValueRow(AndroidStrings["playback_settings"], desktopText("playback.moreSummary"), null, enabled,
-                { controller.showPlaybackSettings() }, testTag = "playback-settings-open",
-                leadingIcon = painterResource("icons/ic_content_video.svg"))
-            SettingsRowDivider()
-            SettingsValueRow(AndroidStrings["source_preferences"], AndroidStrings["source_preferences_summary"], null, enabled,
-                { controller.showSourceSettings() }, testTag = "source-settings-open",
-                leadingIcon = painterResource("icons/ic_source_builtin.svg"))
-            SettingsRowDivider()
-            // Android's storage and network hub: the storage figures and the proxy that routes every request.
-            SettingsValueRow(AndroidStrings["storage_and_network"], desktopText("storage.moreSummary"), null, enabled,
-                { controller.showStorage() }, testTag = "storage-settings-open",
-                leadingIcon = painterResource("icons/ic_storage.svg"))
-            SettingsRowDivider()
-            // Android groups recommendations, statistics and their switches under one 服务 page.
-            SettingsValueRow(AndroidStrings["services"], desktopText("more.servicesSummary"), null,
-                enabled, { controller.showServices() }, testTag = "services-open",
-                leadingIcon = painterResource("icons/ic_suggestion.svg"))
-            SettingsRowDivider()
-            SettingsValueRow(desktopText("more.extensions"), AndroidStrings["extension_management_summary"], null, enabled,
-                { controller.showExtensions() }, testTag = "nav:${desktopText("more.extensions")}",
-                leadingIcon = painterResource("icons/ic_extension.svg"))
-            SettingsRowDivider()
-            SettingsValueRow(desktopText("more.downloads"), desktopText("more.downloadsSummary"), null, enabled,
-                { controller.showDownloads() }, testTag = "nav:${desktopText("more.downloads")}",
-                leadingIcon = painterResource("icons/ic_download.svg"))
-            SettingsRowDivider()
-            // Android's download settings; the Windows queue reads the same numbers, so this is not a dead page.
-            SettingsValueRow(desktopText("downloadsSettings.title"), desktopText("downloadsSettings.moreSummary"), null,
-                enabled, { controller.showDownloadSettings() }, testTag = "download-settings-open",
-                leadingIcon = painterResource("icons/ic_download.svg"))
-            SettingsRowDivider()
-            SettingsValueRow(desktopText("more.backups"), desktopText("more.backupsSummary"), null, enabled,
-                { controller.showBackups() }, testTag = "nav:${desktopText("more.backups")}",
-                leadingIcon = painterResource("icons/ic_backup_restore.svg"))
-            SettingsRowDivider()
-            // Android's nav configuration lives under appearance; here it edits the rail the window shows.
-            SettingsValueRow(AndroidStrings["main_screen_sections"], desktopText("navSettings.moreSummary"), null,
-                enabled, { controller.showNavigationConfig() }, testTag = "nav-config-open",
-                leadingIcon = painterResource("icons/ic_settings.svg"))
-        }
-        SettingsSectionHeader(desktopText("more.appearance"))
-        SettingsGroup {
-            SettingsValueRow(desktopText("more.theme"), null, state.appearance.title, enabled,
-                { dialog = DesktopMoreDialog.THEME }, testTag = "appearance")
-            SettingsRowDivider()
-            SettingsValueRow(desktopText("more.interfaceStyle"), null, state.interfaceStyle.title, enabled,
-                { dialog = DesktopMoreDialog.INTERFACE_STYLE }, testTag = "interface-style")
-            SettingsRowDivider()
-            SettingsValueRow(desktopText("more.language"), desktopText("more.languageDetail"),
-                state.language?.let { tag -> DesktopLanguages.bundled.firstOrNull { it.tag == tag }?.nativeName ?: tag }
-                    ?: desktopText("more.languageSystem"),
-                enabled, { dialog = DesktopMoreDialog.LANGUAGE }, testTag = "language")
-            SettingsRowDivider()
-            SettingsValueRow(AndroidStrings["pref_details_style_manga"], null,
-                detailsStyleLabel(state.detailsStyleManga), enabled,
-                { dialog = DesktopMoreDialog.DETAILS_STYLE_MANGA }, testTag = "details-style-manga")
-            SettingsRowDivider()
-            SettingsValueRow(AndroidStrings["pref_details_style_novel"], null,
-                detailsStyleLabel(state.detailsStyleNovel), enabled,
-                { dialog = DesktopMoreDialog.DETAILS_STYLE_NOVEL }, testTag = "details-style-novel")
-            SettingsRowDivider()
-            SettingsValueRow(AndroidStrings["pref_details_style_video"], null,
-                detailsStyleLabel(state.detailsStyleVideo), enabled,
-                { dialog = DesktopMoreDialog.DETAILS_STYLE_VIDEO }, testTag = "details-style-video")
-        }
-        DesktopTrackerSettings(controller, state, enabled)
-        DesktopAppUpdateSection(controller, state, enabled, onExitRequest)
-        // Android keeps "crash logs" on the about screen itself, between the update card and the support links.
-        SettingsGroup {
-            SettingsValueRow(AndroidStrings["crash_logs"], AndroidStrings["crash_logs_summary"], null, enabled,
-                { controller.showCrashLogs() }, testTag = "app-crash-logs")
-        }
-        // Android's about screen keeps its links in a "support" group; on Windows they sit under the update card.
-        SettingsSectionHeader(AndroidStrings["about_group_support"])
-        SettingsGroup {
-            val links = remember { desktopAboutLinks() }
-            links.forEachIndexed { index, link ->
-                if (index > 0) SettingsRowDivider()
-                SettingsValueRow(link.title, link.url, null, enabled && link.openable,
-                    { controller.openExternalUrl(link.title, link.url) },
-                    testTag = "about-link:${link.key}")
+    var selectedSection by remember { mutableStateOf(DesktopSettingsSection.FEATURES) }
+    val body: @Composable (DesktopSettingsSection) -> Unit = { target ->
+        when (target) {
+            DesktopSettingsSection.FEATURES -> {
+                SettingsSectionHeader(desktopText("more.features"))
+                SettingsGroup {
+                    SettingsValueRow(desktopText("screens.readerSettings"), desktopText("reader.settingsSummary"), null, enabled,
+                        { controller.showReaderSettings() }, testTag = "reader-settings-open",
+                        leadingIcon = painterResource("icons/ic_read.svg"))
+                    SettingsRowDivider()
+                    // Android's playback settings: the player's backdrop, decoder and overlay opacities.
+                    SettingsValueRow(AndroidStrings["playback_settings"], desktopText("playback.moreSummary"), null, enabled,
+                        { controller.showPlaybackSettings() }, testTag = "playback-settings-open",
+                        leadingIcon = painterResource("icons/ic_content_video.svg"))
+                    SettingsRowDivider()
+                    SettingsValueRow(AndroidStrings["source_preferences"], AndroidStrings["source_preferences_summary"], null, enabled,
+                        { controller.showSourceSettings() }, testTag = "source-settings-open",
+                        leadingIcon = painterResource("icons/ic_source_builtin.svg"))
+                    SettingsRowDivider()
+                    // Android's storage and network hub: the storage figures and the proxy that routes every request.
+                    SettingsValueRow(AndroidStrings["storage_and_network"], desktopText("storage.moreSummary"), null, enabled,
+                        { controller.showStorage() }, testTag = "storage-settings-open",
+                        leadingIcon = painterResource("icons/ic_storage.svg"))
+                    SettingsRowDivider()
+                    // Android groups recommendations, statistics and their switches under one 服务 page.
+                    SettingsValueRow(AndroidStrings["services"], desktopText("more.servicesSummary"), null,
+                        enabled, { controller.showServices() }, testTag = "services-open",
+                        leadingIcon = painterResource("icons/ic_suggestion.svg"))
+                    SettingsRowDivider()
+                    SettingsValueRow(desktopText("more.extensions"), AndroidStrings["extension_management_summary"], null, enabled,
+                        { controller.showExtensions() }, testTag = "nav:${desktopText("more.extensions")}",
+                        leadingIcon = painterResource("icons/ic_extension.svg"))
+                    SettingsRowDivider()
+                    SettingsValueRow(desktopText("more.downloads"), desktopText("more.downloadsSummary"), null, enabled,
+                        { controller.showDownloads() }, testTag = "nav:${desktopText("more.downloads")}",
+                        leadingIcon = painterResource("icons/ic_download.svg"))
+                    SettingsRowDivider()
+                    // Android's download settings; the Windows queue reads the same numbers, so this is not a dead page.
+                    SettingsValueRow(desktopText("downloadsSettings.title"), desktopText("downloadsSettings.moreSummary"), null,
+                        enabled, { controller.showDownloadSettings() }, testTag = "download-settings-open",
+                        leadingIcon = painterResource("icons/ic_download.svg"))
+                    SettingsRowDivider()
+                    SettingsValueRow(desktopText("more.backups"), desktopText("more.backupsSummary"), null, enabled,
+                        { controller.showBackups() }, testTag = "nav:${desktopText("more.backups")}",
+                        leadingIcon = painterResource("icons/ic_backup_restore.svg"))
+                    SettingsRowDivider()
+                    // Android's nav configuration lives under appearance; here it edits the rail the window shows.
+                    SettingsValueRow(AndroidStrings["main_screen_sections"], desktopText("navSettings.moreSummary"), null,
+                        enabled, { controller.showNavigationConfig() }, testTag = "nav-config-open",
+                        leadingIcon = painterResource("icons/ic_settings.svg"))
+                }
+            }
+            DesktopSettingsSection.APPEARANCE -> {
+                SettingsSectionHeader(desktopText("more.appearance"))
+                SettingsGroup {
+                    SettingsValueRow(desktopText("more.theme"), null, state.appearance.title, enabled,
+                        { dialog = DesktopMoreDialog.THEME }, testTag = "appearance")
+                    SettingsRowDivider()
+                    SettingsValueRow(desktopText("more.interfaceStyle"), null, state.interfaceStyle.title, enabled,
+                        { dialog = DesktopMoreDialog.INTERFACE_STYLE }, testTag = "interface-style")
+                    SettingsRowDivider()
+                    SettingsValueRow(desktopText("more.language"), desktopText("more.languageDetail"),
+                        state.language?.let { tag -> DesktopLanguages.bundled.firstOrNull { it.tag == tag }?.nativeName ?: tag }
+                            ?: desktopText("more.languageSystem"),
+                        enabled, { dialog = DesktopMoreDialog.LANGUAGE }, testTag = "language")
+                    SettingsRowDivider()
+                    SettingsValueRow(AndroidStrings["pref_details_style_manga"], null,
+                        detailsStyleLabel(state.detailsStyleManga), enabled,
+                        { dialog = DesktopMoreDialog.DETAILS_STYLE_MANGA }, testTag = "details-style-manga")
+                    SettingsRowDivider()
+                    SettingsValueRow(AndroidStrings["pref_details_style_novel"], null,
+                        detailsStyleLabel(state.detailsStyleNovel), enabled,
+                        { dialog = DesktopMoreDialog.DETAILS_STYLE_NOVEL }, testTag = "details-style-novel")
+                    SettingsRowDivider()
+                    SettingsValueRow(AndroidStrings["pref_details_style_video"], null,
+                        detailsStyleLabel(state.detailsStyleVideo), enabled,
+                        { dialog = DesktopMoreDialog.DETAILS_STYLE_VIDEO }, testTag = "details-style-video")
+                }
+                DesktopTrackerSettings(controller, state, enabled)
+            }
+            DesktopSettingsSection.ABOUT -> {
+                DesktopAppUpdateSection(controller, state, enabled, onExitRequest)
+                // Android keeps "crash logs" on the about screen itself, between the update card and the support links.
+                SettingsGroup {
+                    SettingsValueRow(AndroidStrings["crash_logs"], AndroidStrings["crash_logs_summary"], null, enabled,
+                        { controller.showCrashLogs() }, testTag = "app-crash-logs")
+                }
+                // Android's about screen keeps its links in a "support" group; on Windows they sit under the update card.
+                SettingsSectionHeader(AndroidStrings["about_group_support"])
+                SettingsGroup {
+                    val links = remember { desktopAboutLinks() }
+                    links.forEachIndexed { index, link ->
+                        if (index > 0) SettingsRowDivider()
+                        SettingsValueRow(link.title, link.url, null, enabled && link.openable,
+                            { controller.openExternalUrl(link.title, link.url) },
+                            testTag = "about-link:${link.key}")
+                    }
+                }
+            }
+            DesktopSettingsSection.ADVANCED -> {
+                SettingsSectionHeader(desktopText("more.advancedTools"))
+                SettingsGroup {
+                    SettingsValueRow(desktopText("more.browser"), desktopText("more.browserSummary"), null, enabled,
+                        { controller.browser() }, testTag = "nav:${desktopText("more.browser")}",
+                        leadingIcon = painterResource("icons/ic_web.svg"))
+                }
             }
         }
-        SettingsSectionHeader(desktopText("more.advancedTools"))
-        SettingsGroup {
-            SettingsValueRow(desktopText("more.browser"), desktopText("more.browserSummary"), null, enabled,
-                { controller.browser() }, testTag = "nav:${desktopText("more.browser")}",
-                leadingIcon = painterResource("icons/ic_web.svg"))
+    }
+    val scrollTop = Modifier.padding(top = LocalDesktopTopInset.current)
+    if (LocalDesktopWindowWidth.current.value >= 1000.dp) {
+        Row(Modifier.fillMaxSize().testTag("settings-two-pane")) {
+            Column(Modifier.width(360.dp).fillMaxHeight()
+                .verticalScroll(rememberScrollState()).then(scrollTop),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                DesktopSettingsSection.entries.forEach { candidate ->
+                    SettingsValueRow(desktopSettingsSectionLabel(candidate), null, null, enabled,
+                        { selectedSection = candidate },
+                        testTag = "settings-section:${candidate.name}")
+                }
+            }
+            Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.outlineVariant))
+            Column(Modifier.weight(1f).fillMaxHeight()
+                .verticalScroll(rememberScrollState()).then(scrollTop)
+                .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                body(selectedSection)
+            }
+        }
+    } else {
+        Column(Modifier.widthIn(max = 720.dp).fillMaxWidth().verticalScroll(rememberScrollState()).then(scrollTop),
+            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            DesktopSettingsSection.entries.forEach { candidate -> body(candidate) }
         }
     }
     when (dialog) {
@@ -343,6 +379,21 @@ internal fun DesktopMorePanel(controller: DesktopController, enabled: Boolean, o
         )
         null -> Unit
     }
+}
+
+/** The categories the wide settings window lists on the left; each one draws a whole page on the right. */
+private enum class DesktopSettingsSection {
+    FEATURES,
+    APPEARANCE,
+    ABOUT,
+    ADVANCED,
+}
+
+private fun desktopSettingsSectionLabel(section: DesktopSettingsSection): String = when (section) {
+    DesktopSettingsSection.FEATURES -> desktopText("more.features")
+    DesktopSettingsSection.APPEARANCE -> desktopText("more.appearance")
+    DesktopSettingsSection.ABOUT -> AndroidStrings["about_group_support"]
+    DesktopSettingsSection.ADVANCED -> desktopText("more.advancedTools")
 }
 
 private enum class DesktopMoreDialog {

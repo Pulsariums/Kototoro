@@ -158,10 +158,11 @@ def legacyAndroidFolderTags = [in: 'id', iw: 'he']
 /** Language tags with a desktop catalog, in the order the settings page lists them. */
 def desktopLocales = { ->
     def tags = new LinkedHashSet<String>()
+    def legacyFolders = ['values-in': 'id', 'values-iw': 'he']
     def files = desktopI18nDirectory.isDirectory() ? desktopI18nDirectory.listFiles() : null
     files?.findAll { it.name ==~ /desktop-strings_[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\.properties/ }?.sort { it.name }?.each {
         def tag = it.name.substring('desktop-strings_'.length(), it.name.length() - '.properties'.length())
-        tags << (legacyAndroidFolderTags[tag] ?: tag)
+        tags << (legacyFolders["values-${tag}"] ?: tag)
     }
     // `en` is the base catalog (desktop-strings.properties) and always ships.
     tags.add('en')
@@ -308,7 +309,7 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
     inputs.files(translations)
     inputs.files(kotlinSources)
     doLast {
-        def placeholders = ~/%(?:\d+\$)?[-#+0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
+        def placeholders = ~/%((\d+)\$)?[sd]/
         def load = { File file ->
             def bundle = new Properties()
             file.withInputStream { stream -> bundle.load(new InputStreamReader(stream, 'UTF-8')) }
@@ -317,6 +318,7 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
         def baseBundle = load(base)
         def baseKeys = baseBundle.stringPropertyNames().sort()
         if (baseKeys.isEmpty()) throw new GradleException("${base.name} has no keys")
+        def extract = { String value -> (value =~ placeholders).collect { it } }
         translations.files.sort { it.name }.each { file ->
             def bundle = load(file)
             def keys = bundle.stringPropertyNames().sort()
@@ -325,9 +327,9 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
             if (missing) throw new GradleException("${file.name} misses ${missing.size()} keys: ${missing.take(5)}")
             if (extra) throw new GradleException("${file.name} has ${extra.size()} unknown keys: ${extra.take(5)}")
             baseKeys.each { key ->
-                def expected = (baseBundle.getProperty(key) =~ placeholders).collect { it }
-                def actual = (bundle.getProperty(key) =~ placeholders).collect { it }
-                if (expected.sort() != actual.sort()) {
+                def expected = extract(baseBundle.getProperty(key))
+                def actual = extract(bundle.getProperty(key))
+                if (expected != actual) {
                     throw new GradleException("${file.name}: '${key}' placeholders ${actual} do not match the base catalog ${expected}")
                 }
             }

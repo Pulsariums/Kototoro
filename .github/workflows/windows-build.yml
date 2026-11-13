@@ -270,6 +270,13 @@ jobs:
           compression-level: 0
           retention-days: 14
 
+      - name: Print packaging diagnostics
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path 'desktop-app/build/reports/windows-distribution' -Filter '*.log' -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "=== $($_.Name)"; Get-Content -LiteralPath $_.FullName -Tail 40 }
+          Get-ChildItem -Path 'desktop-app/build/test-results/windowsDistributionTest' -Filter '*.xml' -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "=== $($_.Name)"; Select-String -Path $_.FullName -Pattern 'AssertionFailedError|expected|but was|timed out|Exception' | Select-Object -First 12 | ForEach-Object { $_.Line.Trim() } }
+
       - name: Upload packaging diagnostics
         if: failure()
         uses: actions/upload-artifact@v6

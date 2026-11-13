@@ -57,7 +57,8 @@ internal fun DesktopAppearance.isDark(): Boolean = when (this) {
     DesktopAppearance.DARK -> true
 }
 
-/** The window frame (DesktopWindowChrome) resolves the scheme before the theme's own composition exists. */
+/** The window frame (DesktopWindowChrome) resolves the scheme outside the theme's own composition. */
+@Composable
 internal fun desktopColorScheme(dark: Boolean): ColorScheme = if (dark) darkColorScheme(
     primary = Color(0xFFA9C7FF), onPrimary = Color(0xFF003062),
     secondary = Color(0xFF82D3EB), onSecondary = Color(0xFF003441),

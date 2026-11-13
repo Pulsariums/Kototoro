@@ -1,0 +1,59 @@
+name: tmp i18n verify
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: i18n/desktop-languages
+      - name: Compare catalogs
+        run: |
+          python3 - <<'PY'
+          import re
+          base_path = 'desktop-app/src/main/resources/i18n/desktop-strings.properties'
+          ru_path = 'desktop-app/src/main/resources/i18n/desktop-strings_ru.properties'
+
+          def load(path):
+              keys = []
+              values = {}
+              with open(path, encoding='utf-8') as handle:
+                  for line in handle.read().splitlines():
+                      if not line or line.lstrip().startswith('#') or line.lstrip().startswith('!'):
+                          continue
+                      match = re.match(r'\s*([^=:\s]+)\s*[=:]\s*(.*)$', line)
+                      if not match:
+                          print('UNPARSED', path, repr(line))
+                          continue
+                      key, value = match.group(1), match.group(2)
+                      keys.append(key)
+                      values[key] = value
+              return keys, values
+
+          base_keys, base_values = load(base_path)
+          ru_keys, ru_values = load(ru_path)
+          print('base keys', len(base_keys), 'unique', len(set(base_keys)))
+          print('ru keys', len(ru_keys), 'unique', len(set(ru_keys)))
+          missing = [k for k in base_keys if k not in ru_values]
+          extra = [k for k in ru_keys if k not in base_values]
+          duplicates = [k for k in set(ru_keys) if ru_keys.count(k) > 1]
+          print('missing', len(missing), missing[:20])
+          print('extra', len(extra), extra[:20])
+          print('duplicates', duplicates[:20])
+          order = [k for k in ru_keys if k in base_values]
+          expected = [k for k in base_keys if k in ru_values]
+          print('order matches base:', order == expected)
+          pattern = re.compile(r'%([0-9]+\$)?[sd]')
+          bad = []
+          for key in base_keys:
+              if key not in ru_values:
+                  continue
+              if pattern.findall(base_values[key]) != pattern.findall(ru_values[key]):
+                  bad.append((key, pattern.findall(base_values[key]), pattern.findall(ru_values[key])))
+          print('placeholder mismatches', len(bad), bad[:20])
+          untranslated = [k for k in ru_keys if ru_values[k] == base_values.get(k) and k not in ('common.ok',)]
+          print('identical to base', len(untranslated), untranslated[:20])
+          PY

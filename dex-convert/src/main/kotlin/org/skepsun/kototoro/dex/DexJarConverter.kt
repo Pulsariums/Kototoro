@@ -16,9 +16,12 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
+import java.security.MessageDigest
 import java.util.Random
 import java.util.TreeMap
 import java.util.concurrent.locks.ReadWriteLock
@@ -76,8 +79,14 @@ object DexJarConverter {
     private val conversionLock = Any()
 
     private fun convertLocked(source: Path, target: Path, extraEntries: Map<String, ByteArray>): DexConversionReport {
+        val directory = target.toAbsolutePath().parent ?: Path.of(".")
+        val cache = directory.resolve("dex-${cacheKey(source)}.jar")
+        if (Files.isRegularFile(cache) && Files.size(cache) > 0L) {
+            copyAtomically(cache, target)
+            return DexConversionReport(dexEntries(source).count, classesIn(cache), emptyList())
+        }
         val dexSources = dexEntries(source)
-        val temporary = Files.createTempFile(target.toAbsolutePath().parent ?: Path.of("."), ".convert-", ".tmp")
+        val temporary = Files.createTempFile(directory, ".convert-", ".tmp")
         try {
             val broken = mutableListOf<String>()
             var classes = 0
@@ -100,10 +109,42 @@ object DexJarConverter {
                 }
             }
             if (classes == 0) throw DexConversionException(DexConversionFailure.NO_DEX)
-            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING)
+            moveAtomically(temporary, target)
+            runCatching { copyAtomically(target, cache) }
             return DexConversionReport(dexSources.count, classes, broken, repaired)
         } finally {
             Files.deleteIfExists(temporary)
+        }
+    }
+
+    private fun cacheKey(source: Path): String {
+        val attributes = Files.readAttributes(source, BasicFileAttributes::class.java)
+        val material = "$VERSION|${source.toAbsolutePath()}|${attributes.size()}|${attributes.lastModifiedTime().toMillis()}"
+        return MessageDigest.getInstance("SHA-256").digest(material.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+            .take(32)
+    }
+
+    private fun classesIn(jar: Path): Int = ZipFile(jar.toFile()).use { zip ->
+        zip.entries().asSequence().count { !it.isDirectory && it.name.endsWith(".class") }
+    }
+
+    private fun copyAtomically(from: Path, to: Path) {
+        val directory = to.toAbsolutePath().parent ?: Path.of(".")
+        val temporary = Files.createTempFile(directory, ".convert-", ".tmp")
+        try {
+            Files.copy(from, temporary, StandardCopyOption.REPLACE_EXISTING)
+            moveAtomically(temporary, to)
+        } finally {
+            Files.deleteIfExists(temporary)
+        }
+    }
+
+    private fun moveAtomically(from: Path, to: Path) {
+        try {
+            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING)
         }
     }
 

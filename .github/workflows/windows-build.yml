@@ -185,18 +185,19 @@ jobs:
             $arguments += @("-PwindowsWixDirectory=$wixBin", ':desktop-app:windowsMsiContentsCheck')
           }
           if ($env:TRIM_JRE -eq 'true') {
-            $trimInitScript = @'
-allprojects { p ->
-    if (p.path == ':desktop-app') {
-        p.afterEvaluate {
-            p.compose.desktop.application.nativeDistributions {
-                includeAllModules = false
-                modules('java.base','java.desktop','java.logging','java.naming','java.net.http','java.sql','java.management','java.xml','java.xml.crypto','java.prefs','java.scripting','java.instrument','java.security.jgss','java.security.sasl','java.datatransfer','java.rmi','jdk.unsupported','jdk.crypto.ec','jdk.crypto.cryptoki','jdk.charsets','jdk.zipfs','jdk.localedata','jdk.management','jdk.net','jdk.jfr','jdk.naming.dns','jdk.xml.dom')
-            }
-        }
-    }
-}
-'@
+            $trimInitLines = @(
+              "allprojects { p ->"
+              "    if (p.path == ':desktop-app') {"
+              "        p.afterEvaluate {"
+              "            p.compose.desktop.application.nativeDistributions {"
+              "                includeAllModules = false"
+              "                modules('java.base','java.desktop','java.logging','java.naming','java.net.http','java.sql','java.management','java.xml','java.xml.crypto','java.prefs','java.scripting','java.instrument','java.security.jgss','java.security.sasl','java.datatransfer','java.rmi','jdk.unsupported','jdk.crypto.ec','jdk.crypto.cryptoki','jdk.charsets','jdk.zipfs','jdk.localedata','jdk.management','jdk.net','jdk.jfr','jdk.naming.dns','jdk.xml.dom')"
+              "            }"
+              "        }"
+              "    }"
+              "}"
+            )
+            $trimInitScript = $trimInitLines -join "`n"
             [System.IO.File]::WriteAllText("$env:RUNNER_TEMP/trim-jre.init.gradle", $trimInitScript, [System.Text.UTF8Encoding]::new($false))
             $arguments += @('--init-script', "$env:RUNNER_TEMP/trim-jre.init.gradle")
           }

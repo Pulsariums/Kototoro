@@ -1,0 +1,384 @@
+name: Size Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v2.3.6), or latest'
+        required: false
+        default: latest
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  size-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p downloads
+          common=(--repo Kototoro-app/Kototoro --dir downloads --clobber)
+          if [ -z "${TAG:-}" ] || [ "${TAG}" = "latest" ]; then
+            gh release download "${common[@]}" --pattern '*arm64-v8a-release.apk'
+            gh release download "${common[@]}" --pattern '*windows-x64-release.zip'
+          else
+            gh release download "${TAG}" "${common[@]}" --pattern '*arm64-v8a-release.apk'
+            gh release download "${TAG}" "${common[@]}" --pattern '*windows-x64-release.zip'
+          fi
+          ls -l downloads
+
+      - name: Extract archives
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(downloads/*arm64-v8a-release.apk)
+          zips=(downloads/*windows-x64-release.zip)
+          if [ ${#apks[@]} -ne 1 ]; then
+            echo "Expected exactly one '*arm64-v8a-release.apk', found ${#apks[@]}" >&2
+            exit 1
+          fi
+          if [ ${#zips[@]} -ne 1 ]; then
+            echo "Expected exactly one '*windows-x64-release.zip', found ${#zips[@]}" >&2
+            exit 1
+          fi
+          mkdir -p apk win
+          unzip -q -o "${apks[0]}" -d apk
+          unzip -q -o "${zips[0]}" -d win
+          du -sh apk win
+
+      - name: Analyze APK
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          SUMMARY="${GITHUB_STEP_SUMMARY}"
+          mkdir -p size-lists
+
+          APK_LIST=size-lists/apk-files.txt
+          ( cd apk && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$APK_LIST"
+
+          APK_TOP=size-lists/apk-top-level.txt
+          : > "$APK_TOP"
+          while IFS= read -r -d '' entry; do
+            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$APK_TOP"
+          done < <(find apk -mindepth 1 -maxdepth 1 -print0)
+          sort -rn -o "$APK_TOP" "$APK_TOP"
+
+          ABI_LIST=size-lists/apk-libs.txt
+          : > "$ABI_LIST"
+          for abi in apk/lib/*/; do
+            printf '%s\t%s\n' "$(du -sb "$abi" | cut -f1)" "$(basename "$abi")" >> "$ABI_LIST"
+          done
+          sort -rn -o "$ABI_LIST" "$ABI_LIST"
+
+          DEX_LIST=size-lists/apk-dex.txt
+          : > "$DEX_LIST"
+          for dex in apk/classes*.dex; do
+            printf '%s\t%s\n' "$(stat -c %s "$dex")" "$(basename "$dex")" >> "$DEX_LIST"
+          done
+          sort -rn -o "$DEX_LIST" "$DEX_LIST"
+
+          MISC_LIST=size-lists/apk-misc.txt
+          : > "$MISC_LIST"
+          for item in assets res resources.arsc; do
+            if [ -e "apk/$item" ]; then
+              printf '%s\t%s\n' "$(du -sb "apk/$item" | cut -f1)" "$item" >> "$MISC_LIST"
+            fi
+          done
+          sort -rn -o "$MISC_LIST" "$MISC_LIST"
+
+          APK_PATH=$(find downloads -maxdepth 1 -type f -name '*arm64-v8a-release.apk' -print -quit 2>/dev/null || true)
+
+          COMP_LIST=size-lists/apk-compressed.txt
+          : > "$COMP_LIST"
+          if [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
+            { unzip -v "$APK_PATH" 2>/dev/null || true; } | awk '
+              $1 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {
+                name = $8
+                for (i = 9; i <= NF; i++) name = name " " $i
+                printf "%s\t%s\t%s\n", $3, $1, name
+              }' | sort -rn > "$COMP_LIST" || true
+          fi
+
+          ABI64_LIST=size-lists/apk-lib-arm64-v8a.txt
+          : > "$ABI64_LIST"
+          if [ -d apk/lib/arm64-v8a ]; then
+            find apk/lib/arm64-v8a -type f -printf '%s\t%p\n' | sort -rn > "$ABI64_LIST" || true
+          fi
+
+          DEXPKG_LIST=size-lists/apk-dex-packages.txt
+          : > "$DEXPKG_LIST"
+          APKANALYZER="${ANDROID_HOME:-}/cmdline-tools/latest/bin/apkanalyzer"
+          APKANALYZER_STATUS=missing
+          if [ -f "$APKANALYZER" ] && [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
+            APKANALYZER_STATUS=ok
+            { "$APKANALYZER" dex packages --defined-only "$APK_PATH" 2>/dev/null || true; } | awk '
+              $1 !~ /^[PCMF]$/ { next }
+              idx = 0
+              for (i = 3; i <= NF; i++) {
+                if ($i ~ /^[0-9]+$/) { idx = i; break }
+              }
+              if (idx == 0) next
+              name = ""
+              for (i = idx + 1; i <= NF; i++) {
+                if (name == "" && $i ~ /^[0-9]+$/) continue
+                name = (name == "") ? $i : name " " $i
+              }
+              if (name == "") next
+              printf "%s\t%s\n", $idx, name
+            ' | sort -rn | head -n 40 > "$DEXPKG_LIST" || true
+          else
+            echo "apkanalyzer yok"
+          fi
+
+          TOTAL=$(du -sb apk | cut -f1)
+          {
+            echo "## Android APK (arm64-v8a)"
+            echo ""
+            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
+            echo ""
+            echo "### Top 40 largest files"
+            echo ""
+            echo "| # | Size (MB) | Bytes | File |"
+            echo "|---:|---:|---:|---|"
+            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$APK_LIST"
+            echo ""
+            echo "### Size per top-level entry"
+            echo ""
+            echo "| Entry | Size (MB) | Bytes |"
+            echo "|---|---:|---:|"
+            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$APK_TOP"
+            echo ""
+            echo "### Size per ABI (lib/<abi>/)"
+            echo ""
+            if [ -s "$ABI_LIST" ]; then
+              echo "| ABI | Size (MB) | Bytes |"
+              echo "|---|---:|---:|"
+              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$ABI_LIST"
+            else
+              echo "_No lib/<abi>/ directories._"
+            fi
+            echo ""
+            echo "### Dex files"
+            echo ""
+            if [ -s "$DEX_LIST" ]; then
+              echo "| File | Size (MB) | Bytes |"
+              echo "|---|---:|---:|"
+              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$DEX_LIST"
+            else
+              echo "_No classes*.dex files._"
+            fi
+            echo ""
+            echo "### assets / res / resources.arsc"
+            echo ""
+            if [ -s "$MISC_LIST" ]; then
+              echo "| Item | Size (MB) | Bytes |"
+              echo "|---|---:|---:|"
+              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$MISC_LIST"
+            else
+              echo "_None present._"
+            fi
+            echo ""
+            echo "### Top 40 entries by compressed size (from .apk)"
+            echo ""
+            if [ -n "${APK_PATH:-}" ]; then
+              echo "_Source: \`$APK_PATH\`_"
+              echo ""
+            fi
+            if [ -s "$COMP_LIST" ]; then
+              echo "| # | Compressed (MB) | Compressed bytes | Uncompressed (MB) | Entry |"
+              echo "|---:|---:|---:|---:|---|"
+              awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | %.2f | `%s` |\n", NR, $1/1048576, $1, $2/1048576, $3}' "$COMP_LIST"
+            else
+              echo "_No compressed entries parsed._"
+            fi
+            echo ""
+            echo "### Files in lib/arm64-v8a/"
+            echo ""
+            if [ -s "$ABI64_LIST" ]; then
+              echo "| Size (MB) | Bytes | File |"
+              echo "|---:|---:|---|"
+              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$ABI64_LIST"
+            else
+              echo "_No files in lib/arm64-v8a/._"
+            fi
+            echo ""
+            echo "### apkanalyzer dex packages (top 40 by defined size)"
+            echo ""
+            if [ "$APKANALYZER_STATUS" = "ok" ]; then
+              if [ -s "$DEXPKG_LIST" ]; then
+                echo "| Defined size (bytes) | Package / Class / Member |"
+                echo "|---:|---|"
+                awk -F'\t' '{printf "| %s | `%s` |\n", $1, $2}' "$DEXPKG_LIST"
+              else
+                echo "_No apkanalyzer output._"
+              fi
+            else
+              echo "apkanalyzer yok"
+            fi
+            echo ""
+          } >> "$SUMMARY"
+
+      - name: Analyze Windows package
+        run: |
+          set -euo pipefail
+          SUMMARY="${GITHUB_STEP_SUMMARY}"
+          mkdir -p size-lists
+
+          WIN_LIST=size-lists/win-files.txt
+          ( cd win && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$WIN_LIST"
+
+          WIN_TOP=size-lists/win-top-level.txt
+          : > "$WIN_TOP"
+          while IFS= read -r -d '' entry; do
+            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$WIN_TOP"
+          done < <(find win -mindepth 1 -maxdepth 1 -print0)
+          sort -rn -o "$WIN_TOP" "$WIN_TOP"
+
+          EXT_LIST=size-lists/win-extensions.txt
+          awk -F'\t' '
+            {
+              p = tolower($2)
+              n = split(p, parts, "/")
+              f = parts[n]
+              e = (f ~ /\./) ? f : ""
+              if (e != "") sub(/.*\./, "", e)
+              if (e !~ /^(dll|jar|jmod|so|exe|dat)$/) e = "other"
+              size[e] += $1
+              count[e] += 1
+            }
+            END {
+              for (k in size) printf "%s\t%.0f\t%d\n", k, size[k], count[k]
+            }' "$WIN_LIST" | sort -k2,2nr > "$EXT_LIST"
+
+          BIG_LIST=size-lists/win-big-jar-dll.txt
+          awk -F'\t' '
+            {
+              p = tolower($2)
+              n = split(p, parts, "/")
+              f = parts[n]
+              if (f !~ /\./) next
+              e = f
+              sub(/.*\./, "", e)
+              if (e ~ /^(jar|dll|so|dylib|jmod)$/) print
+            }' "$WIN_LIST" | awk -F'\t' 'NR<=15' > "$BIG_LIST"
+
+          DIRS_LIST=size-lists/win-du-dirs.txt
+          : > "$DIRS_LIST"
+          if [ -d win ]; then
+            { du -b --max-depth=3 win 2>/dev/null || true; } | sort -rn | head -n 30 > "$DIRS_LIST" || true
+          fi
+
+          JAR_CONTENTS=size-lists/win-jar-contents.txt
+          : > "$JAR_CONTENTS"
+          while IFS= read -r -d '' jar; do
+            jar_size=$(stat -c %s "$jar" 2>/dev/null || echo 0)
+            if [ "${jar_size:-0}" -gt 5242880 ]; then
+              {
+                printf '=== %s (%s bytes) ===\n' "$jar" "$jar_size"
+                { unzip -l "$jar" 2>/dev/null || true; } | awk '
+                  $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
+                    name = $4
+                    for (i = 5; i <= NF; i++) name = name " " $i
+                    printf "%s\t%s\n", $1, name
+                  }' | sort -rn | head -n 10 | awk -F'\t' '{printf "  %s\t%s\n", $1, $2}'
+                printf '\n'
+              } >> "$JAR_CONTENTS"
+            fi
+          done < <(find win -type f -iname '*.jar' -print0 2>/dev/null || true)
+
+          NESTED_LIST=size-lists/win-nested-archives.txt
+          : > "$NESTED_LIST"
+          if [ -d win ]; then
+            find win -type f \( -iname '*.zip' -o -iname '*.jmod' -o -iname '*.msi' -o -iname '*.cab' \) -printf '%s\t%p\n' 2>/dev/null | sort -rn > "$NESTED_LIST" || true
+          fi
+
+          TOTAL=$(du -sb win | cut -f1)
+          {
+            echo "## Windows package (x64)"
+            echo ""
+            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
+            echo ""
+            echo "_Nested zip/jar/msi-like archives inside the package are not expanded._"
+            echo ""
+            echo "### Top 40 largest files"
+            echo ""
+            echo "| # | Size (MB) | Bytes | File |"
+            echo "|---:|---:|---:|---|"
+            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$WIN_LIST"
+            echo ""
+            echo "### Size per top-level entry"
+            echo ""
+            echo "| Entry | Size (MB) | Bytes |"
+            echo "|---|---:|---:|"
+            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$WIN_TOP"
+            echo ""
+            echo "### Size per extension"
+            echo ""
+            if [ -s "$EXT_LIST" ]; then
+              echo "| Extension | Size (MB) | Bytes | Files |"
+              echo "|---|---:|---:|---:|"
+              awk -F'\t' '{printf "| `%s` | %.2f | %s | %d |\n", $1, $2/1048576, $2, $3}' "$EXT_LIST"
+            else
+              echo "_No files._"
+            fi
+            echo ""
+            echo "### Biggest 15 .jar/.dll files"
+            echo ""
+            if [ -s "$BIG_LIST" ]; then
+              echo "| # | Size (MB) | Bytes | File |"
+              echo "|---:|---:|---:|---|"
+              awk -F'\t' '{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$BIG_LIST"
+            else
+              echo "_No .jar/.dll files._"
+            fi
+            echo ""
+            echo "### Top 30 directories (du, depth 3)"
+            echo ""
+            if [ -s "$DIRS_LIST" ]; then
+              echo "| Size (MB) | Bytes | Directory |"
+              echo "|---:|---:|---|"
+              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$DIRS_LIST"
+            else
+              echo "_No directories._"
+            fi
+            echo ""
+            echo "### .jar contents (> 5 MB, top 10 entries each)"
+            echo ""
+            if [ -s "$JAR_CONTENTS" ]; then
+              echo '```'
+              cat "$JAR_CONTENTS"
+              echo '```'
+            else
+              echo "_No .jar files larger than 5 MB._"
+            fi
+            echo ""
+            echo "### Nested archives (.zip/.jmod/.msi/.cab)"
+            echo ""
+            if [ -s "$NESTED_LIST" ]; then
+              echo "| Size (MB) | Bytes | File |"
+              echo "|---:|---:|---|"
+              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$NESTED_LIST"
+            else
+              echo "_No nested archives._"
+            fi
+            echo ""
+          } >> "$SUMMARY"
+
+      - name: Show size summary in job log
+        if: always()
+        run: cat "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload size lists
+        uses: actions/upload-artifact@v6
+        with:
+          name: size-lists
+          path: size-lists/*
+          if-no-files-found: error
+          retention-days: 14

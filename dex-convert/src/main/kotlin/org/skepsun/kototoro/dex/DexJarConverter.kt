@@ -82,9 +82,7 @@ object DexJarConverter {
         val directory = target.toAbsolutePath().parent ?: Path.of(".")
         val cached = directory.resolve("converted-${cacheKey(source)}.jar")
         if (hasContent(cached)) {
-            if (!hasContent(target) || Files.size(target) != Files.size(cached)) {
-                copyAtomically(cached, target)
-            }
+            copyAtomically(cached, target)
             return DexConversionReport(dexEntries(source).count, classFilesIn(cached), emptyList())
         }
         val dexSources = dexEntries(source)

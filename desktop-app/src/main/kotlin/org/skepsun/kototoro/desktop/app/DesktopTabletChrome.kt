@@ -275,20 +275,27 @@ internal fun DesktopMorePanel(controller: DesktopController, enabled: Boolean, o
         }
     }
     val scrollTop = Modifier.padding(top = LocalDesktopTopInset.current)
-    if (LocalDesktopWindowWidth.current.value >= 1000.dp) {
+    if (LocalDesktopWindowWidth.current >= 1000.dp) {
         Row(Modifier.fillMaxSize().testTag("settings-two-pane")) {
-            Column(Modifier.width(360.dp).fillMaxHeight()
-                .verticalScroll(rememberScrollState()).then(scrollTop),
+            Column(Modifier.width(360.dp).fillMaxHeight().verticalScroll(rememberScrollState()).then(scrollTop)
+                .padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 DesktopSettingsSection.entries.forEach { candidate ->
-                    SettingsValueRow(desktopSettingsSectionLabel(candidate), null, null, enabled,
-                        { selectedSection = candidate },
-                        testTag = "settings-section:${candidate.name}")
+                    val isSelected = candidate == selectedSection
+                    Row(Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                        .clickable(enabled = enabled) { selectedSection = candidate }
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                        .testTag("settings-section:${candidate.name}"),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text(desktopSettingsSectionLabel(candidate), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             }
             Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.outlineVariant))
-            Column(Modifier.weight(1f).fillMaxHeight()
-                .verticalScroll(rememberScrollState()).then(scrollTop)
+            Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).then(scrollTop)
                 .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 body(selectedSection)

@@ -153,12 +153,15 @@ tasks.named('processResources').configure { dependsOn prepareDesktopAppIcons }
 // all it takes to add a language — so untranslated Android folders never ship and the distribution stays small.
 def desktopI18nDirectory = file('src/main/resources/i18n')
 def desktopAndroidResources = rootProject.file('app/src/main/res')
+/** Android's legacy resource folder codes, whose BCP-47 tag differs (`values-in`, `values-iw`). */
+def legacyAndroidFolderTags = [in: 'id', iw: 'he']
 /** Language tags with a desktop catalog, in the order the settings page lists them. */
 def desktopLocales = { ->
     def tags = new LinkedHashSet<String>()
     def files = desktopI18nDirectory.isDirectory() ? desktopI18nDirectory.listFiles() : null
     files?.findAll { it.name ==~ /desktop-strings_[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\.properties/ }?.sort { it.name }?.each {
-        tags << it.name.substring('desktop-strings_'.length(), it.name.length() - '.properties'.length())
+        def tag = it.name.substring('desktop-strings_'.length(), it.name.length() - '.properties'.length())
+        tags << (legacyAndroidFolderTags[tag] ?: tag)
     }
     // `en` is the base catalog (desktop-strings.properties) and always ships.
     tags.add('en')
@@ -181,6 +184,8 @@ def androidResourceDirectoryFor = { String tag ->
         candidates << "values-b+${language}+${parts[1]}"
     }
     if (language != 'en') candidates << "values-${language}"
+    def legacyFolder = legacyAndroidFolderTags.find { it.value == language }?.key
+    if (legacyFolder != null) candidates << "values-${legacyFolder}"
     candidates << 'values'
     candidates.find { new File(desktopAndroidResources, it).isDirectory() }
 }
@@ -303,7 +308,7 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
     inputs.files(translations)
     inputs.files(kotlinSources)
     doLast {
-        def placeholders = ~/%\d+\$?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
+        def placeholders = ~/%(?:\d+\$)?[-#+0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
         def load = { File file ->
             def bundle = new Properties()
             file.withInputStream { stream -> bundle.load(new InputStreamReader(stream, 'UTF-8')) }

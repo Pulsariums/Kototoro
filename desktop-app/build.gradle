@@ -564,7 +564,8 @@ def prepareBundledThirdParty = tasks.register('prepareBundledThirdParty') {
         } else {
             project.copy { from pinnedArtifact('libmpv', null); into mpv; rename { 'libmpv-2.dll' } }
         }
-        ['realcugan', 'realesrgan'].each { key ->
+        // Upscaler programs and models are not bundled (about 41 MB compressed); DesktopSuperResolution.install downloads them on first use.
+        [].each { key ->
             def supplied = ncnnDirectory != null ? new File(ncnnDirectory, bundledDownloads[key].asset) : null
             def archive = pinnedArtifact(key, supplied)
             def target = new File(root, "windows/upscale/$key")

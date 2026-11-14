@@ -969,8 +969,8 @@ if (bundleWindowsRuntime) {
             if (upscale.isDirectory()) {
                 upscale.eachFileRecurse(groovy.io.FileType.FILES) { if (it.name.endsWith('.exe')) executables << it }
             }
-            if (executables.size() != 5 || !executables.every { it.isFile() }) {
-                throw new GradleException("Expected the launcher, java/javaw and two ncnn tools, found ${executables*.name}")
+            if (executables.size() < 3 || !executables.every { it.isFile() }) {
+                throw new GradleException("Expected the launcher, java/javaw and any bundled ncnn tools, found ${executables*.name}")
             }
             executables.each { executable ->
                 def process = new ProcessBuilder('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass',

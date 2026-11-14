@@ -261,6 +261,24 @@ jobs:
           $lines | ForEach-Object { Write-Output $_ }
           $lines | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
 
+      - name: Report zip composition
+        if: always()
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = Get-ChildItem -Path 'desktop-app/build/compose/binaries/main/portable/*.zip' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($zip) {
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
+            $entries = $archive.Entries | Where-Object { $_.Length -gt 0 }
+            $lines = @('zip composition (compressed MB / raw MB)')
+            $lines += $entries | Group-Object { ($_.FullName -split '/')[0..([Math]::Min(3, ($_.FullName -split '/').Count - 2))] -join '/' } | ForEach-Object { [pscustomobject]@{ Name = $_.Name; C = ($_.Group | Measure-Object CompressedLength -Sum).Sum; R = ($_.Group | Measure-Object Length -Sum).Sum } } | Sort-Object C -Descending | Select-Object -First 25 | ForEach-Object { ('{0,8:N1} / {1,8:N1}  {2}' -f ($_.C / 1MB), ($_.R / 1MB), $_.Name) }
+            $lines += 'largest entries:'
+            $lines += $entries | Sort-Object CompressedLength -Descending | Select-Object -First 15 | ForEach-Object { ('{0,8:N1} / {1,8:N1}  {2}' -f ($_.CompressedLength / 1MB), ($_.Length / 1MB), $_.FullName) }
+            $archive.Dispose()
+            $lines | ForEach-Object { Write-Output $_ }
+            $lines | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          }
+
       - name: Upload Windows package
         uses: actions/upload-artifact@v6
         with:

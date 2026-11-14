@@ -303,7 +303,7 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
     inputs.files(translations)
     inputs.files(kotlinSources)
     doLast {
-        def placeholders = ~/%\d+\$?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
+        def placeholders = ~/%\d+$?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
         def load = { File file ->
             def bundle = new Properties()
             file.withInputStream { stream -> bundle.load(new InputStreamReader(stream, 'UTF-8')) }
@@ -570,7 +570,9 @@ def prepareBundledThirdParty = tasks.register('prepareBundledThirdParty') {
             def target = new File(root, "windows/upscale/$key")
             project.copy {
                 from(project.zipTree(archive)) {
-                    exclude '**/*.mp4', '**/*.jpg', '**/*.png', '**/*.webp', '**/vcomp140d.dll'
+                    // Only models-se (Real-CUGAN) and the two anime Real-ESRGAN models are used by DesktopSuperResolution.
+                    exclude '**/*.mp4', '**/*.jpg', '**/*.png', '**/*.webp', '**/vcomp140d.dll',
+                        '**/models-pro/**', '**/models-nose/**', '**/models/realesrgan-x4plus.bin', '**/models/realesrgan-x4plus.param'
                     // Strip the archive's top folder when it has one.
                     eachFile { details ->
                         def segments = details.relativePath.segments

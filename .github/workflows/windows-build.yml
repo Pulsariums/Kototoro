@@ -16,9 +16,9 @@ on:
         default: 'nightly'
         type: string
       trim_jre:
-        description: 'Bundle a jlink-trimmed JRE (size experiment)'
+        description: 'Bundle a jlink-trimmed JRE (set false to ship the full JRE)'
         required: false
-        default: 'false'
+        default: 'true'
         type: string
   workflow_call:
     secrets:
@@ -184,7 +184,7 @@ jobs:
             if (!$wixBin) { throw 'WiX 3 build tools are missing.' }
             $arguments += @("-PwindowsWixDirectory=$wixBin", ':desktop-app:windowsMsiContentsCheck')
           }
-          if ($env:TRIM_JRE -eq 'true') {
+          if ($env:TRIM_JRE -ne 'false') {
             $trimInitLines = @(
               "allprojects { p ->"
               "    if (p.path == ':desktop-app') {"

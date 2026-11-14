@@ -179,7 +179,7 @@ internal object DesktopRuntimeCheck {
                     playTestStream(library)
                     result.setProperty("player", "ok")
                     // Page super-resolution: every bundled program upscales a small page.
-                    for ((key, value) in probeUpscaling(root, session.superResolution, required = true)) {
+                    for ((key, value) in probeUpscaling(root, session.superResolution, required = false)) {
                         result.setProperty(key, value)
                     }
                 }

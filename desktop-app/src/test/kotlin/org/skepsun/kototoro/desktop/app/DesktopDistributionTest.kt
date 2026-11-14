@@ -56,13 +56,9 @@ class DesktopDistributionTest {
         assertEquals("1", result.getProperty("sources"))
         assertTrue(Path.of(result.getProperty("java.home")).startsWith(image.resolve("runtime")))
         assertTrue(Path.of(result.getProperty("browser.executable")).startsWith(app.resolve("resources")))
-        // Playback and page super-resolution run from the components shipped in the image, not from the user's setup.
+        // Playback runs from the components shipped in the image; upscalers are downloaded on first use.
         assertEquals("ok", result.getProperty("player"))
         assertTrue(Path.of(result.getProperty("player.library")).startsWith(app.resolve("resources")))
-        assertEquals("ok", result.getProperty("upscale"))
-        listOf("realcugan", "realesrgan").forEach {
-            assertTrue(Path.of(result.getProperty("upscale.$it")).startsWith(app.resolve("resources")), it)
-        }
         assertTrue(Files.isRegularFile(app.resolve("resources/THIRD_PARTY_PLAYBACK.md")))
         awaitRelease(root)
         // A failing check must end the native process instead of leaving the launcher hung.

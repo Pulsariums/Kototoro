@@ -570,13 +570,16 @@ def prepareBundledThirdParty = tasks.register('prepareBundledThirdParty') {
         } else {
             project.copy { from pinnedArtifact('libmpv', null); into mpv; rename { 'libmpv-2.dll' } }
         }
-        ['realcugan', 'realesrgan'].each { key ->
+        // Upscaler programs and models are not bundled (about 41 MB compressed); DesktopSuperResolution.install downloads them on first use.
+        [].each { key ->
             def supplied = ncnnDirectory != null ? new File(ncnnDirectory, bundledDownloads[key].asset) : null
             def archive = pinnedArtifact(key, supplied)
             def target = new File(root, "windows/upscale/$key")
             project.copy {
                 from(project.zipTree(archive)) {
-                    exclude '**/*.mp4', '**/*.jpg', '**/*.png', '**/*.webp', '**/vcomp140d.dll'
+                    // Only models-se (Real-CUGAN) and the two anime Real-ESRGAN models are used by DesktopSuperResolution.
+                    exclude '**/*.mp4', '**/*.jpg', '**/*.png', '**/*.webp', '**/vcomp140d.dll',
+                        '**/models-pro/**', '**/models-nose/**', '**/models/realesrgan-x4plus.bin', '**/models/realesrgan-x4plus.param'
                     // Strip the archive's top folder when it has one.
                     eachFile { details ->
                         def segments = details.relativePath.segments
@@ -973,8 +976,8 @@ if (bundleWindowsRuntime) {
             if (upscale.isDirectory()) {
                 upscale.eachFileRecurse(groovy.io.FileType.FILES) { if (it.name.endsWith('.exe')) executables << it }
             }
-            if (executables.size() != 5 || !executables.every { it.isFile() }) {
-                throw new GradleException("Expected the launcher, java/javaw and two ncnn tools, found ${executables*.name}")
+            if (executables.size() < 3 || !executables.every { it.isFile() }) {
+                throw new GradleException("Expected the launcher, java/javaw and any bundled ncnn tools, found ${executables*.name}")
             }
             executables.each { executable ->
                 def process = new ProcessBuilder('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass',

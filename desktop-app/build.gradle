@@ -303,7 +303,8 @@ def verifyDesktopStrings = tasks.register('verifyDesktopStrings') {
     inputs.files(translations)
     inputs.files(kotlinSources)
     doLast {
-        def placeholders = ~/%\d+[$]?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]/
+        def placeholders = java.util.regex.Pattern.compile('%([0-9]+[$])?[sd]')
+        def extract = { String value -> value == null ? [] : (value =~ placeholders).collect { it } }
         def load = { File file ->
             def bundle = new Properties()
             file.withInputStream { stream -> bundle.load(new InputStreamReader(stream, 'UTF-8')) }

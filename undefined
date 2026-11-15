@@ -1,389 +1,929 @@
-name: Size Analysis
-
-on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag (e.g. v2.3.6), or latest'
-        required: false
-        default: latest
-        type: string
-
-permissions:
-  contents: read
-
-jobs:
-  size-analysis:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Download release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          set -euo pipefail
-          mkdir -p downloads
-          common=(--repo Kototoro-app/Kototoro --dir downloads --clobber)
-          if [ -z "${TAG:-}" ] || [ "${TAG}" = "latest" ]; then
-            gh release download "${common[@]}" --pattern '*arm64-v8a-release.apk'
-            gh release download "${common[@]}" --pattern '*windows-x64-release.zip'
-          else
-            gh release download "${TAG}" "${common[@]}" --pattern '*arm64-v8a-release.apk'
-            gh release download "${TAG}" "${common[@]}" --pattern '*windows-x64-release.zip'
-          fi
-          ls -l downloads
-
-      - name: Extract archives
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          apks=(downloads/*arm64-v8a-release.apk)
-          zips=(downloads/*windows-x64-release.zip)
-          if [ ${#apks[@]} -ne 1 ]; then
-            echo "Expected exactly one '*arm64-v8a-release.apk', found ${#apks[@]}" >&2
-            exit 1
-          fi
-          if [ ${#zips[@]} -ne 1 ]; then
-            echo "Expected exactly one '*windows-x64-release.zip', found ${#zips[@]}" >&2
-            exit 1
-          fi
-          mkdir -p apk win
-          unzip -q -o "${apks[0]}" -d apk
-          unzip -q -o "${zips[0]}" -d win
-          du -sh apk win
-
-      - name: Analyze APK
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          SUMMARY="${GITHUB_STEP_SUMMARY}"
-          mkdir -p size-lists
-
-          APK_LIST=size-lists/apk-files.txt
-          ( cd apk && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$APK_LIST"
-
-          APK_TOP=size-lists/apk-top-level.txt
-          : > "$APK_TOP"
-          while IFS= read -r -d '' entry; do
-            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$APK_TOP"
-          done < <(find apk -mindepth 1 -maxdepth 1 -print0)
-          sort -rn -o "$APK_TOP" "$APK_TOP"
-
-          ABI_LIST=size-lists/apk-libs.txt
-          : > "$ABI_LIST"
-          for abi in apk/lib/*/; do
-            printf '%s\t%s\n' "$(du -sb "$abi" | cut -f1)" "$(basename "$abi")" >> "$ABI_LIST"
-          done
-          sort -rn -o "$ABI_LIST" "$ABI_LIST"
-
-          DEX_LIST=size-lists/apk-dex.txt
-          : > "$DEX_LIST"
-          for dex in apk/classes*.dex; do
-            printf '%s\t%s\n' "$(stat -c %s "$dex")" "$(basename "$dex")" >> "$DEX_LIST"
-          done
-          sort -rn -o "$DEX_LIST" "$DEX_LIST"
-
-          MISC_LIST=size-lists/apk-misc.txt
-          : > "$MISC_LIST"
-          for item in assets res resources.arsc; do
-            if [ -e "apk/$item" ]; then
-              printf '%s\t%s\n' "$(du -sb "apk/$item" | cut -f1)" "$item" >> "$MISC_LIST"
-            fi
-          done
-          sort -rn -o "$MISC_LIST" "$MISC_LIST"
-
-          APK_PATH=$(find downloads -maxdepth 1 -type f -name '*arm64-v8a-release.apk' -print -quit 2>/dev/null || true)
-
-          COMP_LIST=size-lists/apk-compressed.txt
-          : > "$COMP_LIST"
-          if [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
-            { unzip -v "$APK_PATH" 2>/dev/null || true; } | awk '
-              $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {
-                name = $8
-                for (i = 9; i <= NF; i++) name = name " " $i
-                if (name == "") next
-                printf "%s\t%s\t%s\n", $3, $1, name
-              }' | sort -rn > "$COMP_LIST" || true
-          fi
-
-          ABI64_LIST=size-lists/apk-lib-arm64-v8a.txt
-          : > "$ABI64_LIST"
-          if [ -d apk/lib/arm64-v8a ]; then
-            find apk/lib/arm64-v8a -type f -printf '%s\t%p\n' | sort -rn > "$ABI64_LIST" || true
-          fi
-
-          DEXPKG_LIST=size-lists/apk-dex-packages.txt
-          : > "$DEXPKG_LIST"
-          APKANALYZER="${ANDROID_HOME:-}/cmdline-tools/latest/bin/apkanalyzer"
-          APKANALYZER_STATUS=missing
-          if [ -f "$APKANALYZER" ] && [ -n "${APK_PATH:-}" ] && [ -f "$APK_PATH" ]; then
-            APKANALYZER_STATUS=ok
-            { "$APKANALYZER" dex packages --defined-only "$APK_PATH" 2>/dev/null || true; } | awk '
-              $1 !~ /^[PCMF]$/ { next }
-              {
-                size = ""
-                for (i = 3; i <= NF; i++) {
-                  if ($i ~ /^[0-9]+$/) { size = $i; break }
-                }
-                if (size == "") next
-                name = ""
-                for (i = 3; i <= NF; i++) {
-                  if ($i ~ /^[0-9]+$/) continue
-                  if ($i ~ /^[0-9]+(\.[0-9]+)?%$/) continue
-                  name = (name == "") ? $i : name " " $i
-                }
-                if (name == "") next
-                printf "%s\t%s\n", size, name
-              }' | sort -rn | head -n 40 > "$DEXPKG_LIST" || true
-          else
-            echo "apkanalyzer yok"
-          fi
-
-          TOTAL=$(du -sb apk | cut -f1)
-          {
-            echo "## Android APK (arm64-v8a)"
-            echo ""
-            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
-            echo ""
-            echo "### Top 40 largest files"
-            echo ""
-            echo "| # | Size (MB) | Bytes | File |"
-            echo "|---:|---:|---:|---|"
-            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$APK_LIST"
-            echo ""
-            echo "### Size per top-level entry"
-            echo ""
-            echo "| Entry | Size (MB) | Bytes |"
-            echo "|---|---:|---:|"
-            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$APK_TOP"
-            echo ""
-            echo "### Size per ABI (lib/<abi>/)"
-            echo ""
-            if [ -s "$ABI_LIST" ]; then
-              echo "| ABI | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$ABI_LIST"
-            else
-              echo "_No lib/<abi>/ directories._"
-            fi
-            echo ""
-            echo "### Dex files"
-            echo ""
-            if [ -s "$DEX_LIST" ]; then
-              echo "| File | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$DEX_LIST"
-            else
-              echo "_No classes*.dex files._"
-            fi
-            echo ""
-            echo "### assets / res / resources.arsc"
-            echo ""
-            if [ -s "$MISC_LIST" ]; then
-              echo "| Item | Size (MB) | Bytes |"
-              echo "|---|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$MISC_LIST"
-            else
-              echo "_None present._"
-            fi
-            echo ""
-            echo "### Top 40 entries by compressed size (from .apk)"
-            echo ""
-            if [ -n "${APK_PATH:-}" ]; then
-              echo "_Source: \`$APK_PATH\`_"
-              echo ""
-            fi
-            if [ -s "$COMP_LIST" ]; then
-              echo "| # | Compressed (MB) | Compressed bytes | Uncompressed (MB) | Entry |"
-              echo "|---:|---:|---:|---:|---|"
-              awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | %.2f | `%s` |\n", NR, $1/1048576, $1, $2/1048576, $3}' "$COMP_LIST"
-            else
-              echo "_No compressed entries parsed._"
-            fi
-            echo ""
-            echo "### Files in lib/arm64-v8a/"
-            echo ""
-            if [ -s "$ABI64_LIST" ]; then
-              echo "| Size (MB) | Bytes | File |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$ABI64_LIST"
-            else
-              echo "_No files in lib/arm64-v8a/._"
-            fi
-            echo ""
-            echo "### apkanalyzer dex packages (top 40 by defined size)"
-            echo ""
-            if [ "$APKANALYZER_STATUS" = "ok" ]; then
-              if [ -s "$DEXPKG_LIST" ]; then
-                echo "| Defined size (bytes) | Package / Class / Member |"
-                echo "|---:|---|"
-                awk -F'\t' '{printf "| %s | `%s` |\n", $1, $2}' "$DEXPKG_LIST"
-              else
-                echo "_No apkanalyzer output._"
-              fi
-            else
-              echo "apkanalyzer yok"
-            fi
-            echo ""
-          } >> "$SUMMARY"
-
-      - name: Analyze Windows package
-        run: |
-          set -euo pipefail
-          SUMMARY="${GITHUB_STEP_SUMMARY}"
-          mkdir -p size-lists
-
-          WIN_LIST=size-lists/win-files.txt
-          ( cd win && find . -type f -printf '%s\t%p\n' ) | sort -rn > "$WIN_LIST"
-
-          WIN_TOP=size-lists/win-top-level.txt
-          : > "$WIN_TOP"
-          while IFS= read -r -d '' entry; do
-            printf '%s\t%s\n' "$(du -sb "$entry" | cut -f1)" "$(basename "$entry")" >> "$WIN_TOP"
-          done < <(find win -mindepth 1 -maxdepth 1 -print0)
-          sort -rn -o "$WIN_TOP" "$WIN_TOP"
-
-          EXT_LIST=size-lists/win-extensions.txt
-          awk -F'\t' '
-            {
-              p = tolower($2)
-              n = split(p, parts, "/")
-              f = parts[n]
-              e = (f ~ /\./) ? f : ""
-              if (e != "") sub(/.*\./, "", e)
-              if (e !~ /^(dll|jar|jmod|so|exe|dat)$/) e = "other"
-              size[e] += $1
-              count[e] += 1
-            }
-            END {
-              for (k in size) printf "%s\t%.0f\t%d\n", k, size[k], count[k]
-            }' "$WIN_LIST" | sort -k2,2nr > "$EXT_LIST"
-
-          BIG_LIST=size-lists/win-big-jar-dll.txt
-          awk -F'\t' '
-            {
-              p = tolower($2)
-              n = split(p, parts, "/")
-              f = parts[n]
-              if (f !~ /\./) next
-              e = f
-              sub(/.*\./, "", e)
-              if (e ~ /^(jar|dll|so|dylib|jmod)$/) print
-            }' "$WIN_LIST" | awk -F'\t' 'NR<=15' > "$BIG_LIST"
-
-          DIRS_LIST=size-lists/win-du-dirs.txt
-          : > "$DIRS_LIST"
-          if [ -d win ]; then
-            { du -b --max-depth=3 win 2>/dev/null || true; } | sort -rn > /tmp/win-du-sorted.txt || true
-            { head -n 30 /tmp/win-du-sorted.txt || true; } > "$DIRS_LIST" || true
-          fi
-
-          JAR_CONTENTS=size-lists/win-jar-contents.txt
-          : > "$JAR_CONTENTS"
-          while IFS= read -r -d '' jar; do
-            jar_size=$(stat -c %s "$jar" 2>/dev/null || echo 0)
-            if [ "${jar_size:-0}" -gt 5242880 ]; then
-              {
-                printf '=== %s (%s bytes) ===\n' "$jar" "$jar_size"
-                { unzip -l "$jar" 2>/dev/null || true; } | awk '
-                  $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
-                    name = $4
-                    for (i = 5; i <= NF; i++) name = name " " $i
-                    printf "%s\t%s\n", $1, name
-                  }' | sort -rn > /tmp/jar-entries-sorted.txt || true
-                { head -n 10 /tmp/jar-entries-sorted.txt || true; } | awk -F'\t' '{printf "  %s\t%s\n", $1, $2}' || true
-                printf '\n'
-              } >> "$JAR_CONTENTS" || true
-            fi
-          done < <(find win -type f -iname '*.jar' -print0 2>/dev/null || true)
-
-          NESTED_LIST=size-lists/win-nested-archives.txt
-          : > "$NESTED_LIST"
-          if [ -d win ]; then
-            find win -type f \( -iname '*.zip' -o -iname '*.jmod' -o -iname '*.msi' -o -iname '*.cab' \) -printf '%s\t%p\n' 2>/dev/null | sort -rn > "$NESTED_LIST" || true
-          fi
-
-          TOTAL=$(du -sb win | cut -f1)
-          {
-            echo "## Windows package (x64)"
-            echo ""
-            awk -v b="$TOTAL" 'BEGIN{printf "**Total size:** %.2f MB (%d bytes)\n", b/1048576, b}'
-            echo ""
-            echo "_Nested zip/jar/msi-like archives inside the package are not expanded._"
-            echo ""
-            echo "### Top 40 largest files"
-            echo ""
-            echo "| # | Size (MB) | Bytes | File |"
-            echo "|---:|---:|---:|---|"
-            awk -F'\t' 'NR<=40{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$WIN_LIST"
-            echo ""
-            echo "### Size per top-level entry"
-            echo ""
-            echo "| Entry | Size (MB) | Bytes |"
-            echo "|---|---:|---:|"
-            awk -F'\t' '{printf "| `%s` | %.2f | %s |\n", $2, $1/1048576, $1}' "$WIN_TOP"
-            echo ""
-            echo "### Size per extension"
-            echo ""
-            if [ -s "$EXT_LIST" ]; then
-              echo "| Extension | Size (MB) | Bytes | Files |"
-              echo "|---|---:|---:|---:|"
-              awk -F'\t' '{printf "| `%s` | %.2f | %s | %d |\n", $1, $2/1048576, $2, $3}' "$EXT_LIST"
-            else
-              echo "_No files._"
-            fi
-            echo ""
-            echo "### Biggest 15 .jar/.dll files"
-            echo ""
-            if [ -s "$BIG_LIST" ]; then
-              echo "| # | Size (MB) | Bytes | File |"
-              echo "|---:|---:|---:|---|"
-              awk -F'\t' '{printf "| %d | %.2f | %s | `%s` |\n", NR, $1/1048576, $1, $2}' "$BIG_LIST"
-            else
-              echo "_No .jar/.dll files._"
-            fi
-            echo ""
-            echo "### Top 30 directories (du, depth 3)"
-            echo ""
-            if [ -s "$DIRS_LIST" ]; then
-              echo "| Size (MB) | Bytes | Directory |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$DIRS_LIST"
-            else
-              echo "_No directories._"
-            fi
-            echo ""
-            echo "### .jar contents (> 5 MB, top 10 entries each)"
-            echo ""
-            if [ -s "$JAR_CONTENTS" ]; then
-              echo '```'
-              cat "$JAR_CONTENTS"
-              echo '```'
-            else
-              echo "_No .jar files larger than 5 MB._"
-            fi
-            echo ""
-            echo "### Nested archives (.zip/.jmod/.msi/.cab)"
-            echo ""
-            if [ -s "$NESTED_LIST" ]; then
-              echo "| Size (MB) | Bytes | File |"
-              echo "|---:|---:|---|"
-              awk -F'\t' '{printf "| %.2f | %s | `%s` |\n", $1/1048576, $1, $2}' "$NESTED_LIST"
-            else
-              echo "_No nested archives._"
-            fi
-            echo ""
-          } >> "$SUMMARY"
-
-      - name: Show size summary in job log
-        if: always()
-        run: cat "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload size lists
-        uses: actions/upload-artifact@v6
-        with:
-          name: size-lists
-          path: size-lists/*
-          if-no-files-found: error
-          retention-days: 14
+common.close=Fechar
+common.ok=OK
+common.cancel=Cancelar
+common.save=Salvar
+common.retry=Tentar novamente
+common.clear=Limpar
+common.apply=Aplicar
+common.refresh=Atualizar
+common.all=Todos
+common.more=Mais
+common.multilingual=Multilíngue
+common.chaptersTotal=%d capítulos no total
+common.newChapters=%d novos capítulos
+common.chapterTitle=Capítulo %d
+common.episodeTitle=Episódio %d
+common.pageOf=Página %d · %d%%
+nav.home=Início
+nav.favourites=Favoritos
+nav.browse=Explorar
+nav.history=Histórico
+screens.browseSource=Explorar fontes
+screens.history=Histórico de leitura
+screens.downloads=Downloads de capítulos
+screens.backups=Backup e restauração
+screens.extensions=Extensões e repositórios
+screens.details=Detalhes da obra
+screens.reader=Ler
+screens.sourcePreferences=Configurações da fonte
+screens.browser=Depuração do navegador
+app.opening=Abrindo os dados locais…
+app.startFailed=Não foi possível iniciar: %s
+app.extensionImportFailed=Não foi possível importar a extensão
+app.runtimeIncompatible=API de execução incompatível: %s
+more.servicesSummary=Recomendações, estatísticas de leitura e estimativa do tempo de leitura
+services.saveFailed=Não foi possível salvar a configuração de serviços
+more.extensions=Extensões e repositórios
+more.downloads=Downloads
+more.downloadsSummary=Revise os capítulos offline e as tarefas de download
+more.backups=Backup e restauração
+more.backupsSummary=Exporte a biblioteca, ou visualize e mescle um backup
+more.appearance=Aparência
+more.interfaceStyle=Estilo da interface
+more.language=Idioma
+more.languageSystem=Sistema
+more.languageDetail=Todas as telas seguem este idioma, incluindo datas e números; a escolha é mantida para a próxima inicialização.
+error.languageSaveFailed=Não foi possível salvar o idioma
+more.advancedTools=Ferramentas avançadas
+more.browser=Depuração do navegador
+more.browserSummary=Abra páginas web e verifique o desafio web de uma fonte
+appearance.system=Seguir o sistema
+appearance.light=Claro
+appearance.dark=Escuro
+interfaceStyle.material=Material 3
+interfaceStyle.glass=Vidro do iOS
+browse.mySources=Minhas fontes
+browse.importExtension=Importar extensão
+browse.importFilter=Arquivos de extensão (JAR, APK, CS3)
+browse.sources=%d fontes
+browse.findSource=Encontrar uma fonte
+browse.sourcesEmpty=As extensões importadas mostram suas fontes aqui
+browse.worksEmptyTitle=Seu espaço de leitura no Windows
+browse.worksEmptyDetail=Instale uma fonte em "Extensões e repositórios" ou importe uma extensão local, depois escolha uma fonte à esquerda para começar a explorar.
+browse.backToSources=Voltar à lista de fontes
+browse.searchWorks=Buscar obras
+browse.search=Buscar
+browse.popular=Populares
+browse.latest=Recentes
+browse.sort=Ordenar · %s
+browse.filters=Filtros
+browse.filtersApplied=Filtros · aplicados
+browse.sourceSettings=Configurações da fonte
+browse.noMorePages=Não há mais páginas
+browse.noWorks=Ainda não há obras aqui
+browse.noWorksDetail=Escolha uma fonte e explore, ou adicione obras aos favoritos a partir dos detalhes.
+browse.backToBrowse=Voltar à exploração
+sourceGrid.search=Buscar fontes…
+sourceGrid.extensions=Gerenciar extensões
+sourceGrid.sources=%d fontes
+sourceGrid.empty=As fontes aparecem aqui assim que uma extensão é instalada ou importada.
+source.type=Tipo de fonte
+source.builtin=Integrada
+filters.title=Filtros da fonte
+filters.empty=Esta fonte não tem filtros
+filters.restoreDefaults=Restaurar padrões
+filters.triStateIgnore=Qualquer
+filters.triStateInclude=Incluir
+filters.triStateExclude=Excluir
+filters.unselected=Não selecionado
+filters.ascending=Crescente
+filters.descending=Decrescente
+filters.unsupported=%s: este controle ainda não é compatível
+library.search=Buscar título ou autor
+library.filterAndSort=Filtrar e ordenar
+library.filterWithCount=Filtros · %d
+library.allCategories=Todas
+library.categoriesTitle=Categorias
+library.categoriesEmpty=Ainda não há categorias: adicione uma abaixo.
+library.categoryName=Nome da categoria
+library.categoryAdd=Adicionar
+library.categoryRename=Renomear
+library.categoryDelete=Excluir
+library.categoryUp=Mover para cima
+library.categoryDown=Mover para baixo
+library.categoryCreated=Categoria adicionada
+library.categoryDeleted=Categoria excluída
+library.count=%d / %d obras
+library.empty=Ainda não há obras aqui
+library.emptyFiltered=Nenhuma obra corresponde
+library.clearEmpty=Limpar a busca e os filtros
+library.emptyHint=Abra uma obra de uma fonte para lê-la ou adicioná-la aos favoritos.
+library.sort=Ordenar
+library.displaySaveFailed=Não foi possível salvar as opções de exibição
+library.progress=Progresso de leitura
+library.source=Fonte
+library.resetFilters=Redefinir a busca e os filtros
+library.order.recent=Ordem padrão
+library.order.title=Título
+library.order.lastRead=Lidas recentemente
+library.order.progress=Progresso de leitura
+library.progress.all=Todas
+library.progress.unread=Não lidas
+library.progress.reading=Lendo
+library.progress.finished=Concluídas
+library.tags=Tags
+library.tagsChoose=Escolher tags
+library.tagsSelected=Tags · %d
+library.tagSearch=Encontrar uma tag
+library.tagsEmpty=Ainda não há tags nesta biblioteca
+library.tagsNoMatch=Nenhuma tag corresponde
+library.state=Estado de publicação
+library.download=Downloads
+library.download.all=Todos
+library.download.only=Baixados
+library.download.missing=Não baixados
+library.newChapters=%d novos capítulos
+library.quick=Filtros rápidos
+library.quick.newChapters=Novos capítulos
+library.quick.favorite=Nos favoritos
+library.quick.notFavorite=Fora dos favoritos
+library.quick.nsfw=18+
+library.quick.sfw=Todas as idades
+home.hero.resume=Continuar lendo
+home.hero.history=Lidas recentemente
+home.hero.update=Atualizadas recentemente
+home.hero.recommendation=Recomendadas
+home.empty=Leia ou favorite obras e a página inicial mostra seu histórico e suas novidades.
+home.newChapters=%d novos capítulos
+home.readPercent=%d%% lido
+home.sectionHistory=Histórico
+home.sectionUpdates=Novidades
+home.sectionRecommendations=Recomendadas
+home.quick.favourites=Favoritos
+home.quick.history=Histórico
+home.quick.downloads=Downloads
+home.quick.random=Aleatória
+home.quick.extensions=Extensões
+home.quick.backups=Backup
+home.quick.settings=Configurações
+home.quickAccess=Acesso rápido
+home.refreshRecommendations=Atualizar recomendações
+home.suggestionsDetail=As obras são escolhidas entre as fontes instaladas com base nas tags do seu histórico e dos seus favoritos.
+home.suggestionsOffDetail=As recomendações estão desativadas. Depois de ativadas, são geradas a cada 6 horas a partir das tags do seu histórico e dos seus favoritos.
+home.generateSuggestions=Gerar recomendações
+home.enableSuggestions=Ativar recomendações
+feed.checkUpdates=Procurar atualizações
+feed.trackingOff=Ainda não há nenhuma categoria de favoritos que acompanhe novidades. Assim como no Android, só têm os capítulos novos verificados as obras que estão em uma categoria com acompanhamento.
+feed.enableTracking=Ativar para todos
+feed.updatesTitle=Novidades
+feed.emptyTitle=Ainda não há novidades
+feed.emptyDetail=Toque em “Procurar atualizações” para verificar os favoritos acompanhados.
+feed.filteredTitle=Nada corresponde aos filtros atuais
+feed.filteredDetail=Limpe os filtros do feed ou pare de ocultar o conteúdo 18+ em “Mais → Configurações da fonte”.
+feed.continueReading=Continuar lendo
+feed.timeNow=agora mesmo
+feed.timeToday=Hoje
+feed.timeYesterday=Ontem
+feed.timeDaysAgo=há %d dias
+feed.cleared=Histórico de novidades limpo
+feed.displaySaveFailed=Não foi possível salvar a configuração de exibição do feed
+details.chapters=Capítulos · %d
+details.chapterActions=Ações do capítulo
+details.selectChapters=Selecionar capítulos
+details.cancelSelection=Concluir
+details.selectionCount=%d selecionados
+details.selectAll=Selecionar tudo
+details.clearSelection=Limpar
+details.markedReadCount=%d capítulos marcados como lidos
+details.markRead=Marcar como lido
+details.markUnread=Marcar como não lido
+details.markedRead=%s marcado como lido
+details.markedUnread=%s marcado como não lido
+details.deleteDownload=Excluir download
+details.chapterMissing=Atualize a lista de capítulos antes de alterar este capítulo
+details.latestChapters=Últimos capítulos
+details.firstChapters=Primeiros capítulos
+details.chapterBranchDefault=Padrão
+details.status.ongoing=Em andamento
+details.status.finished=Concluída
+details.status.abandoned=Abandonada
+details.status.paused=Em espera
+details.status.upcoming=Em breve
+details.status.restricted=Indisponível
+details.startReading=Começar / continuar lendo
+details.startWatching=Começar / continuar assistindo
+details.play=Reproduzir
+details.info=Detalhes
+details.statusLabel=Estado
+details.ratingLabel=Nota
+details.altTitles=Títulos alternativos
+details.tags=Tags
+details.readingTime=Tempo restante
+details.readingTimeHoursMinutes=%1$d h %2$d min
+details.readingTimeMinutes=%d min
+details.copyLink=Copiar link
+details.copied=Link copiado
+details.favourite=Adicionar aos favoritos
+details.favourited=Nos favoritos
+details.unfavourite=Remover dos favoritos
+details.loadFailed=Não foi possível carregar os detalhes
+details.synopsis=Sinopse
+details.authorsUnknown=Sem informações do autor
+details.tabBookmarks=Marcadores · %d
+details.bookmarksClear=Excluir todos
+details.selectBookmarks=Selecionar marcadores
+details.bookmarksSelectedCount=%d marcadores selecionados
+details.bookmarksDeleteSelected=Excluir selecionados (%1$d)
+details.bookmarksDeleted=%1$d marcadores excluídos
+details.chapterBookmarkAdd=Adicionar marcador
+details.chapterBookmarkRemove=Remover marcador
+details.chapterBookmarkLabel=Marcador do capítulo
+details.cover=Capa de %s
+details.downloadChapters=Baixar capítulos em lote
+details.downloadWhole=Todos os capítulos (%d)
+details.downloadUnread=Capítulos não lidos (%d)
+details.downloadBranch=Todos os capítulos de “%s” (%d)
+details.downloadFirst=Primeiros %d capítulos (%d)
+reader.panel.chapters=Capítulos
+reader.panel.bookmarks=Marcadores
+reader.panel.options=Configurações de leitura
+reader.panel.more=Mais configurações de leitura
+reader.bookmarksCount=%d marcadores
+reader.bookmarksEmpty=Toque em “Adicionar marcador” na parte de baixo para salvar sua posição.
+reader.chapterMissing=Este capítulo não existe mais
+reader.incognito=Modo anônimo: nada é registrado
+reader.currentPosition=Posição de leitura
+reader.reload=Recarregar esta página
+reader.autoScrollSpeed=Velocidade de virada de página / rolagem automática
+reader.shortcuts=Atalhos
+reader.shortcutsHelp=← / → página\nPageUp / PageDown página ou rolagem\nHome / End primeira e última página\nB adiciona ou remove um marcador\nArraste para virar a página (primeiro mova a imagem quando houver zoom)\nO botão “Auto” na parte de baixo vira páginas ou rola, e pausa por 2 segundos ao interagir\nToque à esquerda ou à direita para virar a página, toque no meio para mostrar ou ocultar a barra de ferramentas (altere em “Ações ao tocar”)\nPressionar e segurar ou clicar com o botão direito executa a ação de toque longo (por padrão abre as configurações de leitura no meio)\nA roda vira páginas (rola quando houver zoom)\nCtrl + roda aplica zoom\nH mostra ou oculta a barra de ferramentas\nF11 tela cheia\nEsc fecha o painel ou volta aos detalhes
+reader.tapGridHint=As áreas de toque definem a ação ao tocar; pressionar e segurar ou clicar com o botão direito define a ação de toque longo.
+reader.tapArea.topLeft=Superior esquerda
+reader.tapArea.topCenter=Superior centro
+reader.tapArea.topRight=Superior direita
+reader.tapArea.centerLeft=Meio esquerda
+reader.tapArea.center=Meio
+reader.tapArea.centerRight=Meio direita
+reader.tapArea.bottomLeft=Inferior esquerda
+reader.tapArea.bottomCenter=Inferior centro
+reader.tapArea.bottomRight=Inferior direita
+reader.animation.none=Nenhuma
+reader.animation.default=Deslizar
+reader.animation.advanced=Cobrir
+reader.animation.simulation=Folha de papel
+reader.mode.single=Página única
+reader.mode.double=Página dupla
+reader.mode.continuous=Rolagem contínua
+reader.upscale=Super-resolução
+reader.upscaleOff=Desativada
+reader.denoise=Redução de ruído
+reader.denoise.conservative=Conservadora
+reader.denoise.none=Nenhuma
+reader.upscaleAnime4kReady=O Anime4K processa as páginas fora da tela na GPU, com os mesmos shaders usados pelo aprimoramento de vídeo.
+reader.upscaleAnime4kMissing=O Anime4K precisa do libmpv (o mesmo da reprodução de vídeo): coloque libmpv-2.dll na pasta mpv do diretório de dados.
+reader.upscaleAnime4kMissingLinux=O Anime4K precisa do libmpv (o mesmo da reprodução de vídeo): instale o pacote libmpv desta distribuição (Debian/Ubuntu: libmpv2).
+reader.upscaleToolInstalled=%s instalado. As páginas são processadas na GPU; a primeira passagem leva alguns segundos por página e os resultados ficam em cache.
+reader.upscaleToolNeeded=Precisa do programa oficial %s (cerca de 45 MB).
+reader.downloadAndInstall=Baixar e instalar
+reader.chooseArchive=Escolher um arquivo
+reader.upscaleFailed=A super-resolução falhou, exibindo o original: %s
+reader.chaptersCount=%d capítulos
+reader.pagePreparing=Preparando a página %d…
+reader.decodeFailed=Não foi possível decodificar a página, recarregue-a
+reader.pageLoadRetry=Não foi possível carregar a página, tente novamente
+reader.pageLoadFailed=Não foi possível carregar a página
+reader.pageLabel=Página %d
+reader.zoom.fitCenter=Ajustar à página
+reader.zoom.fitWidth=Ajustar à largura
+reader.zoom.fitHeight=Ajustar à altura
+reader.zoom.original=Tamanho original
+reader.background.BLACK=Preto
+reader.background.WHITE=Branco
+reader.background.LIGHT=Claro
+reader.background.DARK=Escuro
+reader.background.DEFAULT=Padrão
+reader.background.AUTO=Seguir o sistema
+novel.theme.LIGHT=Branco
+novel.theme.SEPIA=Sépia
+novel.theme.GREEN=Verde
+novel.theme.DARK=Noite
+novel.serifFont=Fonte com serifa
+novel.contentWidth=Largura do texto
+novel.pageIndicator=Página %1$d / %2$d
+novel.shortcutsHelp=PageUp / PageDown / Espaço vira a página ou rola\nHome / End início e fim do capítulo\nH mostra ou oculta a barra de ferramentas\nF11 tela cheia\nEsc fecha o painel ou volta aos detalhes
+novel.previousChapter=Capítulo anterior
+novel.nextChapter=Próximo capítulo
+novel.imageFailed=Não foi possível carregar a ilustração
+novel.imageLoading=Carregando a ilustração…
+novel.chapterTitle=Capítulo %d
+video.backToDetails=Voltar aos detalhes
+video.casting=Transmitindo
+video.cast=Transmitir
+video.episodes=Episódios
+video.fullscreen=Tela cheia
+video.exitFullscreen=Sair da tela cheia
+video.loading=Carregando o vídeo…
+video.buffering=Armazenando em buffer…
+video.previousEpisode=Episódio anterior
+video.nextEpisode=Próximo episódio
+video.play=Reproduzir
+video.pause=Pausar
+video.quality=Qualidade · %s
+video.subtitles=Legendas
+video.audio=Faixas de áudio
+video.mute=Silenciar
+video.unmute=Reativar o som
+video.enhancement=Aprimoramento
+video.fsrSharpness=Nitidez do FSR %d%%
+video.enhancementHint=O aprimoramento é executado na GPU em tempo real; os níveis de maior qualidade do Anime4K exigem bastante da GPU.
+video.libmpvMissing=O libmpv é necessário para reproduzir dentro do aplicativo
+video.externalRequired=Reproduzir com o mpv
+reader.upscalePlatformUnavailable=As ferramentas nativas de super-resolução ainda não estão disponíveis neste sistema.
+video.externalHint=A reprodução incorporada ainda não está disponível no macOS. Instale o mpv e escolha “Abrir no mpv”, ou copie o endereço do vídeo.
+video.libmpvHint=O Kototoro reproduz vídeos com o mpv, mas não o distribui. Baixe o libmpv para Windows (por exemplo, o arquivo mpv-dev-lgpl-x86_64), coloque seu libmpv-2.dll na pasta abaixo e pressione “Detectar novamente”.
+video.libmpvHintLinux=O Kototoro reproduz vídeos com o mpv, mas não o distribui. Instale o libmpv com o gerenciador de pacotes (Debian/Ubuntu: sudo apt install libmpv2, Fedora: sudo dnf install mpv-libs, Arch: sudo pacman -S mpv), ou coloque libmpv.so.2 na pasta abaixo e pressione “Detectar novamente”.
+video.openFolder=Abrir pasta
+video.detectAgain=Detectar novamente
+video.copyUrl=Copiar o endereço do vídeo
+video.urlCopied=Endereço do vídeo copiado (algumas fontes também exigem cabeçalhos de requisição para reproduzir)
+video.playExternal=Reproduzir com o mpv externo
+video.externalOpened=Aberto no mpv externo
+video.externalFailed=Não foi possível iniciar o mpv: %s
+video.openFolderFailed=Não foi possível abrir a pasta: %s
+video.playerStartFailed=Não foi possível iniciar o reprodutor: %s
+video.openFailed=Não foi possível abrir o vídeo: %s
+video.enhancementUnavailable=Aprimoramento indisponível: %s
+video.line=Fluxo %d
+video.castDialogTitle=Transmitir para um dispositivo DLNA
+video.castSearching=Procurando dispositivos na rede local…
+video.castNotFound=Nenhum dispositivo encontrado. Verifique se a TV ou o aparelho está na mesma rede deste PC e se o firewall do Windows permite o acesso à rede do Kototoro.
+video.castSearchAgain=Procurar novamente
+video.castTo=Transmitindo para %s · %s
+video.castEnd=Parar a transmissão (continuar aqui)
+video.castState.PLAYING=Reproduzindo
+video.castState.PAUSED_PLAYBACK=Pausado
+video.castState.STOPPED=Parado
+video.castState.TRANSITIONING=Carregando
+video.castState.NO_MEDIA_PRESENT=Sem mídia
+downloads.storage=Armazenamento de downloads / recuperar registros antigos
+downloads.empty=Baixe capítulos pelos detalhes de uma obra para manter um capítulo inteiro disponível para leitura offline.
+downloads.status.QUEUED=Na fila
+downloads.status.DOWNLOADING=Baixando
+downloads.status.PAUSED=Pausado
+downloads.status.COMPLETE=Baixado
+downloads.status.FAILED=Falha no download
+downloads.pages=%d / %d páginas
+downloads.usage=%d capítulos salvos (%d baixados, %d páginas), %d KB de imagens
+downloads.selectAll=Selecionar tudo
+downloads.selectNone=Limpar seleção
+downloads.selected=%d selecionados
+downloads.batchPause=Pausar selecionados (%d)
+downloads.batchResume=Continuar selecionados (%d)
+downloads.batchRetry=Tentar novamente os que falharam (%d)
+downloads.batchRemove=Esquecer selecionados (%d)
+downloads.batchPaused=%d capítulos pausados
+downloads.batchQueued=%d capítulos na fila
+downloads.nothingToQueue=Nada novo para baixar
+downloads.batchRemoved=%d capítulos esquecidos; seus blocos de imagem ficaram recuperáveis no armazenamento de downloads
+downloads.chapterRemoved=%s esquecido; seus blocos de imagem ficaram recuperáveis
+downloads.chapterMissing=Esse capítulo não está mais baixado
+downloads.autoCleanup=Recuperar blocos não referenciados automaticamente
+downloads.imageCache=Cache de imagens
+downloads.imageCacheUsage=%1$s usados, %2$s mantidos pelos capítulos salvos, limite %3$s
+downloads.imageCacheBudget=Limite: %1$s
+downloads.imageCacheUnlimited=Sem limite
+downloads.imageCacheClear=Limpar cache
+downloads.imageCacheCleared=%1$d imagens em cache removidas (%2$s)
+downloads.imageCacheClearKept=Nada a remover: o cache contém apenas imagens de capítulos salvos
+downloads.cleanupAuto=%d blocos não referenciados recuperados (%d KB)
+downloads.export=Exportar CBZ
+downloads.exportAll=Exportar todos os capítulos concluídos
+downloads.exportAllDone=%1$d capítulos exportados
+downloads.exportAllPartial=%1$d capítulos exportados, %2$d falharam
+downloads.exportNothing=Ainda não há capítulo concluído para exportar
+downloads.exported=%s exportado
+downloads.exportIncomplete=Só é possível exportar um capítulo totalmente baixado
+downloads.exportDirectory=Essa pasta não está mais disponível; escolha outra
+downloads.exportMissing=Uma imagem deste capítulo está ausente ou danificada; verifique o capítulo primeiro
+downloads.pause=Pausar
+downloads.verify=Verificar / continuar
+downloads.resume=Continuar
+downloads.readOffline=Ler offline
+downloads.failed=Falha no download
+downloads.cleanupTitle=Recuperar registros antigos de download
+downloads.cleanupText=Os registros de download ocupam %d KB. %d registros antigos (cerca de %d KB) podem ser recuperados. Apenas blocos de metadados não referenciados são recuperados; capítulos e imagens permanecem.
+downloads.cleanupConfirm=Recuperar
+downloads.cleanupDone=%d registros antigos recuperados (%d KB)
+downloads.cleanupDoneSkipped=%d registros antigos recuperados (%d KB), %d registros alterados ignorados
+backups.title=Backup da biblioteca
+backups.exportDetail=Exporta categorias de favoritos, favoritos, histórico de leitura, marcadores, estatísticas de leitura, informações das obras e a ordem das fontes no formato ZIP do Kototoro que o Android lê.
+backups.excluded=Extensões, imagens baixadas, configurações das fontes e configurações de leitura não fazem parte deste backup.
+backups.filterName=ZIP de backup do Kototoro
+backups.filterNameBoth=ZIP de backup do Kototoro / Kotatsu
+backups.export=Exportar backup
+backups.choose=Escolher um arquivo para restaurar
+backups.preview=Visualizar restauração
+backups.file=Arquivo de restauração: %s
+backups.time=Data do backup: %s
+backups.sectionCount=%s: %d registros
+backups.otherEntries=O arquivo também contém %d outras entradas que não são restauradas:
+backups.mergeDetail=A mesclagem mantém suas categorias existentes e os favoritos, histórico e marcadores mais recentes. Estatísticas da mesma sessão de leitura assumem o maior valor, então restaurar duas vezes não soma. Um conflito de numeração ou dados inválidos desfazem toda a restauração.
+backups.merge=Confirmar mesclagem
+backups.section.CATEGORIES=Categorias de favoritos
+backups.section.CONTENTS=Informações das obras
+backups.section.FAVOURITES=Favoritos
+backups.section.HISTORY=Histórico de leitura
+backups.section.SOURCES=Ordem das fontes
+backups.section.SETTINGS=Configurações do aplicativo
+backups.section.SETTINGS_READER_GRID=Áreas de toque da leitura
+backups.section.AUTH=Contas e autorização
+backups.section.BOOKMARKS=Marcadores
+backups.section.STATS=Estatísticas de leitura
+backups.section.SCROBBLING=Serviços de acompanhamento
+backups.section.TRACKS=Acompanhamento de novidades
+backups.section.EXTENSION_REPOS=Repositórios de extensões
+backups.section.EXTENSION_GROUPS=Grupos de extensões
+backups.section.SOURCE_ORIGINS=Registros de fontes
+backups.section.SAVED_FILTERS=Predefinições de filtros
+backups.section.LEGACY=Dados de entidades legadas
+backups.section.OTHER=Outros dados
+backups.saved=Backup da biblioteca salvo: %s
+backups.expired=A visualização expirou, escolha o arquivo novamente
+backups.merged=Mesclagem concluída, %d registros processados
+jsonSources.addressHint=https://example.com/api.php/provide/vod
+jsonSources.name=Nome de exibição (opcional)
+jsonSources.remove=Remover
+jsonSources.added=%d fontes adicionadas
+jsonSources.skipped=%d site(s) spider ignorados
+jsonSources.noneFound=Nenhum site CMS foi encontrado nesse link
+jsonSources.legadoSkipped=%d fonte(s) Legado ignoradas (apenas fontes de romance são compatíveis)
+jsonSources.legadoNoneFound=Nenhuma fonte de romance Legado compatível foi encontrada
+jsonSources.addressRequired=Informe um link ou endereço de API
+jsonSources.saveFailed=Não foi possível salvar as fontes JSON
+jsonSources.removed=Fonte removida
+extensions.repositoryAddress=Endereço do repositório
+extensions.catalogCount=%s · %d extensões
+extensions.catalog=Extensões do repositório
+extensions.search=Encontrar uma extensão, idioma ou fonte
+sourceList.empty=Nenhuma fonte corresponde a esta busca
+sourceList.search=Encontrar uma fonte
+extensions.kind.parser=Plugin de analisador
+extensions.noPackage=Nenhum pacote incluído
+extensions.unsupportedApi=API ainda não compatível
+extensions.installed=Instalada
+extensions.newerLocal=Sua versão local é mais recente
+extensions.update=Atualizar
+extensions.install=Instalar
+extensions.installConvert=Instalar (converter APK)
+extensions.sourcesAfterInstall=As fontes são lidas após a instalação
+extensions.installedCount=Instaladas · %d
+extensions.installedSummary=%s (%d fontes)
+extensions.autoUpdate=Atualizar na inicialização
+extensions.checkUpdates=Procurar atualizações
+extensions.updateAll=Atualizar todas (%d)
+extensions.entrySummary=%s · %s · %d fontes
+extensions.showSources=Fontes · %d
+extensions.hideSources=Ocultar fontes · %d
+extensions.updateAvailable=atualização disponível: %s
+extensions.uninstall=Desinstalar
+extensions.uninstallTitle=Desinstalar %s?
+extensions.uninstallDetail=Isso remove suas %d fontes e os arquivos de instalação. Favoritos, histórico e downloads são mantidos e voltam a funcionar após reinstalar.
+extensions.allUpToDate=Todas as extensões estão atualizadas
+extensions.updatesAvailable=%d extensões têm atualizações
+extensions.updatesAvailableHint=%d extensões têm atualizações, atualize-as em "Extensões e repositórios"
+extensions.updated=%d extensões atualizadas
+extensions.updateFailed=Falha na atualização:
+extensions.uninstalled=%s desinstalada
+extensions.uninstallFailed=Não foi possível desinstalar:
+extensions.imported=Importada
+extensions.catalogRead=%s lido, %d extensões
+extensions.repositoryRemoved=%s esquecido; as extensões instaladas a partir dele continuam instaladas
+extensions.repositoryMissing=Esse repositório não está mais salvo
+extensions.readRepositoryFirst=Leia um repositório primeiro
+extensions.selectSourceFirst=Selecione uma fonte primeiro
+extensions.repositoryReadFailed=Alguns repositórios não puderam ser lidos:
+extensions.autoUpdateSaveFailed=Não foi possível salvar a configuração de atualização automática
+extensions.installedTool=%s instalado
+settings.suggestions=Recomendações
+settings.suggestionsEnabled=Ativar recomendações
+settings.suggestionsEnabledDetail=Geradas a partir das tags do seu histórico e dos seus favoritos; os candidatos vêm das fontes habilitadas, a menos que a opção abaixo os amplie
+settings.suggestionsNsfw=Excluir conteúdo adulto
+settings.suggestionsExcludeTags=Tags excluídas
+settings.suggestionsPreferredTags=Tags preferidas
+settings.updates=Verificação de atualizações
+settings.checkNewChapters=Procurar novos capítulos
+settings.checkNewChaptersDetail=Verifica as obras em categorias de favoritos que acompanham novidades
+settings.checkFrequency=Frequência da verificação automática de atualizações
+settings.tagSeparator=Separe com vírgulas
+settings.frequency.manual=Manual
+settings.frequency.low=Baixa
+settings.frequency.default=Padrão
+settings.frequency.high=Alta
+settings.suggestionsSaveFailed=Não foi possível salvar as configurações de recomendação
+settings.trackerSaveFailed=Não foi possível salvar as configurações de verificação de atualizações
+settings.appearanceSaveFailed=Não foi possível salvar a aparência
+settings.interfaceStyleSaveFailed=Não foi possível salvar o estilo da interface
+settings.saved=Configuração salva
+settings.rejected=A fonte rejeitou esta configuração
+settings.persistedInMemory=Configuração aplicada na memória, não foi possível salvá-la no disco
+preference.unsupported=Este controle ainda não é compatível
+browser.title=Páginas e scripts
+browser.hint=Configure a ponte do WebView2 para usar o depurador do navegador.
+browser.address=Endereço da página
+browser.open=Abrir página
+browser.show=Mostrar janela
+browser.hide=Ocultar janela
+browser.hint2=Trabalhe na janela do navegador e depois sincronize os cookies para as requisições da fonte. Fechar a janela a oculta, e o navegador é liberado quando o aplicativo é encerrado.
+browser.syncCookies=Sincronizar cookies
+browser.synced=Cookies sincronizados
+browser.shown=Janela exibida
+browser.hidden=Janela oculta
+browser.script=Expressão JavaScript
+browser.loadHtml=Carregar HTML e executá-lo
+browser.evaluate=Executar JavaScript na página
+browser.busy=Executando…
+browser.failed=A ação do navegador falhou
+browser.invalidUrl=Informe um endereço de página HTTP ou HTTPS válido
+browser.loadFailed=Não foi possível carregar a página
+browser.offlinePage=Navegador offline
+challenge.hint=Esta fonte exige verificação web, conclua-a na janela do navegador.
+challenge.continue=Concluído, continuar a requisição
+challenge.cancel=Cancelar a verificação
+challenge.shown=Janela de verificação exibida
+challenge.ended=Verificação encerrada
+challenge.show=Mostrar a janela de verificação
+challenge.showFailed=Não foi possível mostrar a janela de verificação, tente novamente ou cancele a verificação
+challenge.blockedTitle=%d site(s) exigem verificação web (encontrados ao carregar em segundo plano; nenhuma janela foi aberta)
+challenge.blockedMore=%d a mais
+challenge.verify=Verificar
+challenge.dismiss=Ignorar
+challenge.verified=Verificação concluída
+cleanup.pageIndexRecords=%d páginas do leitor indexadas
+cleanup.items=%d entradas
+cleanup.pagesCleared=Índice de páginas do leitor limpo: %d registros
+cleanup.pagesClearFailed=Não foi possível limpar o índice de páginas do leitor
+cleanup.readChaptersDeleted=%d capítulos salvos excluídos que o histórico já havia ultrapassado
+label.sort.UPDATED=Atualizadas recentemente
+label.sort.UPDATED_ASC=Atualizadas há mais tempo
+label.sort.POPULARITY=Popularidade
+label.sort.POPULARITY_ASC=Popularidade (crescente)
+label.sort.POPULARITY_HOUR=Popularidade · 1 hora
+label.sort.POPULARITY_TODAY=Popularidade · hoje
+label.sort.POPULARITY_WEEK=Popularidade · esta semana
+label.sort.POPULARITY_MONTH=Popularidade · este mês
+label.sort.POPULARITY_YEAR=Popularidade · este ano
+label.sort.RATING=Nota
+label.sort.RATING_ASC=Nota (crescente)
+label.sort.NEWEST=Mais recentes
+label.sort.NEWEST_ASC=Mais antigas
+label.sort.ALPHABETICAL=Nome A–Z
+label.sort.ALPHABETICAL_DESC=Nome Z–A
+label.sort.ADDED=Adicionadas recentemente
+label.sort.ADDED_ASC=Adicionadas há mais tempo
+label.sort.RELEVANCE=Relevância
+message.generatingSuggestions=Gerando recomendações a partir das fontes instaladas…
+message.suggestionsGenerated=%d recomendações geradas
+message.installSourceFirst=Instale uma fonte de conteúdo primeiro
+message.noSuggestions=Ainda não há recomendações: leia ou favorite algumas obras primeiro
+message.backgroundCheck=Verificação em segundo plano: %d obras têm %d novos capítulos
+message.checkingUpdates=Verificando atualizações %d / %d
+message.nothingToCheck=Nada a verificar: favorite algumas obras e ative o acompanhamento de novidades nas categorias delas
+message.checkedNoNew=%d obras verificadas, nenhum capítulo novo
+message.checkedNoNewFailed=%d obras verificadas, nenhum capítulo novo (%d não puderam ser verificadas)
+message.checkedNew=%d obras têm %d novos capítulos
+message.checkedNewFailed=%d obras têm %d novos capítulos (%d não puderam ser verificadas)
+message.addedToFavourites=Adicionado aos favoritos
+message.removedFromFavourites=Removido dos favoritos
+message.castingTo=Transmitindo para %s
+error.workNotFound=Essa obra não existe mais
+error.noChapters=Nenhum capítulo legível
+error.noChapterText=Este capítulo não tem texto para exibir
+error.noEpisodes=Nenhum episódio reproduzível
+error.noVideo=Este episódio não tem vídeo reproduzível
+error.noPages=Este capítulo não tem páginas
+error.favouritesEmpty=Os favoritos estão vazios
+error.bookmarkMissing=Esse marcador não existe mais
+error.bookmarkChapterMissing=O capítulo do marcador não existe mais, atualize os detalhes da obra
+error.bookmarkPageMissing=A página do marcador não existe mais
+error.bookmarkChanged=O texto marcado mudou ou a posição é inválida, atualize os detalhes da obra
+error.videoNotPlaying=Nenhum vídeo está sendo reproduzido
+error.novelNotOpen=Nenhum capítulo de romance está aberto
+error.chapterNotOfWork=Esse capítulo pertence a outra obra
+error.sortUnsupported=Esta fonte não é compatível com essa ordem
+error.readerSettingsInMemory=Configurações de leitura aplicadas na memória, não foi possível salvá-las no disco
+error.enhancementInMemory=Aprimoramento aplicado na memória, não foi possível salvá-lo no disco
+error.sourceApiIncompatible=API da fonte incompatível: %s
+error.sourceApiIncompatibleShort=API da fonte incompatível
+error.webView2Required=Configure o navegador WebView2 primeiro
+error.downloadIncomplete=O capítulo ainda não foi totalmente baixado
+error.localWorkMissing=Esse registro de obra local não existe mais
+error.localDownloadMissing=Uma imagem baixada está ausente ou danificada, verifique / continue na página de downloads
+error.olderExtension=Não é compatível instalar uma versão mais antiga da extensão
+error.extensionRecordMissing=Esse registro de extensão não existe mais
+error.extensionRecordDelete=Não foi possível excluir o registro da extensão
+error.extensionNotLoaded=A extensão não está carregada
+error.extensionRestoreFailed=Não foi possível restaurar a extensão: %s
+error.downloadBlockIdentity=A identidade do bloco de download é inválida e não pode ser recuperada
+error.downloadManifestMissingBlock=O manifesto de download está sem um bloco de dados
+error.downloadBlockChecksum=O bloco de dados do download falhou na verificação
+error.downloadManifestIncomplete=O manifesto de download está incompleto
+error.downloadIndexRead=Não foi possível ler o índice de downloads: %s
+error.downloadRecordCorrupt=Um registro de download está danificado: %s
+error.downloadLegacyIndex=Não foi possível ler o índice de downloads legado, o arquivo original foi mantido
+error.downloadMigrationFailed=Não foi possível migrar um registro de download, o original foi mantido: %s
+error.downloadRecordTooLarge=O registro de download é grande demais para ser salvo
+error.downloadSaveFailed=Não foi possível salvar o registro de download no disco
+error.cacheFileChecksum=O arquivo da página em cache falhou na verificação
+error.pageIdentityMismatch=A fonte retornou uma identidade de página inesperada
+error.imageSizeInvalid=O tamanho da página é inválido
+error.imageAllocationFailed=Não foi possível alocar os pixels da página
+error.imageDecodeFailed=Não foi possível decodificar a página
+error.tileDecodeUnsupported=Este formato de imagem não permite decodificação parcial
+error.tileDecodeFailed=Não foi possível decodificar essa parte da página, tente novamente
+error.reclaimExpired=A prévia de recuperação expirou, verifique novamente
+error.coverRetry=Tentar novamente a capa
+error.sourceRuntimeIncompatible=Ambiente de execução da fonte incompatível
+error.sourceNetworkFailed=A requisição da fonte falhou
+error.sourceParseFailed=Não foi possível interpretar os dados da fonte
+error.sourceExecutionFailed=A chamada da fonte falhou
+error.diagnosticHeader=%s: %s
+error.diagnostic=(diagnóstico %s, log: %s)
+error.diagnosticNoLog=(diagnóstico %s, não foi possível gravar o log de diagnóstico)
+runtime.upscale.archiveSha256=%s: o arquivo baixado falhou na verificação SHA-256
+runtime.upscale.executableMissing=%s: falta %s no arquivo
+runtime.upscale.toolNotInstalled=%s não está instalado
+runtime.upscale.needsLibmpv=O Anime4K precisa do libmpv, o mesmo usado na reprodução de vídeo
+runtime.upscale.noImage=%s não produziu nenhuma imagem
+runtime.upscale.noProgram=%s não usa um programa externo
+runtime.upscale.failed=%s falhou (saída %d): %s
+runtime.download.tooLarge=o download excede o limite de tamanho
+runtime.upscale.downloadFailed=não foi possível baixar %s: %s
+runtime.backup.targetExists=o arquivo de backup já existe; escolha um novo nome
+runtime.backup.tooLarge=os dados do backup excedem o limite de tamanho; nenhum arquivo foi gravado
+runtime.backup.previewClosed=a prévia foi fechada; escolha o arquivo novamente
+runtime.backup.archiveTooLarge=o arquivo de backup excede o limite de 512 MiB
+runtime.backup.invalidSections=o backup tem nomes de seção duplicados ou inválidos
+runtime.backup.expandedTooLarge=o backup expandido excede o limite de 1 GiB
+runtime.backup.directoryMismatch=o diretório do ZIP de backup não corresponde ao seu conteúdo
+runtime.backup.noIndex=o arquivo escolhido não tem um índice de backup do Kototoro/Kotatsu
+runtime.backup.invalidIndexCount=a contagem do índice de backup é inválida
+runtime.repository.requestFailed=a requisição ao repositório falhou: HTTP %d
+runtime.repository.closed=a conexão com o repositório está fechada
+runtime.repository.insecureRedirect=um redirecionamento inseguro do repositório foi recusado
+runtime.repository.tooLarge=os dados do repositório excedem o limite de tamanho
+runtime.repository.invalidUrl=informe uma URL de repositório HTTP(S) sem credenciais ou fragmento
+runtime.repository.recordReadFailed=não foi possível ler os repositórios salvos: %s
+runtime.repository.fullIndex=uma URL de repositório com parâmetros deve apontar para um index.pb, index.json ou index.min.json completo
+runtime.repository.emptyName=o repositório não tem nome
+runtime.repository.signingChanged=as informações de assinatura do repositório mudaram; verifique o endereço
+runtime.repository.noExtensions=o repositório não tem lista de extensões
+runtime.repository.invalidExtensions=a lista de extensões do repositório é inválida
+runtime.repository.invalidIdentity=a identidade da extensão do repositório é inválida
+runtime.repository.cloudstreamDefault=Repositório Cloudstream
+runtime.repository.cloudstreamPlugins=Lista de plugins Cloudstream
+runtime.repository.cloudstreamEmpty=o repositório Cloudstream não tem plugins utilizáveis
+runtime.repository.defaultName=Repositório de extensões
+runtime.extension.refreshFirst=atualize os repositórios primeiro
+runtime.extension.parserInstall=plugins de analisador devem ser instalados pelo fluxo de analisador
+runtime.extension.noDownload=esta extensão não tem pacote para baixar
+runtime.extension.notParser=o item do repositório não é um plugin de analisador
+runtime.extension.parserNoDownload=este plugin de analisador não tem pacote para baixar
+runtime.extension.invalidCloudstream=não é um plugin Cloudstream válido (.cs3)
+runtime.extension.dexConvertFailed=não foi possível converter o plugin DEX do Android em arquivos de classe JVM: %s
+runtime.extension.apkConvertFailed=não foi possível converter o APK do Android em arquivos de classe JVM: %s
+runtime.extension.mismatch=o pacote, a versão ou a API da extensão baixada não corresponde ao repositório
+runtime.extension.notDirectory=o diretório da extensão deve ser um diretório real
+runtime.extension.notRegularFile=o arquivo da extensão deve ser um arquivo comum
+runtime.extension.recordSaveFailed=não foi possível salvar o registro do repositório ou da extensão; nada foi instalado
+upscale.model.REALESRGAN_4X_ANIME=Real-ESRGAN 4x anime
+upscale.model.REALESR_ANIMEVIDEO_2X=Real-ESR AnimeVideo 2x (rápido)
+upscale.model.ANIME4K_C=Anime4K C (apenas reparo)
+upscale.model.ANIME4K_CA=Anime4K C+A (apenas reparo)
+runtime.update.checksumMissing=a versão não publica um arquivo SHA-256
+runtime.update.checksumMissingFor=o arquivo SHA-256 não lista %s
+runtime.update.checksumMismatch=o pacote baixado não corresponde a %s
+runtime.update.packageMissing=esta versão não tem pacote %s
+runtime.update.sizeMismatch=o pacote baixado tem o tamanho errado
+runtime.update.notAnImage=o pacote não é uma imagem do Kototoro
+runtime.update.http=o servidor de atualizações respondeu HTTP %d
+runtime.update.tooLarge=os dados da atualização são grandes demais
+runtime.update.unreadable=não foi possível ler os dados da atualização
+runtime.update.notInstalled=esta cópia não é um pacote instalado, por isso não pode se atualizar
+runtime.update.unsafeEntry=o pacote contém um caminho inseguro: %s
+more.about=Sobre e atualizações
+update.version=Versão %1$s
+update.checkNow=Procurar atualizações
+update.checking=Verificando…
+update.upToDate=Esta é a versão mais recente
+update.available=A versão %1$s está disponível
+update.download=Baixar
+update.downloadingPercent=%1$d%%
+update.downloaded=A versão %1$s foi baixada e verificada
+update.install=Reiniciar e atualizar
+update.discard=Excluir o pacote
+update.autoCheck=Procurar atualizações automaticamente
+update.autoCheckDetail=Verifica o canal de lançamentos a cada %1$d horas enquanto a janela está aberta
+update.autoDownload=Baixar atualizações automaticamente
+update.autoDownloadDetail=Baixa e verifica o pacote assim que uma nova versão é encontrada
+update.installOnExit=Instalar ao sair
+update.installOnExitDetail=Aplica uma atualização baixada quando você fecha a janela
+update.unsupported=Esta cópia não está em um diretório de aplicativo instalado com permissão de escrita, por isso não pode se substituir
+update.platformUnavailable=As atualizações automáticas do aplicativo ainda não estão disponíveis neste sistema.
+update.settingsSaveFailed=Não foi possível salvar as configurações de atualização
+update.versionUnknown=A versão desta cópia é desconhecida, por isso não é possível procurar atualizações
+update.restarting=Reiniciando para aplicar %1$s
+update.size=%1$s
+update.published=Publicada em %1$s
+update.changelogReload=Recarregar notas
+update.changelogLoading=Carregando notas da versão…
+update.changelogEmpty=Este canal ainda não tem notas de versão publicadas
+update.changelogCurrent=Versão atual
+update.noNotes=Esta versão não tem notas
+about.linkFailed=não foi possível abrir %1$s, então o endereço é exibido: %2$s
+crashLogs.loading=Lendo os relatórios de falha…
+crashLogs.empty=Ainda não foi gravado nenhum relatório de falha
+crashLogs.copied=Relatório de falha copiado
+crashLogs.copyFailed=Não foi possível copiar o relatório de falha
+webdav.title=Sincronização na nuvem (WebDAV)
+webdav.detail=O backup é enviado para este diretório com os nomes de arquivo e as regras de retenção do Android; restaurar baixa um arquivo remoto e depois passa pela mesma visualização e mesclagem de um arquivo local.
+webdav.server=URL do servidor
+webdav.path=Diretório remoto
+webdav.user=Nome de usuário
+webdav.password=Senha
+webdav.keep=Retidos por namespace
+webdav.interval=Backup automático a cada (horas, 0 = desativado)
+webdav.autoLast=Último envio automático: %1$s
+webdav.autoNever=Nenhum envio automático ainda; o primeiro ocorre assim que o aplicativo inicia
+webdav.test=Testar conexão
+webdav.refresh=Atualizar lista
+webdav.upload=Enviar esta biblioteca
+webdav.reachable=O diretório responde
+webdav.notConfigured=Informe primeiro a URL do servidor WebDAV
+webdav.settingsSaveFailed=Não foi possível salvar as configurações do WebDAV
+webdav.uploaded=%1$s enviado (%2$d KB)
+webdav.uploadedTrimmed=%1$s enviado (%2$d KB) e %3$d arquivo(s) mais antigos removidos
+webdav.deleted=O backup remoto %1$s foi excluído
+webdav.preview=Backup remoto %1$s baixado; mescle-o quando estiver correto
+webdav.latest=Backup mais recente: %1$s
+webdav.empty=O diretório remoto ainda não tem backups
+webdav.unlisted=A lista remota ainda não foi lida
+webdav.restore=Baixar e visualizar
+webdav.delete=Excluir
+webdav.file=%1$s · %2$s · %3$d KB
+webdav.localKept=Cópia local mantida: %1$s
+webdav.localNever=Ainda não há cópia local
+webdav.localSummary=%1$d cópia(s) · mais recente %2$s
+webdav.localFailed=Não foi possível gravar o backup em %1$s
+webdav.choose=Escolher…
+webdav.outputReset=Usar o padrão
+webdav.open=Abrir
+webdav.localOpenFailed=Não foi possível abrir %1$s
+webdav.outputInvalid=%1$s não é uma pasta em que os backups possam ser gravados
+webdav.autoRestoredAndUploaded=Mesclado o backup mais recente do servidor %1$s (%2$d linhas) e enviado o instantâneo mesclado
+screens.recommendations=Recomendações
+common.back=Voltar
+common.previous=Anterior
+settings.suggestionsTags=Tags
+settings.suggestionsSources=Fontes
+settings.suggestionsPreferredSources=Fontes preferidas
+settings.suggestionsExcludedSources=Fontes excluídas
+extensions.catalogEmpty=Escolha um repositório para explorar suas extensões
+extensions.installedEmpty=Ainda não há extensões instaladas
+more.features=Recursos
+more.theme=Tema
+screens.readerSettings=Configurações de leitura
+reader.settingsSummary=Modo de leitura, direção, escala, margens e virada de página
+reader.settingsPages=Páginas
+reader.settingsTurning=Virada de página
+reader.setting.direction=Direção de leitura
+reader.setting.doubleCover=Capa em página separada
+reader.direction.ltr=Da esquerda para a direita
+reader.direction.rtl=Da direita para a esquerda
+reader.direction.vertical=De cima para baixo
+library.selectionCount=%d selecionadas
+library.selectionAll=Selecionar tudo
+library.selectionCategories=Categorias
+library.selectionRemove=Remover dos favoritos
+library.selectionRemoveHistory=Remover do histórico
+library.selectionRemoveDetail=Elas saem desta estante mas mantêm o progresso de leitura.
+library.selectionRemoveHistoryDetail=O progresso de leitura delas também é excluído.
+library.selectionComplete=Marcar como concluídas
+library.completePrompt=A posição de leitura delas passa para o último capítulo, então o progresso que tinham é perdido.
+library.completed=%d obras marcadas como concluídas
+library.completeNone=Nenhuma das obras selecionadas tem capítulos para marcar
+library.selectionPin=Fixar
+library.selectionUnpin=Desafixar
+library.pinned=Fixadas
+library.pinnedCount=%d obras fixadas
+library.unpinnedCount=%d obras desafixadas
+library.pinNone=Nada para fixar
+library.selectionShare=Compartilhar
+library.shared=%d links copiados para a área de transferência
+library.shareFailed=O Windows recusou a área de transferência, então os links são exibidos
+library.shareEmpty=Nada na seleção tem um link para compartilhar
+library.categoriesPickTitle=Categorias para %d obras
+library.categoriesUpdated=Categorias atualizadas para %d obras
+library.selectionDownload=Baixar
+library.downloadHint=Cada obra mantém seu próprio progresso; capítulos já salvos são ignorados.
+library.downloadWhole=Todos os capítulos
+library.downloadUnread=Capítulos não lidos
+library.downloadFirst=Primeiros %d capítulos
+library.migrate=Migrar
+library.migrateHint=Procure a mesma obra em outra fonte. Categorias, progresso e estatísticas passam para a nova obra; a original mantém seus downloads e marcadores.
+library.migrateSource=Fonte de destino: %s
+library.migrateKeep=Manter a obra original
+library.migrateEmpty=Nada encontrado nesta fonte
+library.migrateSearching=Procurando…
+library.migrateNoSources=Não há outra fonte deste tipo instalada
+library.migrated=Migrada para %s
+library.favouritesRemoved=%d obras removidas dos favoritos
+library.historyRemoved=%d registros removidos do histórico
+screens.tagBlacklist=Tags bloqueadas
+sources.overview=Visão geral
+sources.sort.default=Ordem de instalação
+sources.sort.title=Título
+sources.sort.language=Idioma
+sources.sort.custom=Ordem personalizada
+sources.reorderSummary=Mova uma linha para cima ou para baixo e depois salve a sequência
+sources.wizardSummary=Conheça o que são repositórios, extensões e fontes e depois escolha o tema da interface
+sources.reorderEmpty=Nenhuma fonte habilitada para reordenar
+sources.wizardAppearanceSummary=Escolha aqui o tema, o estilo da interface e o idioma da interface; a página de configurações altera esses mesmos três depois
+sources.remote=Fontes remotas
+sources.jarPriorityNote=Tem efeito na próxima vez que o aplicativo iniciar.
+sources.adult=Conteúdo adulto
+sources.nsfwFilter=Ocultar conteúdo 18+
+sources.nsfwFilterSummary=Telas que ignoram fontes e obras adultas
+sources.nsfw.sources=Fontes e exploração
+sources.nsfw.favourites=Favoritos
+sources.nsfw.history=Histórico
+sources.nsfw.updates=Novidades
+sources.nsfw.bookmarks=Marcadores e notas
+sources.adultNote=As recomendações mantêm sua própria opção 18+.
+sources.tags=Tags
+sources.tagBlacklistNote=O Android lê a mesma seleção: IDs de taxonomia, sinônimos e padrões “raw:” correspondem exatamente.
+sources.tagBlacklistClear=Limpar
+sources.tagBlacklistAddPattern=Adicionar “%s”
+sources.tagBlacklistKey=Chave: %s
+sources.tagBlacklistEnglish=Inglês: %s
+sources.tagBlacklistCategory=Categoria: %s
+sources.tagBlacklistAliases=Sinônimos: %s
+settings.sourcesSaveFailed=Não foi possível salvar as configurações das fontes
+storage.moreSummary=Uso de armazenamento e proxy
+storage.database=Banco de dados
+storage.images=Imagens
+storage.imagesProtected=Imagens · %1$s mantidos pelos capítulos salvos
+storage.preferences=Preferências e downloads
+storage.logs=Logs
+storage.other=Outros
+storage.volume=Tamanho do volume
+video.decoder.hardwareOnly=Somente decodificação por hardware; um arquivo que a GPU não consegue decodificar falha em vez de usar a CPU
+video.decoder.hardwarePreferred=Decodificação por hardware com alternativa por software quando a GPU não consegue decodificar o arquivo
+video.decoder.softwarePreferred=Decodificação por software para todos os arquivos
+playback.moreSummary=Fundo de reprodução, decodificador e opacidade dos controles
+error.videoSettingsInMemory=As configurações de reprodução foram aplicadas, mas não puderam ser salvas no disco
+replaceRules.loading=Lendo as regras…
+replaceRules.filter=Arquivos de regras (JSON)
+replaceRules.importFailed=O arquivo não é uma lista de regras de substituição
+replaceRules.exported=Regras exportadas para %s
+replaceRules.exportFailed=Não foi possível exportar as regras
+dictionaryRules.loading=Lendo as regras de dicionário…
+dictionaryRules.filter=Arquivos de regras de dicionário (JSON)
+dictionaryRules.saved=Regra de dicionário salva
+dictionaryRules.deleted=Regra de dicionário excluída
+dictionaryRules.imported=%d regras de dicionário importadas
+dictionaryRules.importFailed=O arquivo não é uma lista de regras de dicionário
+dictionaryRules.exported=Regras de dicionário exportadas para %s
+dictionaryRules.exportFailed=Não foi possível exportar as regras de dicionário
+downloadsSettings.title=Configurações de download
+downloadsSettings.moreSummary=Páginas paralelas, séries simultâneas, intervalo entre requisições e tentativas
+downloadsSettings.parity=Apenas a parte que o Windows consegue cumprir
+downloadsSettings.parityDetail=As linhas do Android sobre rede móvel, otimização de bateria, qualidade de vídeo, ilustrações de romance e diretório de conteúdo pertencem a recursos de plataforma que o Windows não tem, então esta página edita os números de velocidade e tentativas que a fila offline realmente lê.
+error.downloadSettingsInMemory=As configurações de download estão ativas, mas não puderam ser salvas no disco
+navSettings.moreSummary=Quais destinos a barra lateral mostra e em que ordem
+navSettings.position=%1$d de %2$d
+navSettings.morePinned=Mais fica sempre por último
+navSettings.morePinnedDetail=É a única entrada para todas as outras páginas, por isso não pode ser reordenada, ocultada nem listada aqui.
+navSettings.cap=O Android mantém o mesmo limite de %1$d destinos; remover o último traz Início de volta.
+error.navSettingsInMemory=A lista de navegação está ativa, mas não pôde ser salva no disco
+feed.readCompleted=Lido
+feed.pendingChapters=%s capítulos não lidos
+feed.updatesAvailable=Novidades de capítulos disponíveis
+feed.sourceTime=Fonte atualizada: %s
+feed.sourceTimeUnknown=Data de atualização da fonte desconhecida
+feed.sourceTimePartial=Algumas datas desconhecidas
+feed.chapterDetails=Detalhes do capítulo
+extensions.testSourcesSummary=Pedir a cada fonte habilitada uma lista, uma capa, detalhes, capítulos, páginas e um resultado de busca
+sourceTest.intro=Cada fonte recebe o pedido de uma lista principal, três capas, os detalhes da primeira obra, seus capítulos, as páginas do primeiro capítulo e um resultado de busca. Uma fonte que responde “não compatível” em uma etapa é ignorada em vez de falhar; a etapa aleatória do Android não tem operação no Windows e não é executada.
+sourceTest.steps=%1$d fontes habilitadas serão testadas, três por vez.
+sourceTest.results=Resultados (%1$d)
+sourceTest.empty=Nada foi testado ainda nesta visita.
+sourceTest.stepCount=%1$d etapas
+sourceTest.copied=Os resultados estão na área de transferência como JSON
+sourceTest.copyFailed=A área de transferência recusou os resultados; nada foi copiado
+sourceTest.disabledFailed=%1$d fontes com falha foram desabilitadas e removidas da barra de fontes
+sourceTest.nothingFailed=Nenhuma fonte falhou, então não há nada para desabilitar
+extensions.add=Adicionar
+extensions.addHint=Adicione um repositório ou link de configuração de fonte, ou importe um arquivo de extensão local.
+extensions.repositoryType=Repositório de extensões
+extensions.available=Disponível
+extensions.localFileHint=Importe um JAR, APK, plugin Cloudstream ou uma configuração JSON do TVBox ou Legado. O formato do arquivo é detectado automaticamente.
+extensions.localFileFilter=Extensões e configurações de fontes
+extensions.findRepository=Buscar repositórios
+extensions.repositoriesEmpty=Ainda não há repositórios. Adicione um para descobrir extensões e fontes.
+extensions.noResults=Nenhum resultado correspondente
+extensions.repositorySources=%d fontes
+extensions.removeSourceRepository=Remover %s?
+extensions.removeSourceRepositoryHint=Remova esta configuração e suas %d fontes. Itens da biblioteca, histórico e downloads são mantidos.
+extensions.browseRepository=Explorar
+extensions.sourcesEmpty=Ainda não há fontes. Adicione um repositório ou importe uma extensão para começar.
+history.daysAgo=há %d dias

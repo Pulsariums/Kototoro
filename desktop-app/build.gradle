@@ -705,6 +705,7 @@ compose.desktop {
     application {
         mainClass = 'org.skepsun.kototoro.desktop.app.DesktopMainKt'
         javaHome = desktopLauncher.get().metadata.installationPath.asFile.absolutePath
+        jvmArgs "-Xmx2g"
         if (bundleDesktopRuntime) {
             disableDefaultConfiguration()
             mainJar.set(tasks.named('jar').flatMap { it.archiveFile })

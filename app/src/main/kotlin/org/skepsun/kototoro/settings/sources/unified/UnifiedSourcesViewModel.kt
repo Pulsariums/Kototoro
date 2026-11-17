@@ -944,7 +944,7 @@ class UnifiedSourcesViewModel @Inject constructor(
                     availableJsonPackages.update { packages ->
                         packages.filterNot { it.repositoryId == repository.id }
                     }
-                    emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
+                    deleteImportedJsonRepositorySources(repository, ready)
                 } else {
                     deleteImportedJsonRepositorySources(repository, ready)
                 }
@@ -955,7 +955,7 @@ class UnifiedSourcesViewModel @Inject constructor(
                     availableJsonPackages.update { packages ->
                         packages.filterNot { it.repositoryId == repository.id }
                     }
-                    emitMessage(appContext.getString(R.string.unified_sources_repository_deleted))
+                    deleteImportedJsonRepositorySources(repository, ready)
                 } else {
                     deleteImportedJsonRepositorySources(repository, ready)
                 }

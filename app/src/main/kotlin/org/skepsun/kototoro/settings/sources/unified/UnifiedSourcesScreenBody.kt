@@ -254,6 +254,7 @@ fun UnifiedSourcesScreen(
                                     selectedSourceIds = activeSelectedSourceIds,
                                     onSourceSelectionChange = onSourceSelectionChange,
                                     onSourcePinnedChange = onSourcePinnedChange,
+                                    packageNames = remember(state.allPackages) { state.allPackages.associate { it.id to it.name } },
                                 )
                                 UNIFIED_SOURCES_TAB_REPOSITORIES -> UnifiedRepositoryList(
                                     modifier = pageModifier,

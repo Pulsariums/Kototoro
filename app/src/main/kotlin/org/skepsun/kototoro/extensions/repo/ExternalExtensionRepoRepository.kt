@@ -127,6 +127,7 @@ class ExternalExtensionRepoRepository @Inject constructor(
                     ?: appContext.getString(R.string.extension_repository_refresh_failed_message),
             ).toEntity()
         }
+        if (dao.get(repo.type, repo.baseUrl) == null) return
         if (entity.baseUrl != repo.baseUrl) {
             dao.delete(repo.type, repo.baseUrl)
         }
@@ -205,6 +206,7 @@ class ExternalExtensionRepoRepository @Inject constructor(
 
     private suspend fun clearCatalogRefreshError(repo: ExternalExtensionRepo) {
         if (repo.lastError == null) return
+        if (dao.get(repo.type, repo.baseUrl) == null) return
         dao.upsert(
             repo.copy(
                 updatedAt = System.currentTimeMillis(),
@@ -214,6 +216,7 @@ class ExternalExtensionRepoRepository @Inject constructor(
     }
 
     private suspend fun markCatalogRefreshFailed(repo: ExternalExtensionRepo, error: Throwable) {
+        if (dao.get(repo.type, repo.baseUrl) == null) return
         dao.upsert(
             repo.copy(
                 updatedAt = System.currentTimeMillis(),

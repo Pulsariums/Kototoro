@@ -171,6 +171,7 @@ internal fun UnifiedSourceList(
     selectedSourceIds: Set<String>,
     onSourceSelectionChange: (Set<String>) -> Unit,
     onSourcePinnedChange: (String, Boolean) -> Unit,
+    packageNames: Map<String, String> = emptyMap(),
 ) {
     val expressive = LocalMaterialExpressiveComponentsEnabled.current
     val horizontalPadding = if (expressive) 8.dp else 0.dp
@@ -189,8 +190,8 @@ internal fun UnifiedSourceList(
     val collapsedPackageIds = remember(collapsiblePackageIds, expandedPackageIds) {
         collapsiblePackageIds - expandedPackageIds
     }
-    val displayRows = remember(sources, collapsedPackageIds) {
-        buildGroupedUnifiedSourceRows(sources, collapsedPackageIds)
+    val displayRows = remember(sources, collapsedPackageIds, packageNames) {
+        buildGroupedUnifiedSourceRows(sources, collapsedPackageIds, packageNames)
     }
     // Keep the first action chip aligned with the global content margin; the actions
     // row itself is still horizontally scrollable towards the screen edge.
@@ -415,6 +416,7 @@ internal sealed interface UnifiedSourceDisplayRow {
 internal fun buildGroupedUnifiedSourceRows(
     sources: List<UnifiedSourceItem>,
     collapsedPackageIds: Set<String>,
+    packageNames: Map<String, String> = emptyMap(),
 ): List<UnifiedSourceDisplayRow> {
     val byPackage = LinkedHashMap<String, MutableList<UnifiedSourceItem>>()
     sources.forEach { source ->
@@ -437,7 +439,8 @@ internal fun buildGroupedUnifiedSourceRows(
                     add(
                         UnifiedSourceDisplayRow.PackageHeader(
                             packageId = packageId,
-                            packageName = resolveUnifiedSourceGroupName(members, packageId),
+                            packageName = packageNames[packageId]?.takeIf { it.isNotBlank() }
+                                ?: resolveUnifiedSourceGroupName(members, packageId),
                             kind = members.first().kind,
                             sourceCount = members.size,
                             collapsed = packageId in collapsedPackageIds,

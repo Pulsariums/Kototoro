@@ -1,0 +1,21 @@
+name: tmp-yama
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devel
+      - run: |
+          set -e
+          git apply -R --verbose tmp-yama/geri.patch
+          git rm -rq tmp-yama .github/workflows/tmp-yama.yml
+          git config user.name "$(git log -1 --format=%an)"
+          git config user.email "$(git log -1 --format=%ae)"
+          git add -A
+          git commit -qm 'revert(sources): kaynak listesi degisikligi geri alindi'
+          git push -q origin HEAD:devel

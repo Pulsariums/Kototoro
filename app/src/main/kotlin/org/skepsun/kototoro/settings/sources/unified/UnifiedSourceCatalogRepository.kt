@@ -550,7 +550,7 @@ class UnifiedSourceCatalogRepository @Inject constructor(
                     source.toUnifiedSourceItem(sourceEntity, jsonSummary, jsonEntity)
                 }.onFailure { e ->
                     Log.e("UnifiedSourceCatalog", "Failed to build UnifiedSourceItem for ${source.name}", e)
-                }.getOrElse { e -> source.toFailedUnifiedSourceItem(e) }
+                }.getOrNull()
             }
             .sortedWith(compareBy({ it.kind.ordinal }, { it.title.lowercase() }))
         if (BuildConfig.DEBUG) {
@@ -631,33 +631,6 @@ class UnifiedSourceCatalogRepository @Inject constructor(
             isBroken = isBroken,
         )
     }
-
-    /**
-     * A source whose list row cannot be built must not vanish silently: it stays visible
-     * with the failure in its title, so the user can see which source broke and why.
-     */
-    private fun ContentSource.toFailedUnifiedSourceItem(error: Throwable): UnifiedSourceItem? = runCatching {
-        val packageRef = runCatching { resolvePackageRef(null, null) }.getOrNull()
-        val reason = "${error::class.java.simpleName}: ${error.message.orEmpty()}".take(120)
-        UnifiedSourceItem(
-            id = name,
-            kind = runCatching { resolveKind() }.getOrDefault(UnifiedSourceKind.MIHON),
-            source = this,
-            title = "$name (yüklenemedi: $reason)",
-            language = null,
-            contentType = org.skepsun.kototoro.parsers.model.ContentType.MANGA,
-            repositoryId = null,
-            repositoryName = null,
-            packageId = packageRef?.first,
-            packageName = packageRef?.second,
-            isEnabled = true,
-            isPinned = false,
-            isAvailable = true,
-            isInstalled = true,
-            isNsfw = false,
-            isBroken = false,
-        )
-    }.getOrNull()
 
     private fun ContentSource.resolveLanguage(): String? {
         val rawLanguage = getLocale()?.language

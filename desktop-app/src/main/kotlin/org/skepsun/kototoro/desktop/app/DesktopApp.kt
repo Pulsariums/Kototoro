@@ -105,6 +105,10 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                 // Android's floating top chrome: the page draws under it and scrolls beneath it; the bar (the generic
                 // header, the challenge and failure notices, the progress line) floats over the page.
                 val pagePadding = if (reading || listState.screen == DesktopScreen.HOME) 0.dp else 24.dp
+                // The right rail already owns its edge gap; keeping the full page inset here left a wide band of
+                // background between the rows and the bar. The header and the page share the smaller end inset so
+                // the two stay aligned.
+                val pageEndPadding = if (pagePadding == 0.dp) 0.dp else 8.dp
                 val headerPage = !reading && listState.screen !in OwnChromeScreens
                 // The progress line is not part of the bar: a load must not move the page's own bar and rows.
                 val rootBar = headerPage || challenge != null || (blockedSites.isNotEmpty() && !reading) ||
@@ -116,7 +120,7 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                     // Native video/browser windows cannot be recorded into a layer.
                     recordBackdrop = !reading && listState.screen != DesktopScreen.BROWSER,
                     topBar = { if (rootBar) Column(Modifier.fillMaxWidth()
-                        .padding(start = pagePadding, end = pagePadding, top = pagePadding, bottom = 14.dp),
+                        .padding(start = pagePadding, end = pageEndPadding, top = pagePadding, bottom = 14.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     if (headerPage) Header(listState, controller, !closing)
                     challenge?.let { pending ->
@@ -156,7 +160,7 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                     // Pages with their own floating bar start it at this inset and scroll beneath it themselves; the
                     // others are placed below the bar.
                     val inset = if (rootBar) inner.calculateTopPadding() else pagePadding
-                    Box(Modifier.fillMaxSize().padding(start = pagePadding, end = pagePadding, bottom = pagePadding)
+                    Box(Modifier.fillMaxSize().padding(start = pagePadding, end = pageEndPadding, bottom = pagePadding)
                         // A reader keeps its own floating toolbars, so a notice above it pushes it down instead.
                         .padding(top = if (listState.screen in OwnChromeScreens || listState.screen in ScrollUnderScreens) 0.dp
                             else inset)) {

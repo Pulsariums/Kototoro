@@ -129,7 +129,7 @@ internal fun DesktopNavigationRail(controller: DesktopController, state: Desktop
 }
 
 /** Gap between the vertical bar and the window edges; the bar is this much plus [TabletVerticalBarControlWidth] wide. */
-internal val DesktopVerticalBarEdgeGap = 12.dp
+internal val DesktopVerticalBarEdgeGap = 8.dp
 
 /** The rail id of "更多"; the configured destinations use their own stable ids so navigation never re-maps. */
 internal const val DESKTOP_NAV_MORE_ID = 3

@@ -1241,6 +1241,23 @@ class DesktopController(
             .sortedBy { order.indexOf(it.repository.indexUrl).let { index -> if (index < 0) Int.MAX_VALUE else index } }
     }
 
+    /** Renames a saved repository; the index address stays what refresh and signatures resolve against. */
+    fun renameRepository(repository: DesktopRepository, name: String) = action {
+        val trimmed = name.trim()
+        require(session.repositories.rename(repository.indexUrl, trimmed)) { desktopText("extensions.repositoryMissing") }
+        mutableState.update { current ->
+            current.copy(
+                repositories = session.repositories.saved(),
+                extensionCatalog = current.extensionCatalog?.let { catalog ->
+                    if (catalog.repository.indexUrl == repository.indexUrl) catalog.renamed(trimmed) else catalog
+                },
+                extensionCatalogs = current.extensionCatalogs.map { catalog ->
+                    if (catalog.repository.indexUrl == repository.indexUrl) catalog.renamed(trimmed) else catalog
+                },
+            )
+        }
+    }
+
     /** Drops a saved repository; its extensions stay installed, matching Android's "forget the source" behavior. */
     fun removeRepository(repository: DesktopRepository) = action {
         require(session.repositories.remove(repository.indexUrl)) { desktopText("extensions.repositoryMissing") }

@@ -28,6 +28,11 @@ data class DesktopRepositoryCatalog(
     private val parserPluginPackages: Set<String> = emptySet(),
     private val cloudstreamPluginPackages: Set<String> = emptySet(),
 ) {
+    /** The same catalog under a user-chosen repository name; the private package sets do not survive a plain copy. */
+    fun renamed(name: String) = DesktopRepositoryCatalog(
+        repository.copy(name = name), extensions, parserPluginPackages, cloudstreamPluginPackages,
+    )
+
     fun isParserPlugin(extension: ExtensionStoreIndex.Extension): Boolean =
         extension.packageName in parserPluginPackages
 
@@ -65,6 +70,22 @@ class DesktopRepositories(
     }
 
     fun saved(): List<DesktopRepository> = repositories.toList()
+
+    /**
+     * Gives a saved repository the name the user typed. The index address stays the identity: it is what a
+     * refresh resolves against, and renaming must not drop the repository from the saved list.
+     */
+    fun rename(indexUrl: String, name: String): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return false
+        val current = repositories.firstOrNull { it.indexUrl == indexUrl } ?: return false
+        if (current.name == trimmed) return true
+        val updated = repositories.map { if (it.indexUrl == indexUrl) it.copy(name = trimmed) else it }
+        persistRepositoryPreference(preferences, "repositories",
+            SourcePreferenceValue.Text(SourceProtocolJson.encodeToString(updated)))
+        repositories = updated
+        return true
+    }
 
     /**
      * Forgets a saved repository. Installed extensions stay installed (Android keeps them too and only marks

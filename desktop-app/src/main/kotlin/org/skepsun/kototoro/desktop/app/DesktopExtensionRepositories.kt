@@ -14,6 +14,7 @@ import org.skepsun.kototoro.core.ui.buttons.Button
 import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.core.ui.extensions.ExtensionRepositoryCard
 import org.skepsun.kototoro.desktop.runtime.DesktopJsonSource
+import org.skepsun.kototoro.desktop.runtime.DesktopRepository
 import org.skepsun.kototoro.tvbox.TvBoxStoredConfig
 
 internal data class DesktopImportedSourceRepository(val address: String, val title: String, val sources: List<DesktopJsonSource>)
@@ -41,6 +42,8 @@ internal fun DesktopExtensionRepositories(
 ) {
     var query by remember { mutableStateOf("") }
     var removing by remember { mutableStateOf<DesktopImportedSourceRepository?>(null) }
+    var renaming by remember { mutableStateOf<DesktopRepository?>(null) }
+    var renameText by remember { mutableStateOf("") }
     val repositories = state.repositories.filter { query.isBlank() || it.name.contains(query, true) || it.indexUrl.contains(query, true) }
     val configs = imported.filter { query.isBlank() || it.title.contains(query, true) || it.address.contains(query, true) }
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -61,6 +64,8 @@ internal fun DesktopExtensionRepositories(
                     badges = { Text(desktopText("extensions.repositoryType"), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary) },
                     actions = {
+                        TextButton({ renaming = repo; renameText = repo.name }, enabled = enabled,
+                            modifier = Modifier.testTag("repository-rename:${repo.indexUrl}")) { Text(AndroidStrings["rename"]) }
                         TextButton({ controller.fetchRepository(repo.indexUrl) }, enabled = enabled,
                             modifier = Modifier.testTag("repository:${repo.indexUrl}")) { Text(desktopText("extensions.browseRepository")) }
                         TextButton({ controller.removeRepository(repo) }, enabled = enabled,
@@ -92,6 +97,24 @@ internal fun DesktopExtensionRepositories(
             confirmButton = { TextButton({ removing = null; controller.removeJsonSources(repo.sources.map { it.id }) },
                 enabled = enabled, modifier = Modifier.testTag("repository-remove-confirm")) { Text(AndroidStrings["delete"]) } },
             dismissButton = { TextButton({ removing = null }) { Text(desktopText("common.cancel")) } })
+    }
+    renaming?.let { repo ->
+        AlertDialog(onDismissRequest = { renaming = null },
+            title = { Text(AndroidStrings["rename"]) },
+            text = {
+                OutlinedTextField(renameText, { renameText = it },
+                    label = { Text(AndroidStrings["name"]) }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("repository-rename-field"))
+            },
+            confirmButton = {
+                TextButton({
+                    val name = renameText.trim()
+                    renaming = null
+                    controller.renameRepository(repo, name)
+                }, enabled = enabled && renameText.isNotBlank(),
+                    modifier = Modifier.testTag("repository-rename-confirm")) { Text(AndroidStrings["save"]) }
+            },
+            dismissButton = { TextButton({ renaming = null }) { Text(AndroidStrings["cancel"]) } })
     }
 }
 

@@ -20,10 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,6 +39,9 @@ import coil3.compose.AsyncImage
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.model.ContentSource
 import org.skepsun.kototoro.core.ui.adaptive.TvTextButton
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 import org.skepsun.kototoro.migration.domain.DuplicateGroupEntry
 import org.skepsun.kototoro.migration.ui.migrationTitle
 import org.skepsun.kototoro.migration.ui.rememberCoverRequest

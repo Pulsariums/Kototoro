@@ -30,6 +30,15 @@ data class ServicesSettingsUiState(
     val readingTimeEstimation: Boolean,
     val browseTracking: Boolean? = null,
     val browseMoreTracking: Boolean = false,
+    /** Community ratings and comments; null on hosts that do not have them yet, which hides the rows. */
+    val community: CommunityServicesState? = null,
+)
+
+data class CommunityServicesState(
+    val enabled: Boolean,
+    val nsfwRatings: Boolean,
+    /** `community_share_sources`: name the source a rating or comment was made on. */
+    val shareSources: Boolean = true,
 )
 
 /** Android's icons for the same rows; desktop passes none because its settings pages have no leading artwork. */
@@ -66,6 +75,11 @@ fun ServicesSettingsContent(
     onBrowseTrackingChange: (Boolean) -> Unit = {},
     onBrowseMoreTrackingChange: (Boolean) -> Unit = {},
     discordSettings: ServicesSettingsAction? = null,
+    onCommunityChange: (Boolean) -> Unit = {},
+    onCommunityNsfwChange: (Boolean) -> Unit = {},
+    onCommunityShareSourcesChange: (Boolean) -> Unit = {},
+    onCommunityRecoveryKeyClick: () -> Unit = {},
+    onCommunityNicknameClick: (() -> Unit)? = null,
 ) {
     @Composable
     fun onOff(value: Boolean): String = if (value) uiString("enabled") else uiString("disabled")
@@ -113,6 +127,32 @@ fun ServicesSettingsContent(
                 SettingsValueRow(discordSettings.title, discordSettings.summary, null, enabled,
                     discordSettings.onClick, testTag = "services-discord",
                     leadingIcon = icons.discord)
+            }
+        }
+        val community = state.community
+        if (community != null) {
+            SettingsSectionHeader(uiString("community"))
+            SettingsGroup {
+                // Turning it on asks first: the host shows what becomes public and sets up the identity.
+                SettingsSwitchRow(uiString("community_enabled"), uiString("community_enabled_summary"),
+                    community.enabled, enabled, onCommunityChange, testTag = "services-community")
+                if (community.enabled) {
+                    SettingsRowDivider()
+                    SettingsSwitchRow(uiString("community_nsfw_ratings"), uiString("community_nsfw_ratings_summary"),
+                        community.nsfwRatings, enabled, onCommunityNsfwChange, testTag = "services-community-nsfw")
+                    SettingsRowDivider()
+                    SettingsSwitchRow(uiString("community_share_sources"), uiString("community_share_sources_summary"),
+                        community.shareSources, enabled, onCommunityShareSourcesChange,
+                        testTag = "services-community-share-sources")
+                    SettingsRowDivider()
+                    SettingsValueRow(uiString("community_recovery_key"), uiString("community_recovery_key_summary"), null,
+                        enabled, onCommunityRecoveryKeyClick, testTag = "services-community-recovery-key")
+                    if (onCommunityNicknameClick != null) {
+                        SettingsRowDivider()
+                        SettingsValueRow(uiString("community_nickname"), uiString("community_nickname_summary"), null,
+                            enabled, onCommunityNicknameClick, testTag = "services-community-nickname")
+                    }
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 package org.skepsun.kototoro.desktop.app
+import org.skepsun.kototoro.core.library.filter
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,6 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.skepsun.kototoro.core.source.SourceContent
 import org.skepsun.kototoro.core.ui.adaptive.TabletLayoutClass
+import org.skepsun.kototoro.core.ui.buttons.FilledTonalButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.core.ui.compose.CompactPosterCardStyle
 import org.skepsun.kototoro.core.ui.compose.HeroPagerIndicator
 import org.skepsun.kototoro.core.ui.home.*
@@ -82,8 +85,8 @@ internal fun DesktopHomePanel(controller: DesktopController, state: DesktopAppSt
             .filter { filter.accepts(ecosystems[it.content.source.name], it.content.source.contentType) }
             .filterNot { hidden(it.content) }
     }
-    val recommendations = remember(state.suggestions, filter, ecosystems, blacklist) {
-        state.suggestions
+    val recommendations = remember(state.suggestions, state.suggestionSettings, filter, ecosystems, blacklist) {
+        state.suggestionSettings.preferences().filter(state.suggestions)
             .filter { filter.accepts(ecosystems[it.source.name], it.source.contentType) }
             .filterNot(hidden)
             .map { HomeWork(it) }
@@ -110,6 +113,9 @@ internal fun DesktopHomePanel(controller: DesktopController, state: DesktopAppSt
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TopBarTitleBlock(desktopText("nav.home"))
                 Spacer(Modifier.weight(1f))
+                OutlinedButton({ controller.showSearch() }, enabled = enabled, modifier = Modifier.testTag("home-search")) {
+                    Text(desktopText("globalSearch.open"))
+                }
                 DesktopSourceFilterControls(filter, state.sources, controller::homeFilter, enabled, "home")
             }
         },
@@ -224,7 +230,10 @@ private fun UpdatesRail(controller: DesktopController, works: List<HomeWork>) {
     val rim = rememberCoverRimBorderBrush(isIosStyle, isDark = MaterialTheme.colorScheme.background.luminance() < .5f)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HomeSectionHeader(desktopText("home.sectionUpdates"), works.size, painterResource("icons/ic_arrow_forward.svg"),
-            onMoreClick = { controller.subscriptions() }, titleModifier = Modifier.testTag("home-updates-more"))
+            // Android's `onHomeViewAllUpdatesClick` opens the updates destination, not the feed: the rail's summary and
+            // its complete view are the same thing, so "全部" lands on the page that lists every work with new
+            // chapters instead of the timeline that merely mentions them.
+            onMoreClick = { controller.showUpdates() }, titleModifier = Modifier.testTag("home-updates-more"))
         // Android's list-mode rail: a horizontally scrolling row of pages, each a column of rows, three pages across on
         // wide windows with the next one peeking in from the right edge.
         BoxWithConstraints(Modifier.fillMaxWidth()) {

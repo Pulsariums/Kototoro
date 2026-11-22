@@ -1,6 +1,7 @@
 package org.skepsun.kototoro.discover.ui.compose
 
 import org.skepsun.kototoro.core.ui.adaptive.tvIconButtonRing
+import org.skepsun.kototoro.core.ui.buttons.IconButton
 import org.skepsun.kototoro.scrobbling.common.ui.scrobblerIconTint
 
 import android.os.Build
@@ -37,7 +38,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -144,6 +144,8 @@ fun DiscoverHeroCarousel(
     sharedElementKeyForItem: (ContentListModel, Int) -> String = { item, _ ->
         contentCoverSharedKey(item.manga.source.name, item.manga.coverUrl.orEmpty())
     },
+    /** Title artwork by item id; such an item shows it in place of its title text. */
+    logoUrls: Map<Long, String> = emptyMap(),
 ) {
     if (items.isEmpty()) return
 
@@ -571,14 +573,34 @@ fun DiscoverHeroCarousel(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = item.title,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = heroContentColor,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        val logoUrl = logoUrls[item.id]
+                        // The plain title stays until the artwork has loaded, and comes back if it fails.
+                        var isLogoShown by remember(logoUrl) { mutableStateOf(false) }
+                        Box {
+                            if (logoUrl != null) {
+                                AsyncImage(
+                                    model = logoUrl,
+                                    contentDescription = item.title,
+                                    contentScale = ContentScale.Fit,
+                                    alignment = Alignment.CenterStart,
+                                    onSuccess = { isLogoShown = true },
+                                    onError = { isLogoShown = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 64.dp),
+                                )
+                            }
+                            if (!isLogoShown) {
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = heroContentColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                         val infoText = remember(item.manga.state, item.manga.chapters?.size, item.manga.tags, item.scoreText, context) {
                             item.buildInfoText(context)
                         }

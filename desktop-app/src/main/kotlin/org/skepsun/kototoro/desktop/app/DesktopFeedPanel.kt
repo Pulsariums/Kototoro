@@ -14,6 +14,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.skepsun.kototoro.core.source.SourceContent
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.buttons.FilledTonalButton
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.core.ui.feed.FeedContinueAction
 import org.skepsun.kototoro.core.ui.feed.FeedTimelineCard
 import org.skepsun.kototoro.core.ui.feed.FeedUpdateDetails
@@ -293,13 +297,16 @@ private fun FeedRow(controller: DesktopController, state: DesktopAppState, row: 
             else -> " · " + desktopText("feed.pendingChapters", row.pendingCount)
         },
         isNew = row.unread,
+        isRead = !row.unread && row.pendingCount == 0,
         onClick = { open() },
         modifier = Modifier.testTag("feed-row:${row.logId}"),
         screenPadding = 0.dp,
         timelineLabel = label,
-        continueAction = FeedContinueAction(painterResource("icons/ic_read.svg"), desktopText("feed.continueReading")) {
-            row.displayMangaId?.let { if (enabled) controller.continueTracked(it) }
-        },
+        continueAction = FeedContinueAction(
+            icon = painterResource("icons/ic_read.svg"),
+            label = desktopText("feed.continueReading"),
+            onClick = { row.displayMangaId?.let { if (enabled) controller.continueTracked(it) } },
+        ),
         cover = { content?.let { DesktopCover(it, controller.session.covers, Modifier.matchParentSize()) } },
     )
 }

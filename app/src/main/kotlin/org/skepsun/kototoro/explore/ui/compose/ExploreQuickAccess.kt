@@ -27,10 +27,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.jsonsource.TVBoxRepositorySelection
 import org.skepsun.kototoro.core.model.ContentSourceAvailability
@@ -55,18 +55,19 @@ import org.skepsun.kototoro.core.model.getLocale
 import org.skepsun.kototoro.core.model.getTitle
 import org.skepsun.kototoro.core.prefs.AppSettings
 import org.skepsun.kototoro.core.prefs.ListMode
-import org.skepsun.kototoro.core.ui.adaptive.TvTextButton
-import org.skepsun.kototoro.core.ui.compose.ContentSourceResolvedIcon
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
+import org.skepsun.kototoro.core.ui.adaptive.TvTextButton
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
+import org.skepsun.kototoro.core.ui.buttons.TextButton
+import org.skepsun.kototoro.core.ui.compose.ContentSourceResolvedIcon
 import org.skepsun.kototoro.core.ui.compose.TvDropdownMenuItem
 import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 import org.skepsun.kototoro.discover.ui.compose.DiscoverHeroCarousel
 import org.skepsun.kototoro.discover.ui.compose.discoverHeroHeight
+import org.skepsun.kototoro.explore.domain.browseHeroHasContent
 import org.skepsun.kototoro.explore.ui.model.ContentSourceItem
 import org.skepsun.kototoro.list.ui.model.ContentListModel
 import org.skepsun.kototoro.scrobbling.common.domain.model.ScrobblerService
-import java.util.Locale
 
 @Composable
 internal fun BrowseHeroBlock(
@@ -82,7 +83,13 @@ internal fun BrowseHeroBlock(
     onHeroItemClick: (ContentListModel, String) -> Unit,
     sharedElementKeyForItem: (ContentListModel, Int) -> String,
     modifier: Modifier = Modifier,
+    logoUrls: Map<Long, String> = emptyMap(),
 ) {
+    if (!browseHeroHasContent(heroItemCount = heroItems.size, isDiscoverLoading = isLoadingOnly)) {
+        // Nothing to show and nothing loading: painting a full-height gradient box here leaves the
+        // user staring at an empty band above the content.
+        return
+    }
     if (heroItems.isNotEmpty()) {
         DiscoverHeroCarousel(
             title = title,
@@ -97,6 +104,7 @@ internal fun BrowseHeroBlock(
             settings = settings,
             sharedElementKeyForItem = sharedElementKeyForItem,
             modifier = modifier,
+            logoUrls = logoUrls,
         )
     } else {
         val configuration = LocalConfiguration.current
@@ -186,11 +194,13 @@ private fun SourcesQuickAccessSection(
         }
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             var isExpanded by rememberSaveable(sources.size) { mutableStateOf(false) }
-            val columns = remember(maxWidth, metrics, browseListMode) {
+            val systemFontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+            val columns = remember(maxWidth, metrics, browseListMode, systemFontScale) {
                 calculateSourceGridColumns(
                     availableWidth = maxWidth,
                     metrics = metrics,
                     browseListMode = browseListMode,
+                    fontScale = systemFontScale,
                 )
             }
             val collapsedRowCount = if (maxWidth < 520.dp) 5 else 4

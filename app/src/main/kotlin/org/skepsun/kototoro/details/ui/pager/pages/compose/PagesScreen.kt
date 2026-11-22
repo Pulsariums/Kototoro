@@ -30,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import org.skepsun.kototoro.R
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
 import org.skepsun.kototoro.core.util.ext.mangaSourceExtra
+import org.skepsun.kototoro.core.ui.compose.keepAboveWindowBottom
 import org.skepsun.kototoro.core.ui.compose.SelectionActionBar
 import org.skepsun.kototoro.core.ui.compose.SelectionBarIconButton
 import org.skepsun.kototoro.core.ui.compose.VerticalScrollbar
@@ -340,7 +342,7 @@ fun PagesScreen(
             visible = selectedItemIds.isNotEmpty(),
             enter = androidx.compose.animation.slideInVertically { it } + androidx.compose.animation.fadeIn(),
             exit = androidx.compose.animation.slideOutVertically { it } + androidx.compose.animation.fadeOut(),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).keepAboveWindowBottom().padding(bottom = 16.dp),
         ) {
             SelectionActionBar(
                 selectedCount = selectedItemIds.size,

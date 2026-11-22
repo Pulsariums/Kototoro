@@ -1011,7 +1011,7 @@
     <string name="details_comments">評論</string>
     <string name="details_metadata_chapter_hint">元數據章節僅用於瀏覽信息和章節頁面，不會直接打開閱讀器或播放器。</string>
     <string name="details_metadata_chapters">元數據章節</string>
-    <string name="details_metadata_source">元數據源</string>
+    <string name="details_metadata_source">追蹤和中繼資料</string>
     <string name="details_metadata_source_label">元數據源: %1$s</string>
     <string name="details_metadata_source_login_hint">搜索和本地綁定無需登錄即可使用。登錄後可自動同步在線進度。</string>
     <string name="details_more_comments">更多</string>
@@ -1210,6 +1210,8 @@
     <string name="error_source_validation_failed">源驗證失敗</string>
     <string name="exclude_nsfw_from_suggestions_summary">搜索建議中將不會出現成人漫畫，此選項可能對某些圖源不生效</string>
     <string name="expand">展開</string>
+    <string name="chapter_volumes_expand_all">全部展開</string>
+    <string name="chapter_volumes_collapse_all">全部摺疊</string>
     <string name="extension_download_in_progress">下載中…</string>
     <string name="extension_download_progress">下載中 %1$d%%</string>
     <string name="extension_install_mode_local_apk">安裝模式：本地 APK</string>
@@ -1717,6 +1719,11 @@
     <string name="reader_chapter_title_at_bottom">章節標題顯示在底部</string>
     <string name="reader_chapter_title_at_bottom_summary">將頂部欄中的作品名與章節名移到進度條上方，單手更易觸及</string>
     <string name="reader_chapter_toast_summary">切換章節時顯示包含章節標題的彈出提示</string>
+    <string name="reader_chapter_break">章節分隔卡片</string>
+    <string name="reader_chapter_break_summary">在章節之間顯示過渡頁，列出已讀完與下一章的標題</string>
+    <string name="chapter_break_finished">本章已讀完</string>
+    <string name="chapter_break_next">下一章</string>
+    <string name="chapter_break_last">已經是最後一章</string>
     <string name="reader_controls_in_bottom_bar">閱讀器底部控制欄</string>
     <string name="reader_dual_page">橫屏/大屏雙欄顯示</string>
     <string name="reader_font_size">字體大小</string>
@@ -3024,6 +3031,10 @@
     <string name="presentation_mode_tv">TV</string>
     <string name="presentation_mode_restore_standard">恢復標準介面</string>
     <string name="suggestions_preferred_sources">偏好源</string>
+    <string name="suggestions_favourite_sources">收藏源優先</string>
+    <string name="suggestions_favourite_sources_summary">優先展示你收藏的作品所在源的推薦</string>
+    <string name="suggestions_popular_sources">熱門源優先</string>
+    <string name="suggestions_popular_sources_summary">在偏好源之外，優先展示 EverythingMoe 榜單上排名靠前的源</string>
     <string name="suggestions_preferred_sources_summary">優先展示所選源的推薦作品</string>
     <string name="suggestions_excluded_sources">排除源</string>
     <string name="suggestions_excluded_sources_summary">不從所選源獲取推薦作品</string>
@@ -3100,6 +3111,12 @@
         <plurals name="pages_value">
         <item quantity="one">每頁</item>
         <item quantity="other">每 %1$d 頁</item>
+    </plurals>
+    <plurals name="chapter_words_count">
+        <item quantity="other">%s 字</item>
+    </plurals>
+    <plurals name="chapter_pages_count">
+        <item quantity="other">%d 頁</item>
     </plurals>
     <string name="reader_background">閱讀背景</string>
     <string name="reader_background_theme">跟隨應用主題</string>
@@ -3216,7 +3233,7 @@
     <string name="stats_duration_minutes">%1$d 分鐘</string>
     <string name="plugin_missing_host_classes">無法安裝 %1$s，因為它依賴 Kototoro 不支援的 %2$s 宿主類：\n%3$s</string>
     <string name="chapter_selection_hint_tv">使用章節行上的下載按鈕逐個選擇章節。</string>
-    <string name="details_entity_metadata">後設資料來源</string>
+    <string name="details_entity_metadata">追蹤和中繼資料</string>
     <string name="details_entity_metadata_binding">後設資料繫結</string>
     <string name="details_metadata_binding_unavailable">暫無後設資料繫結</string>
     <string name="details_remove_metadata_binding">移除後設資料繫結</string>
@@ -3871,7 +3888,7 @@
     <string name="updated_header_up_to_date">所有訂閱均已是最新</string>
     <string name="updated_header_up_to_date_subtitle">下拉可檢查最新章節更新</string>
     <string name="suggestions_header_title">為你發現</string>
-    <string name="suggestions_header_subtitle">基於閱讀偏好即時匹配 · 發現更多可能</string>
+    <string name="suggestions_header_subtitle">從閱讀偏好出發，發現下一部喜歡的作品</string>
     <string name="suggestions_header_refresh">換一批</string>
     <string name="search_bar_placeholder">搜尋漫畫、小說、源…</string>
     <string name="home_greeting_morning">早上好</string>
@@ -4147,4 +4164,48 @@
     <string name="details_view_catalog">查看目錄</string>
     <string name="details_my_reading">我的閱讀</string>
     <string name="details_not_started">未開始</string>
+    <string name="details_tracking_metadata">追蹤和中繼資料</string>
+    <string name="details_tracking_metadata_hint">在這裡關聯追蹤網站，中繼資料單獨選擇。</string>
+    <string name="details_tracking_original">原始內容來源</string>
+    <string name="details_tracking_unlinked">未關聯作品</string>
+    <string name="details_tracking_linked">已關聯</string>
+    <string name="details_tracking_search_slot">點擊搜尋作品</string>
+    <string name="details_tracking_metadata_active">正在使用此中繼資料</string>
+    <string name="details_tracking_use_metadata">使用此作品的中繼資料</string>
+    <string name="details_tracking_community_score">社群評分：%1$s</string>
+    <string name="details_tracking_progress">章節 / 集數</string>
+    <string name="details_tracking_personal_score">我的評分 · 0–10</string>
+    <string name="details_tracking_replace">更換關聯作品</string>
+    <string name="details_tracking_unlink">解除關聯</string>
+    <string name="details_tracking_link">關聯</string>
+    <string name="details_tracking_link_hint">重新關聯此作品，即可啟用進度同步。</string>
+    <string name="details_tracking_unlink_hint">解除本機關聯，保留追蹤網站上的收藏、評分和進度。</string>
+    <string name="suggestion_direction_all">全部推薦</string>
+    <string name="suggestion_direction_taste">常讀題材</string>
+    <string name="suggestion_direction_popular">熱門榜</string>
+    <string name="suggestion_direction_new">新作與更新</string>
+    <string name="suggestion_direction_explore">換換口味</string>
+    <string name="suggestion_language_title">推薦語言</string>
+    <string name="suggestion_language_summary">預設混合推薦，優先系統語言；也可僅顯示所選語言。按來源声明的語言判断。</string>
+    <string name="suggestion_language_system">系統語言</string>
+    <string name="suggestion_language_chinese">中文</string>
+    <string name="suggestion_language_english">英語</string>
+    <string name="suggestion_language_japanese">日語</string>
+    <string name="suggestion_language_all">不設優先</string>
+    <string name="suggestion_language_only">僅顯示所選語言</string>
+    <string name="suggestion_language_only_badge">僅 %1$s</string>
+    <string name="suggestion_language_preferred_badge">%1$s優先</string>
+    <string name="suggestion_preferences_action">推薦偏好</string>
+    <string name="suggestion_discovery_eyebrow">發現下一段故事</string>
+    <string name="suggestion_results_count">%1$d 部作品</string>
+    <string name="suggestion_description_all">從熟悉的題材、熱門作品和新發現中，尋找下一部喜歡的作品。</string>
+    <string name="suggestion_description_taste">沿著常讀的題材，繼續探索喜歡的故事。</string>
+    <string name="suggestion_description_popular">看看各個來源正在流行的作品。</string>
+    <string name="suggestion_description_new">關注新上架和近期更新的作品。</string>
+    <string name="suggestion_description_explore">走出熟悉的題材，試試新的故事。</string>
+    <string name="suggestion_reason_taste">你常讀 %1$s</string>
+    <string name="suggestion_reason_explore">試試 %1$s</string>
+    <string name="suggestion_reason_popular">來源熱門</string>
+    <string name="suggestion_reason_new">新作與近期更新</string>
+    <string name="suggestion_reason_default">與你的閱讀口味相近</string>
 </resources>

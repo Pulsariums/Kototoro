@@ -1,6 +1,7 @@
 package org.skepsun.kototoro.details.ui.compose
 
 
+import org.skepsun.kototoro.core.ui.buttons.IconButton
 import org.skepsun.kototoro.core.ui.chapters.ChapterGridSizeRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,7 +37,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -1244,6 +1244,8 @@ sealed interface DetailsAction {
     data class SearchAuthorEverywhere(val author: String) : DetailsAction
     data class SearchTagOnSource(val tag: ContentTag) : DetailsAction
     data class SearchTagEverywhere(val tagTitle: String) : DetailsAction
+    /** A plain title search across every source, e.g. for a community work the index knows only by name. */
+    data class SearchTitleEverywhere(val title: String) : DetailsAction
     data class OpenWebUrl(val url: String) : DetailsAction
     data class SelectBranch(val branch: String?) : DetailsAction
     data object ManageCategories : DetailsAction

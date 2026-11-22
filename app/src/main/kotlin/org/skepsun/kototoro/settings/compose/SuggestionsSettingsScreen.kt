@@ -59,12 +59,24 @@ fun SuggestionsSettingsScreen(
 ) {
     val isEnabled by settings.observeAsState(AppSettings.KEY_SUGGESTIONS) { isSuggestionsEnabled }
     val isWifiOnly by settings.observeAsState(AppSettings.KEY_SUGGESTIONS_WIFI_ONLY) { isSuggestionsWiFiOnly }
+    val favouriteSourcesFirst by settings.observeAsState(AppSettings.KEY_SUGGESTIONS_FAVOURITE_SOURCES) {
+        isSuggestionsFavouriteSourcesFirst
+    }
+    val popularSourcesFirst by settings.observeAsState(AppSettings.KEY_SUGGESTIONS_POPULAR_SOURCES) {
+        isSuggestionsPopularSourcesFirst
+    }
     val includeDisabledSources by settings.observeAsState(AppSettings.KEY_SUGGESTIONS_DISABLED_SOURCES) {
         isSuggestionsIncludeDisabledSources
     }
     val notificationsEnabled by settings.observeAsState(AppSettings.KEY_SUGGESTIONS_NOTIFICATIONS) {
         isSuggestionsNotificationAvailable
     }
+    val language by settings.observeAsState(
+        org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.PREFERENCE_KEY,
+    ) { suggestionsLanguage }
+    val languageOnly by settings.observeAsState(
+        org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ONLY_PREFERENCE_KEY,
+    ) { suggestionsLanguageOnly }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -126,6 +138,21 @@ fun SuggestionsSettingsScreen(
                     )
                 }
                 item {
+                    org.skepsun.kototoro.core.ui.suggestions.SuggestionLanguageSelector(
+                        selected = language,
+                        only = languageOnly,
+                        onSelect = {
+                            settings.suggestionsLanguage = it
+                            if (it == org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ALL) {
+                                settings.suggestionsLanguageOnly = false
+                            }
+                        },
+                        onOnlyChanged = { settings.suggestionsLanguageOnly = it },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        enabled = isEnabled,
+                    )
+                }
+                item {
                     SettingsTextInputPreference(
                         title = stringResource(R.string.suggestions_excluded_genres),
                         iconRes = R.drawable.ic_tag,
@@ -143,6 +170,30 @@ fun SuggestionsSettingsScreen(
                         value = preferredTags,
                         enabled = isEnabled,
                         onValueChange = onPreferredTagsChanged,
+                    )
+                }
+                item {
+                    SettingsSwitchPreference(
+                        title = stringResource(R.string.suggestions_favourite_sources),
+                        iconRes = R.drawable.ic_star_small,
+                        summary = stringResource(R.string.suggestions_favourite_sources_summary),
+                        checked = favouriteSourcesFirst,
+                        enabled = isEnabled,
+                        onCheckedChange = { checked ->
+                            settings.isSuggestionsFavouriteSourcesFirst = checked
+                        },
+                    )
+                }
+                item {
+                    SettingsSwitchPreference(
+                        title = stringResource(R.string.suggestions_popular_sources),
+                        iconRes = R.drawable.ic_star_small,
+                        summary = stringResource(R.string.suggestions_popular_sources_summary),
+                        checked = popularSourcesFirst,
+                        enabled = isEnabled,
+                        onCheckedChange = { checked ->
+                            settings.isSuggestionsPopularSourcesFirst = checked
+                        },
                     )
                 }
                 item {
@@ -347,18 +398,18 @@ private fun <T> SuggestionSourceFilterRow(
     )
     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         item(key = "all") {
-            FilterChip(
+            org.skepsun.kototoro.core.ui.chips.CompactChoicePill(
                 selected = selectedOptions.isEmpty(),
                 onClick = onAllClick,
-                label = { Text(allLabel) },
+                label = allLabel,
                 modifier = Modifier.tvChipRing(),
             )
         }
         items(options, key = optionKey) { option ->
-            FilterChip(
+            org.skepsun.kototoro.core.ui.chips.CompactChoicePill(
                 selected = option in selectedOptions,
                 onClick = { onOptionClick(option) },
-                label = { Text(optionLabel(option)) },
+                label = optionLabel(option),
                 modifier = Modifier.tvChipRing(),
             )
         }

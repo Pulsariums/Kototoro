@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,6 +48,7 @@ import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
 import kotlin.math.roundToInt
+import org.skepsun.kototoro.core.ui.buttons.IconButton
 
 internal data class VideoActionDialogItem(
     val title: String,
@@ -56,6 +56,11 @@ internal data class VideoActionDialogItem(
     val leadingText: String? = null,
     @DrawableRes val iconRes: Int? = null,
     val checked: Boolean? = null,
+    /**
+     * Where the entry sorts in the overflow menu; the technical dump declares [VideoPlayerMoreSection.DIAGNOSTICS] so it
+     * lands after the everyday actions instead of between them.
+     */
+    val section: VideoPlayerMoreSection = VideoPlayerMoreSection.FREQUENT,
     val onClick: () -> Unit,
 )
 

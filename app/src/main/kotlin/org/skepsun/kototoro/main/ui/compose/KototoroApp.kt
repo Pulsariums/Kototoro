@@ -260,6 +260,8 @@ internal data class KototoroDisplayPrefs(
     val listMode: ListMode,
     val browseListMode: ListMode,
     val gridSize: Int,
+    val sectionGridSizes: Map<org.skepsun.kototoro.list.ui.ListDisplaySection, Int>,
+    val sectionListModes: Map<org.skepsun.kototoro.list.ui.ListDisplaySection, ListMode>,
     val cornerRadius: Int,
     val isBrowseTrackingRecommendationsEnabled: Boolean,
     val isBrowseMoreTrackingRecommendationsEnabled: Boolean,
@@ -301,6 +303,18 @@ private fun topLevelKeyForRouteOwnerKey(
     "suggestions" -> SuggestionsNavKey
     "bookmarks" -> BookmarksNavKey
     "updated" -> UpdatedNavKey
+    else -> null
+}
+
+/** The page whose own display options this route edits; the home rails and routes without any use the general ones. */
+private fun TopLevelNavKey?.displaySection(): org.skepsun.kototoro.list.ui.ListDisplaySection? = when (this) {
+    ExploreNavKey, DiscoverNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.BROWSE
+    HistoryNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.HISTORY
+    FavoritesNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.FAVORITES
+    SuggestionsNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.SUGGESTIONS
+    UpdatedNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.UPDATED
+    LocalNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.LOCAL
+    FeedNavKey -> org.skepsun.kototoro.list.ui.ListDisplaySection.FEED
     else -> null
 }
 
@@ -510,7 +524,6 @@ fun KototoroApp(
     val activeSourcePresetId = displayPrefs.activeSourcePresetId
     val listMode = displayPrefs.listMode
     val browseListMode = displayPrefs.browseListMode
-    val gridSize = displayPrefs.gridSize
     val cornerRadius = displayPrefs.cornerRadius
     val isBrowseTrackingRecommendationsEnabled = displayPrefs.isBrowseTrackingRecommendationsEnabled
     val isBrowseMoreTrackingRecommendationsEnabled = displayPrefs.isBrowseMoreTrackingRecommendationsEnabled
@@ -834,6 +847,15 @@ fun KototoroApp(
             }
         }
     }
+    // The entering phase normally ends while details is open. When it has not (the hero protection never
+    // reported its end) the route is back on a main page with "hide the chrome for entering details" still
+    // true, and no later state change would ever show the top bar again.
+    LaunchedEffect(isImmersiveRoute) {
+        if (!isImmersiveRoute && heroTransitionPhase == HeroTransitionPhase.EnteringDetails) {
+            chromeState.setHeroTransitionPhase(HeroTransitionPhase.Idle)
+            chromeState.setDetailsChromeTransitionPending(false)
+        }
+    }
     val heroTransitionInProgress by produceState(
         initialValue = false,
         isDetailsChromeTransitionPending,
@@ -864,6 +886,8 @@ fun KototoroApp(
         }
     }
     val showBrowseSourceSettingsEntry = chromeTopLevelKey == ExploreNavKey || chromeTopLevelKey == DiscoverNavKey
+    val displaySection = chromeTopLevelKey.displaySection()
+    val gridSize = displaySection?.let { displayPrefs.sectionGridSizes.getValue(it) } ?: displayPrefs.gridSize
     val resolvedTopBarOverrideState = chromeTopBarOwnerKey
         ?.let(routeTopBarOverrideStates::get)
         ?: globalTopBarOverrideState
@@ -1286,22 +1310,21 @@ fun KototoroApp(
                         sourceTagCustomMenuContent = sourceTagCustomMenuContent,
                         supportsDisplayModeMenu = supportsDisplayModeMenu,
                         currentListMode = when {
-                            showBrowseSourceSettingsEntry -> browseListMode
                             isHomeRoute -> appSettings.homeListMode
+                            displaySection != null -> displayPrefs.sectionListModes.getValue(displaySection)
                             else -> listMode
                         },
                         onListModeSelected = {
-                            if (showBrowseSourceSettingsEntry) {
-                                appSettings.browseListMode = it
-                            } else if (isHomeRoute) {
+                            if (isHomeRoute) {
                                 appSettings.homeListMode = it
                             } else {
-                                appSettings.listMode = it
+                                appSettings.setListModeOf(displaySection, it)
                             }
                         },
                         supportsGridSizeSlider = supportsGridSizeSlider,
                         gridSize = gridSize,
-                        onGridSizeChange = { appSettings.gridSize = it },
+                        displaySection = displaySection,
+                        onGridSizeChange = { appSettings.setGridSizeOf(displaySection, it) },
                         isBrowseTrackingRecommendationsEnabled = if (showBrowseSourceSettingsEntry) {
                             isBrowseTrackingRecommendationsEnabled
                         } else {

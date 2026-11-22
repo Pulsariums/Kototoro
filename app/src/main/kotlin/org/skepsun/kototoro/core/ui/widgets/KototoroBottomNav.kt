@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -206,7 +208,11 @@ fun KototoroBottomNav(
     }
     val systemBarsPadding = WindowInsets.systemBarsIgnoringVisibility.asPaddingValues()
     val statusBarTopPadding = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
-    val railBottomInset = systemBarsPadding.calculateBottomPadding()
+    // Height of the system navigation-bar inset. The docked bar paints its surface all the way
+    // down over this strip (the row used to consume it as outer padding, which left the strip
+    // transparent and let the page content show through below the bar).
+    val navigationBarsBottomInset = systemBarsPadding.calculateBottomPadding()
+    val railBottomInset = navigationBarsBottomInset
 
     val targetAlpha = 0.84f
 
@@ -405,7 +411,6 @@ fun KototoroBottomNav(
     } else {
         Row(
             modifier = navBarModifier
-                .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
                 .then(if (adjacentAction != null) Modifier.padding(end = 12.dp) else Modifier),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -420,13 +425,17 @@ fun KototoroBottomNav(
                     tonalElevation = 0.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(currentExplicitHeight)
+                        .height(currentExplicitHeight + navigationBarsBottomInset)
                         .padding(
                             start = nonFloatingContentHorizontalPadding,
                             end = nonFloatingContentHorizontalPadding,
                             top = nonFloatingTopPadding,
                         ),
-                    windowInsets = WindowInsets(0),
+                    // The docked bar's glass surface reaches the screen bottom; the inset is
+                    // applied inside the NavigationBar so its items stay above the system
+                    // gesture/navigation area instead of the whole container being pushed up.
+                    windowInsets = WindowInsets.navigationBarsIgnoringVisibility
+                        .only(WindowInsetsSides.Bottom),
                 ) {
                     activeItems.forEach { item ->
                         val isSelected = navState.selectedItemId == item.id
@@ -1038,25 +1047,28 @@ private fun FloatingBottomNavRow(
                                 clickPulse = clickPulses[item.id] ?: 0,
                                 badge = badges[item.id],
                                 contentDescription = stringResource(item.title),
+                                selectedTint = selectedContentColor,
                             )
                             AnimatedVisibility(
                                 visible = isSelected && showSelectedLabels,
                                 enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
                                 exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
                             ) {
-                                Text(
-                                    text = stringResource(item.title),
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontSize = MaterialTheme.typography.labelMedium.fontSize * labelScale,
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .padding(start = if (hasNumberBadge) 20.dp else 8.dp)
-                                        .then(
-                                            labelMaxWidth?.let { Modifier.widthIn(max = it) } ?: Modifier,
+                                NavigationLabelFontScale {
+                                    Text(
+                                        text = stringResource(item.title),
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontSize = MaterialTheme.typography.labelMedium.fontSize * labelScale,
                                         ),
-                                )
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .padding(start = if (hasNumberBadge) 20.dp else 8.dp)
+                                            .then(
+                                                labelMaxWidth?.let { Modifier.widthIn(max = it) } ?: Modifier,
+                                            ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -1078,15 +1090,18 @@ private fun FloatingBottomNavRow(
                             clickPulse = clickPulses[item.id] ?: 0,
                             badge = badges[item.id],
                             contentDescription = stringResource(item.title),
+                            selectedTint = selectedContentColor,
                         )
                     }
                     if ((isSelected || labelsAlwaysVisible) && showSelectedLabels) {
                         Spacer(modifier = Modifier.height(0.dp))
-                        Text(
-                            text = stringResource(item.title),
-                            style = MaterialTheme.typography.labelSmall,
-                            maxLines = 1,
-                        )
+                        NavigationLabelFontScale {
+                            Text(
+                                text = stringResource(item.title),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
                 }
@@ -1583,5 +1598,26 @@ private fun navEnterAnimationResId(itemId: Int): Int? {
         R.id.nav_explore -> R.drawable.avd_explore_enter
         R.id.nav_favorites -> R.drawable.avd_favourites_enter
         else -> null
+    }
+}
+
+/**
+ * The bar has a fixed height and its tab labels are a single line, so at a 2x system font they were clipped to the top
+ * half of their glyphs. Labels follow the system font up to this cap, like the platform's own navigation bar; the rest
+ * of the screen keeps scaling.
+ */
+private const val NavigationLabelMaxFontScale = 1.3f
+
+internal fun navigationLabelFontScale(systemFontScale: Float): Float =
+    systemFontScale.coerceAtMost(NavigationLabelMaxFontScale)
+
+@Composable
+private fun NavigationLabelFontScale(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    val capped = navigationLabelFontScale(density.fontScale)
+    if (capped == density.fontScale) {
+        content()
+    } else {
+        CompositionLocalProvider(LocalDensity provides Density(density.density, capped)) { content() }
     }
 }

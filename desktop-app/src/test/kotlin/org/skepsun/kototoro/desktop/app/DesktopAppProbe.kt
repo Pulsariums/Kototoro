@@ -191,6 +191,10 @@ object DesktopAppProbe {
                 DesktopDownloadsProbe.run(args)
                 return
             }
+            if (args[0] == "browse-empty") {
+                DesktopBrowseEmptyProbe.run(args)
+                return
+            }
             if (args[0].startsWith("filters")) {
                 DesktopFilterProbe.run(args)
                 return
@@ -217,6 +221,10 @@ object DesktopAppProbe {
             }
             if (args[0].startsWith("reader-gestures-")) {
                 DesktopReaderGestureProbe.run(args)
+                return
+            }
+            if (args[0] == "reader-chapter-break") {
+                DesktopChapterBreakProbe.run(args)
                 return
             }
             if (args[0] == "reader-webtoon-gaps") {

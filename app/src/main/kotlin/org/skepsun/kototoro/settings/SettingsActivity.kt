@@ -1,5 +1,10 @@
 package org.skepsun.kototoro.settings
 
+import androidx.compose.runtime.CompositionLocalProvider
+import org.skepsun.kototoro.core.ui.settings.LocalSettingsSearchTarget
+import org.skepsun.kototoro.core.ui.settings.SettingsSearchTarget
+
+
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -264,6 +269,14 @@ class SettingsActivity :
 
     private var isFoldUnfolded = false
     private var composeDestination: SettingsDestination? by mutableStateOf(null)
+    private var settingsSearchTarget by mutableStateOf<SettingsSearchTarget?>(null)
+    private var settingsSearchDestination: SettingsDestination? = null
+    private var settingsSearchRequestId = 0
+
+    /** Set when a search result opened a destination, so going back returns to the result list. */
+    private var keepSearchForDestination: SettingsDestination? = null
+    // A page opened from a search result goes back to those results, not to a reset settings root.
+    private var returnToSearchResults = false
     private var pendingSettingsDialog by mutableStateOf<SettingsDialogState?>(null)
     private sealed interface SettingsDialogState {
         data class Confirmation(
@@ -715,7 +728,13 @@ class SettingsActivity :
             showTopBar = true,
             searchContent = searchContent,
             actions = actions,
-            content = content,
+            content = {
+                CompositionLocalProvider(
+                    LocalSettingsSearchTarget provides settingsSearchTarget.takeIf {
+                        composeDestination == settingsSearchDestination
+                    },
+                ) { content() }
+            },
         )
     }
 
@@ -820,6 +839,10 @@ class SettingsActivity :
     }
 
     private fun navigateToPreference(item: SettingsItem) {
+        settingsSearchDestination = item.destination
+        settingsSearchTarget = SettingsSearchTarget(item.key, ++settingsSearchRequestId, item.title.toString())
+        keepSearchForDestination = item.destination
+        returnToSearchResults = true
         val args = buildBundle(1) {
             putString(ARG_PREF_KEY, item.key)
         }
@@ -833,7 +856,14 @@ class SettingsActivity :
         shouldRestoreFragment: Boolean,
         pushCurrentToStack: Boolean = true,
     ) {
-        viewModel.discardSearch()
+        if (keepSearchForDestination == destination) {
+            keepSearchForDestination = null
+        } else if (destination == SettingsDestination.Root && returnToSearchResults) {
+            returnToSearchResults = false
+        } else {
+            returnToSearchResults = false
+            viewModel.discardSearch()
+        }
         if (destination !is SettingsDestination.UnifiedSources) {
             updateUnifiedSourcesSearchActive(false)
             unifiedSourcesActivePanel = null
@@ -1946,6 +1976,11 @@ class SettingsActivity :
         val currentDestination = composeDestination ?: return
         val previousDestination = composeNavigationStack.lastOrNull()
         if (currentDestination == SettingsDestination.Root) {
+            if (viewModel.isSearching) {
+                // Back closes the search first; leaving settings takes a second press.
+                viewModel.discardSearch()
+                return
+            }
             finishFromComposeDestination(currentDestination)
             return
         }

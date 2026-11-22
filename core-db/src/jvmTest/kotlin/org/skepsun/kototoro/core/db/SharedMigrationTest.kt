@@ -5,6 +5,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -14,7 +15,11 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.skepsun.kototoro.community.data.CommunityOutboxEntity
+import org.skepsun.kototoro.community.data.CommunityRatingEntity
+import org.skepsun.kototoro.community.data.CommunityResolutionEntity
 import org.skepsun.kototoro.core.db.migrations.sharedDatabaseMigrations
+import org.skepsun.kototoro.suggestions.data.SuggestionEntity
 import org.skepsun.kototoro.tracker.data.TrackScheduleEntity
 import java.io.File
 
@@ -59,6 +64,42 @@ class SharedMigrationTest {
             db.getHistoryDao().upsert(history.copy(chapterId = 5L, furthestChapterId = 0L, updatedAt = 3))
             assertEquals(5L, db.getHistoryDao().find(MANGA_ID)!!.chapterId)
             assertEquals(HISTORY_CHAPTER_ID, db.getHistoryDao().find(MANGA_ID)!!.furthestChapterId)
+
+            // v89: a suggestion says why it is one; what was stored before says nothing.
+            val stored = db.getSuggestionDao().findAll().single()
+            assertEquals("", stored.direction)
+            assertEquals(null, stored.reason)
+            assertEquals(9L, stored.createdAt)
+            assertEquals(1, db.getSuggestionDao().observeAll(20, emptyList(), direction = "TASTE").first().size)
+            assertTrue(db.getSuggestionDao().observeAll(20, emptyList(), direction = "NEW").first().isEmpty())
+            db.getSuggestionDao().upsert(SuggestionEntity(MANGA_ID, 1f, 9L, "EXPLORE", "genre.horror"))
+            val replaced = db.getSuggestionDao().findAll().single()
+            assertEquals("EXPLORE", replaced.direction)
+            assertEquals("genre.horror", replaced.reason)
+            assertEquals(1, db.getSuggestionDao().observeAll(20, emptyList(), direction = "EXPLORE").first().size)
+            assertTrue(db.getSuggestionDao().observeAll(20, emptyList(), direction = "TASTE").first().isEmpty())
+
+            // v90: community rating, outbox and tracker id search tables start empty and take rows.
+            val community = db.getCommunityDao()
+            assertEquals(null, community.findRating(MANGA_ID))
+            val rating = CommunityRatingEntity(MANGA_ID, stars = 8, address = "comic:x", eventId = "e1", createdAt = 10)
+            community.upsertRating(rating)
+            assertEquals(rating, community.observeRating(MANGA_ID).first())
+            community.upsertOutbox(CommunityOutboxEntity("e1", "{}", 34259, 10, attempts = 0, nextAttemptAt = 5, lastError = null))
+            assertEquals(listOf("e1"), community.findDueOutbox(now = 5, limit = 10).map { it.eventId })
+            assertTrue(community.findDueOutbox(now = 4, limit = 10).isEmpty())
+            // v91: an event a relay accepted leaves the pending count and waits for confirmation instead.
+            val outbox = community.findOutbox("e1")!!
+            assertEquals(0L, outbox.publishedAt)
+            community.upsertOutbox(outbox.copy(publishedAt = 6, acceptedRelays = "wss://a", nextAttemptAt = 9))
+            assertEquals(0, community.countOutbox())
+            assertEquals(1, community.countUnconfirmed())
+            assertTrue(community.findDueOutbox(now = 100, limit = 10).isEmpty())
+            assertEquals(listOf("e1"), community.findDueUnconfirmed(now = 9, limit = 10).map { it.eventId })
+            val resolution = CommunityResolutionEntity(MANGA_ID, "ANILIST", "BOUND", remoteId = 7, checkedAt = 1, failures = 0)
+            community.upsertResolution(resolution)
+            community.upsertResolution(resolution.copy(service = "BANGUMI", status = "FAILED", remoteId = null, failures = 1))
+            assertEquals(2, community.findResolutions(MANGA_ID).size)
         } finally {
             db.close()
         }
@@ -91,6 +132,7 @@ class SharedMigrationTest {
                 "INSERT INTO history(manga_id, created_at, updated_at, chapter_id, page, scroll, percent, deleted_at, chapters) " +
                     "VALUES ($MANGA_ID, 1, 2, $HISTORY_CHAPTER_ID, 3, 0, 0.5, 0, 20)",
             )
+            connection.execSQL("INSERT INTO suggestions(manga_id, relevance, created_at) VALUES ($MANGA_ID, 0.5, 9)")
             connection.execSQL("PRAGMA user_version = 84")
         }
     }

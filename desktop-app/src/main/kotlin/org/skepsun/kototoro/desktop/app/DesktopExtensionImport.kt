@@ -1,14 +1,21 @@
 package org.skepsun.kototoro.desktop.app
 
+import org.skepsun.kototoro.core.ui.chips.CompactChoicePill
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.skepsun.kototoro.core.extensions.SourceInputIntent
+import org.skepsun.kototoro.core.extensions.detectSourceInput
 import java.nio.file.Path
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 
 /** One add flow, with format choices matching Android's repository kinds and local-file import. */
 @Composable
@@ -23,6 +30,16 @@ internal fun DesktopExtensionImportDialog(
     var address by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var sourceConfig by remember { mutableStateOf(false) }
+    // The two chips ask the user to classify the address; the shared rules do it whenever the address says so, and the
+    // chips stay as an override for the addresses that genuinely look alike.
+    val detected = remember(address) { detectSourceInput(address) }
+    LaunchedEffect(detected) {
+        when (detected) {
+            SourceInputIntent.SOURCE_CONFIG -> sourceConfig = true
+            SourceInputIntent.REPOSITORY_INDEX -> sourceConfig = false
+            else -> Unit
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag("extension-add-dialog"),
@@ -34,11 +51,36 @@ internal fun DesktopExtensionImportDialog(
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.testTag("extension-add-error")) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(!sourceConfig, { sourceConfig = false },
-                        { Text(desktopText("extensions.repositoryType")) }, enabled = enabled,
-                        modifier = Modifier.testTag("extension-add-repository"))
-                    FilterChip(sourceConfig, { sourceConfig = true }, { Text("TVBox / CMS / Legado") }, enabled = enabled,
-                        modifier = Modifier.testTag("extension-add-tvbox"))
+                    CompactChoicePill(
+                        selected = !sourceConfig,
+                        onClick = { sourceConfig = false },
+                        label = { Text(desktopText("extensions.repositoryType")) },
+                        enabled = enabled,
+                        modifier = Modifier.testTag("extension-add-repository"),
+                    )
+                    CompactChoicePill(
+                        selected = sourceConfig,
+                        onClick = { sourceConfig = true },
+                        label = { Text("TVBox / CMS / Legado") },
+                        enabled = enabled,
+                        modifier = Modifier.testTag("extension-add-tvbox"),
+                    )
+                }
+                val detectedHint = when (detected) {
+                    SourceInputIntent.REPOSITORY_INDEX -> desktopText("extensions.detectedRepository")
+                    SourceInputIntent.SOURCE_CONFIG -> desktopText("extensions.detectedSourceConfig")
+                    SourceInputIntent.EXTENSION_FILE -> desktopText("extensions.detectedExtensionFile")
+                    SourceInputIntent.JSON_ADDRESS -> desktopText("extensions.detectedJsonAddress")
+                    SourceInputIntent.SOURCE_CONFIG_FILE -> desktopText("extensions.detectedSourceConfig")
+                    SourceInputIntent.UNKNOWN -> null
+                }
+                if (detectedHint != null && address.isNotBlank()) {
+                    Text(
+                        detectedHint,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("extension-add-detected"),
+                    )
                 }
                 OutlinedTextField(address, { address = it }, singleLine = true, enabled = enabled,
                     label = { Text(desktopText("extensions.repositoryAddress")) },

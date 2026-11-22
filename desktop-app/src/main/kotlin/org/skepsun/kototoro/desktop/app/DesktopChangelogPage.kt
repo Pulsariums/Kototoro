@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,14 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
 import org.skepsun.kototoro.core.ui.markdown.MarkdownText
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
 import org.skepsun.kototoro.desktop.runtime.DesktopUpdateRelease
 
 /**
  * Android's changelog screen (`settings/about/changelog/ChangelogScreen`) for the Windows host: this channel's
  * installable releases, newest first, each with its version, date and Markdown notes.
  *
- * Android joins every release into one Markdown string and renders it with Markwon; here each release is a card of its
+ * Android joins every release into one Markdown string; here each release is a card of its
  * own so a long history stays readable, and the shared [MarkdownText] renders the same subset of Markdown.
  */
 @Composable

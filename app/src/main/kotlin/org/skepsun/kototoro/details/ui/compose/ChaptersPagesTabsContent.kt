@@ -37,12 +37,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,6 +61,7 @@ import org.skepsun.kototoro.core.ui.compose.ContentSourceIcon
 import org.skepsun.kototoro.core.ui.compose.rememberResolvedSourceTitle
 import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 import org.skepsun.kototoro.core.ui.adaptive.tvTabRing
+import org.skepsun.kototoro.core.ui.buttons.Button
 import org.skepsun.kototoro.core.ui.adaptive.tvTextInputFocusEscape
 import org.skepsun.kototoro.details.ui.model.DetailsChapterSourceTab
 import org.skepsun.kototoro.details.ui.compose.state.DetailsPaneState
@@ -68,6 +71,7 @@ import org.skepsun.kototoro.details.ui.pager.bookmarks.BookmarksViewModel
 import org.skepsun.kototoro.details.ui.pager.chapters.compose.ChapterSelectionUiState
 import org.skepsun.kototoro.details.ui.pager.bookmarks.compose.BookmarksScreenRoot
 import org.skepsun.kototoro.details.ui.pager.chapters.compose.ChaptersScreen
+import org.skepsun.kototoro.details.ui.pager.chapters.ChapterGroupsManager
 import org.skepsun.kototoro.details.ui.pager.chapters.compose.ChaptersScreenRoot
 import org.skepsun.kototoro.details.ui.pager.pages.PagesViewModel
 import org.skepsun.kototoro.details.ui.pager.pages.compose.PagesScreenRoot
@@ -101,6 +105,7 @@ fun ChaptersPagesTabsContent(
     readingChapterTabs: List<DetailsChapterSourceTab> = emptyList(),
     onSelectMetadataChapterTab: (DetailsChapterSourceTab) -> Unit = {},
     onSelectReadingChapterTab: (DetailsChapterSourceTab) -> Unit = {},
+    onChooseReadingSource: (() -> Unit)? = null,
     initialPage: Int = 0,
     selectedTabId: Int? = null,
     showTabStrip: Boolean = true,
@@ -248,6 +253,8 @@ fun ChaptersPagesTabsContent(
                         chapterQuery = chapterQuery,
                         onSelectMetadataChapterTab = onSelectMetadataChapterTab,
                         onSelectReadingChapterTab = onSelectReadingChapterTab,
+                        onChooseReadingSource = onChooseReadingSource,
+                        contentType = contentType,
                         isScrollEnabled = isChapterListScrollEnabled,
                         detailsPaneState = detailsPaneState,
                         handleSelectionBackPressInternally = handleSelectionBackPressInternally,
@@ -295,6 +302,8 @@ private fun DetailsChapterPanels(
     chapterQuery: String,
     onSelectMetadataChapterTab: (DetailsChapterSourceTab) -> Unit,
     onSelectReadingChapterTab: (DetailsChapterSourceTab) -> Unit,
+    onChooseReadingSource: (() -> Unit)?,
+    contentType: ContentType?,
     isScrollEnabled: Boolean,
     detailsPaneState: DetailsPaneState? = null,
     handleSelectionBackPressInternally: Boolean,
@@ -318,15 +327,19 @@ private fun DetailsChapterPanels(
             selectedModeName = availableModes.first().name
         }
     }
-    val readingChapterTitleRes = remember(readingChapterTabs) {
-        val selectedReadingContentType = readingChapterTabs.firstOrNull { it.isSelected }?.source?.getContentType()
-            ?: readingChapterTabs.firstOrNull()?.source?.getContentType()
-        if (selectedReadingContentType == ContentType.VIDEO || selectedReadingContentType == ContentType.HENTAI_VIDEO) {
-            R.string.details_playback_chapters
-        } else {
-            R.string.details_reading_chapters
-        }
+    // Without a reading source the work's own kind decides, which the metadata chapters carry.
+    val isPlayback = remember(readingChapterTabs, metadataChapterTabs, contentType) {
+        val readingContentType = (readingChapterTabs.firstOrNull { it.isSelected } ?: readingChapterTabs.firstOrNull())
+            ?.source?.getContentType()
+            ?: (metadataChapterTabs.firstOrNull { it.isSelected } ?: metadataChapterTabs.firstOrNull())
+                ?.source?.getContentType()
+            ?: contentType
+        readingContentType == ContentType.VIDEO || readingContentType == ContentType.HENTAI_VIDEO
     }
+    val readingChapterTitleRes = if (isPlayback) R.string.details_playback_chapters else R.string.details_reading_chapters
+    // A work opened from a tracking site has metadata chapters but nothing to read them from: its own chapter list
+    // is the metadata's again, and none of it opens.
+    val hasNoReadingSource = readingChapterTabs.isEmpty() && metadataChapterTabs.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (availableModes.size > 1) {
@@ -350,7 +363,13 @@ private fun DetailsChapterPanels(
                 dragModifier = dragModifier,
             )
 
-            ChapterPanelMode.READING -> {
+            ChapterPanelMode.READING -> if (hasNoReadingSource) {
+                NoReadingSourcePanel(
+                    isPlayback = isPlayback,
+                    onChooseReadingSource = onChooseReadingSource,
+                    dragModifier = dragModifier,
+                )
+            } else {
                 if (readingChapterTabs.size > 1 && !isMergeRepeatedChapters) {
                     ChapterSourceTabsRow(
                         tabs = readingChapterTabs,
@@ -369,6 +388,50 @@ private fun DetailsChapterPanels(
                     handleSelectionBackPressInternally = handleSelectionBackPressInternally,
                     onSelectionStateChange = onChapterSelectionStateChange,
                     dragModifier = dragModifier,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoReadingSourcePanel(
+    isPlayback: Boolean,
+    onChooseReadingSource: (() -> Unit)?,
+    dragModifier: Modifier,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(dragModifier)
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(
+                if (isPlayback) R.string.details_no_playback_source_title else R.string.details_no_reading_source_title,
+            ),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(
+                if (isPlayback) R.string.details_no_playback_source_text else R.string.details_no_reading_source_text,
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        if (onChooseReadingSource != null) {
+            Button(
+                onClick = onChooseReadingSource,
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text(
+                    stringResource(
+                        if (isPlayback) R.string.details_choose_playback_source else R.string.details_choose_reading_source,
+                    ),
                 )
             }
         }
@@ -497,6 +560,9 @@ private fun MetadataChapterPanel(
             )
         }.withVolumeHeaders(context)
     }
+    val groupsManager = remember { ChapterGroupsManager() }
+    val visibleItems = remember(items, groupsManager.collapsedGroups) { groupsManager.applyCollapsedState(items) }
+    val foldableGroupIds = remember(items) { groupsManager.foldableGroupIds(items) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (tabs.size > 1) {
@@ -508,7 +574,7 @@ private fun MetadataChapterPanel(
         }
         ChaptersScreen(
             requestInitialFocus = requestInitialFocus,
-            items = items,
+            items = visibleItems,
             isGridView = isGridView,
             isScrollEnabled = isScrollEnabled,
             gridScale = 1.0f,
@@ -519,7 +585,9 @@ private fun MetadataChapterPanel(
             initialChapterId = null,
             onItemClick = { viewModel.value = it.chapter },
             onItemLongClick = {},
-            onHeaderClick = {},
+            onHeaderClick = { header -> if (header.isCollapsible) groupsManager.toggleGroup(header.groupId) },
+            allGroupsCollapsed = groupsManager.areAllCollapsed(foldableGroupIds),
+            onToggleAllGroups = { groupsManager.toggleAll(foldableGroupIds) },
             onFilterChipClick = {},
             onSelectionActionClick = {},
             onClearSelection = {},
@@ -649,7 +717,7 @@ private fun MetadataChapterDialog(
         },
         confirmButton = {
             if (chapter.url.isNotBlank()) {
-                androidx.compose.material3.TextButton(onClick = onOpenBrowser) {
+                org.skepsun.kototoro.core.ui.buttons.TextButton(onClick = onOpenBrowser) {
                     Icon(
                         painter = painterResource(R.drawable.ic_open_external),
                         contentDescription = null,
@@ -661,7 +729,7 @@ private fun MetadataChapterDialog(
             }
         },
         dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onDismissRequest) {
+            org.skepsun.kototoro.core.ui.buttons.TextButton(onClick = onDismissRequest) {
                 Text(stringResource(android.R.string.cancel))
             }
         },

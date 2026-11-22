@@ -1,5 +1,7 @@
 package org.skepsun.kototoro.download.ui.compose
 
+import org.skepsun.kototoro.video.domain.formatVideoSize
+import org.skepsun.kototoro.video.player.MeasuredVideoSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,19 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,7 +61,11 @@ import org.skepsun.kototoro.core.prefs.DownloadFormat
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
 import org.skepsun.kototoro.core.ui.adaptive.tvIconButtonRing
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.core.ui.compose.TvDropdownMenuItem
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 import org.skepsun.kototoro.core.util.ext.findActivity
 import org.skepsun.kototoro.core.util.ext.joinToStringWithLimit
 import org.skepsun.kototoro.core.util.ext.makeSnackbar
@@ -137,6 +139,7 @@ fun DownloadDialog(
     val isVideoContent by viewModel.isVideoContent.collectAsStateWithLifecycle()
     val isVideoQualitiesLoading by viewModel.isVideoQualitiesLoading.collectAsStateWithLifecycle()
     val videoQualities by viewModel.videoQualities.collectAsStateWithLifecycle()
+    val videoQualitySizes by viewModel.videoQualitySizes.collectAsStateWithLifecycle()
     val defaultFormat by viewModel.defaultFormat.collectAsStateWithLifecycle()
     val availableDestinations by viewModel.availableDestinations.collectAsStateWithLifecycle()
 
@@ -383,7 +386,8 @@ fun DownloadDialog(
                         value = if (isVideoQualitiesLoading) {
                             stringResource(id = R.string.fetching_video_quality)
                         } else {
-                            selectedVideoQuality ?: stringResource(id = R.string.system_default)
+                            selectedVideoQuality?.let { videoQualityLabel(it, videoQualitySizes) }
+                                ?: stringResource(id = R.string.system_default)
                         },
                         expanded = showVideoQualityMenu,
                         enabled = !isVideoQualitiesLoading,
@@ -400,7 +404,7 @@ fun DownloadDialog(
                         )
                         videoQualities.orEmpty().forEach { quality ->
                             DropdownMenuItem(
-                                text = { Text(text = quality) },
+                                text = { Text(text = videoQualityLabel(quality, videoQualitySizes)) },
                                 onClick = {
                                     selectedVideoQuality = quality
                                     showVideoQualityMenu = false
@@ -759,4 +763,10 @@ private fun rememberDownloadCountOptions(maxAvailableCount: Int): List<Int> {
             }
         }.distinct()
     }
+}
+
+/** A quality option's title, followed by its measured size when known ("~" marks an estimate). */
+private fun videoQualityLabel(quality: String, sizes: Map<String, MeasuredVideoSize>): String {
+    val size = sizes[quality] ?: return quality
+    return quality + " · " + (if (size.isEstimated) "~" else "") + formatVideoSize(size.bytes)
 }

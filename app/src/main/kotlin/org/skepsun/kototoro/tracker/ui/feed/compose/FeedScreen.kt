@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +48,7 @@ import org.skepsun.kototoro.core.model.FavouriteCategory
 import org.skepsun.kototoro.core.prefs.AppSettings
 import org.skepsun.kototoro.core.prefs.ListMode
 import org.skepsun.kototoro.core.prefs.observeAsState
+import org.skepsun.kototoro.core.ui.buttons.Button
 import org.skepsun.kototoro.core.ui.compose.AppLayoutTokens
 import org.skepsun.kototoro.core.ui.compose.KototoroLoadingIndicator
 import org.skepsun.kototoro.core.ui.compose.KototoroPullToRefreshBox
@@ -91,6 +91,7 @@ fun FeedScreen(
     selectedItemIds: Set<Long> = emptySet(),
     onFeedItemLongClick: (FeedItem) -> Unit = {},
     onFeedItemContinueReading: (FeedItem) -> Unit = {},
+    onFeedItemReadChapter: (FeedItem, Long) -> Unit = { _, _ -> },
     onFeedDetailsViewed: (FeedItem) -> Unit = {},
     showCategoryFilterInline: Boolean = true,
     host: RetainedPagingSnapshotHost? = null,
@@ -142,10 +143,11 @@ fun FeedScreen(
     val settings = remember(context.applicationContext) { AppSettings(context.applicationContext) }
     val carouselPrefs by settings.observeAsState(
         AppSettings.KEY_GRID_SIZE,
+        AppSettings.gridSizeKeyOf(org.skepsun.kototoro.list.ui.ListDisplaySection.FEED),
         AppSettings.KEY_BADGES_BOTTOM_RIGHT,
     ) {
         UpdatedContentCarouselPrefs(
-            gridScale = gridSize / 100f,
+            gridScale = gridSizeOf(org.skepsun.kototoro.list.ui.ListDisplaySection.FEED) / 100f,
             badgesBottomRight = badgesBottomRight,
         )
     }
@@ -250,6 +252,7 @@ fun FeedScreen(
                     onFeedItemClick = onFeedItemClick,
                     onFeedItemLongClick = onFeedItemLongClick,
                     onFeedItemContinueReading = onFeedItemContinueReading,
+                    onFeedItemReadChapter = onFeedItemReadChapter,
                         onFeedDetailsViewed = onFeedDetailsViewed,
                     onUpdatedContentItemClick = onUpdatedContentItemClick,
                     onUpdatedContentMoreClick = onUpdatedContentMoreClick,
@@ -273,6 +276,7 @@ fun FeedScreen(
                         onFeedItemClick = onFeedItemClick,
                         onFeedItemLongClick = onFeedItemLongClick,
                         onFeedItemContinueReading = onFeedItemContinueReading,
+                        onFeedItemReadChapter = onFeedItemReadChapter,
                         onFeedDetailsViewed = onFeedDetailsViewed,
                         onUpdatedContentItemClick = onUpdatedContentItemClick,
                         onUpdatedContentMoreClick = onUpdatedContentMoreClick,
@@ -295,6 +299,7 @@ fun FeedScreen(
                         onFeedItemClick = onFeedItemClick,
                         onFeedItemLongClick = onFeedItemLongClick,
                         onFeedItemContinueReading = onFeedItemContinueReading,
+                        onFeedItemReadChapter = onFeedItemReadChapter,
                         onFeedDetailsViewed = onFeedDetailsViewed,
                         onUpdatedContentItemClick = onUpdatedContentItemClick,
                         onUpdatedContentMoreClick = onUpdatedContentMoreClick,
@@ -393,6 +398,7 @@ private fun FeedListItemContent(
     onFeedItemClick: (FeedItem, Rect?) -> Unit,
     onFeedItemLongClick: (FeedItem) -> Unit,
     onFeedItemContinueReading: (FeedItem) -> Unit,
+    onFeedItemReadChapter: (FeedItem, Long) -> Unit,
     onFeedDetailsViewed: (FeedItem) -> Unit,
     onUpdatedContentItemClick: (UpdatedContentHeaderItem, Rect?) -> Unit,
     onUpdatedContentMoreClick: (UpdatedContentHeader) -> Unit,
@@ -418,6 +424,11 @@ private fun FeedListItemContent(
             onDetailsViewed = { onFeedDetailsViewed(item) },
             onContinueReading = if (selectedItemIds.isEmpty()) {
                 { onFeedItemContinueReading(item) }
+            } else {
+                null
+            },
+            onReadChapter = if (selectedItemIds.isEmpty()) {
+                { chapterId -> onFeedItemReadChapter(item, chapterId) }
             } else {
                 null
             },

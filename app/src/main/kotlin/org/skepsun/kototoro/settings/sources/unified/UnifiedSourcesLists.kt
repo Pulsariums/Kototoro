@@ -36,22 +36,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -83,10 +78,17 @@ import org.skepsun.kototoro.aniyomi.model.AniyomiAnimeSource
 import org.skepsun.kototoro.core.model.getSummary
 import org.skepsun.kototoro.core.model.ContentSourceAvailability
 import org.skepsun.kototoro.core.ui.adaptive.tvIconButtonRing
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.buttons.FilledTonalButton
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
 import org.skepsun.kototoro.core.ui.compose.ContentSourceIcon
+import org.skepsun.kototoro.core.ui.compose.EmptyStatePanel
 import org.skepsun.kototoro.core.ui.compose.TvDropdownMenuItem
 import org.skepsun.kototoro.core.ui.compose.VerticalScrollbar
 import org.skepsun.kototoro.core.ui.compose.rememberSafePainter
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 import org.skepsun.kototoro.ireader.model.IReaderMangaSource
 import org.skepsun.kototoro.mihon.model.MihonMangaSource
@@ -104,61 +106,6 @@ private object PackageIconMemoryCache {
 }
 
 @Composable
-internal fun UnifiedEmptyState(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    message: String,
-    modifier: Modifier = Modifier,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp, horizontal = 24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            if (actionLabel != null && onAction != null) {
-                Spacer(modifier = Modifier.height(4.dp))
-                FilledTonalButton(onClick = onAction) {
-                    Text(actionLabel)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 internal fun UnifiedSourceList(
     modifier: Modifier = Modifier,
     listState: LazyListState,
@@ -171,6 +118,10 @@ internal fun UnifiedSourceList(
     selectedSourceIds: Set<String>,
     onSourceSelectionChange: (Set<String>) -> Unit,
     onSourcePinnedChange: (String, Boolean) -> Unit,
+    // False when nothing is installed at all, as opposed to everything being filtered away.
+    hasAnySources: Boolean = true,
+    onAddSource: () -> Unit = {},
+    onResetFilters: () -> Unit = {},
 ) {
     val expressive = LocalMaterialExpressiveComponentsEnabled.current
     val horizontalPadding = if (expressive) 8.dp else 0.dp
@@ -207,7 +158,9 @@ internal fun UnifiedSourceList(
                 bottom = 4.dp,
             ),
         ) {
-            item(key = "source_actions") {
+            // Bulk actions over an empty catalogue are a row of dead buttons above the one thing the
+            // user can do, which is to add a source.
+            if (hasAnySources) item(key = "source_actions") {
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth().keepHorizontalSwipes()
@@ -346,11 +299,25 @@ internal fun UnifiedSourceList(
             }
             if (displayRows.isEmpty()) {
                 item(key = "sources_empty_state") {
-                    UnifiedEmptyState(
-                        icon = Icons.Outlined.SearchOff,
-                        title = stringResource(R.string.no_sources_found),
-                        message = stringResource(R.string.no_sources_found_desc),
-                    )
+                    if (hasAnySources) {
+                        EmptyStatePanel(
+                            icon = Icons.Outlined.SearchOff,
+                            title = stringResource(R.string.no_sources_found),
+                            message = stringResource(R.string.no_sources_found_desc),
+                            actionLabel = stringResource(R.string.reset_filter),
+                            onAction = onResetFilters,
+                        )
+                    } else {
+                        // Nothing is installed: "adjust your filters" would send the user looking
+                        // for a filter that is not the problem.
+                        EmptyStatePanel(
+                            icon = Icons.Outlined.Extension,
+                            title = stringResource(R.string.no_manga_sources),
+                            message = stringResource(R.string.unified_sources_empty_none_desc),
+                            actionLabel = stringResource(R.string.add_source),
+                            onAction = onAddSource,
+                        )
+                    }
                 }
             }
         }
@@ -363,18 +330,6 @@ internal fun UnifiedSourceList(
             SourceTestDialog(sources = sources.filter { it.isEnabled }.map { it.source }, onDismiss = { showSourceTest = false })
         }
     }
-}
-
-@Composable
-private fun UnifiedSourceIcon(
-    item: UnifiedSourceItem,
-    modifier: Modifier = Modifier,
-) {
-    ContentSourceIcon(
-        source = item.source,
-        modifier = modifier,
-        contentDescription = item.title,
-    )
 }
 
 /**
@@ -668,15 +623,23 @@ private fun UnifiedSourceRow(
                 )
             }
         } else {
+            var showsArtwork by remember(item.source.name) { mutableStateOf(false) }
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .background(groupColor ?: MaterialTheme.colorScheme.surfaceContainerHigh, style.iconShape),
+                    .then(
+                        if (showsArtwork) Modifier else Modifier.background(
+                            groupColor ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+                            style.iconShape,
+                        ),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                UnifiedSourceIcon(
-                    item = item,
-                    modifier = Modifier.size(24.dp),
+                ContentSourceIcon(
+                    source = item.source,
+                    modifier = Modifier.size(if (showsArtwork) 36.dp else 24.dp),
+                    contentDescription = item.title,
+                    onArtworkChange = { showsArtwork = it },
                 )
             }
         }
@@ -903,7 +866,7 @@ internal fun UnifiedRepositoryList(
                 }
             } else if (configured.isEmpty()) {
                 item(key = "repo_empty_state") {
-                    UnifiedEmptyState(
+                    EmptyStatePanel(
                         icon = Icons.Outlined.SearchOff,
                         title = stringResource(R.string.no_extension_repositories),
                         message = stringResource(R.string.no_sources_found_desc),
@@ -1141,7 +1104,7 @@ internal fun UnifiedPackageList(
             }
             if (packages.isEmpty() && recommendedPackages.isEmpty() && missingSourcesWithoutMatch.isEmpty()) {
                 item(key = "packages_empty_state") {
-                    UnifiedEmptyState(
+                    EmptyStatePanel(
                         icon = Icons.Outlined.SearchOff,
                         title = stringResource(R.string.no_packages_found),
                         message = stringResource(R.string.no_packages_found_desc),

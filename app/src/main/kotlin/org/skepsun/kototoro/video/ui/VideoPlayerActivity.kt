@@ -200,6 +200,8 @@ import org.skepsun.kototoro.video.ui.compose.VideoSeekFeedbackState
 import org.skepsun.kototoro.video.ui.compose.VideoActionDialog
 import org.skepsun.kototoro.video.ui.compose.VideoActionDialogItem
 import org.skepsun.kototoro.video.ui.compose.VideoActionDialogState
+import org.skepsun.kototoro.video.ui.compose.VideoPlayerMoreSection
+import org.skepsun.kototoro.video.ui.compose.orderVideoPlayerMoreItems
 import org.skepsun.kototoro.video.ui.compose.VideoSubtitleSettingsDialog
 import org.skepsun.kototoro.video.ui.compose.VideoSubtitleSettingsDialogState
 import org.skepsun.kototoro.video.ui.compose.VideoChapterDialog
@@ -229,6 +231,7 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
         private const val CLOUDSTREAM_PLAYBACK_HEALTH_CHECK_DELAY_MS = 5_000L
         private const val CLOUDSTREAM_HLS_PROBE_TIMEOUT_MS = 10_000L
         private const val VIDEO_SIZE_PROBE_TIMEOUT_MS = 6_000L
+        private const val VIDEO_SIZE_MEASURE_TIMEOUT_MS = 10_000L
         private const val VIDEO_SIZE_PROBE_CONCURRENCY = 3
         private const val ENABLE_M3U8_PROXY_CACHE = false
         private const val TORRENT_VIDEO_MARKER = "kototoro:torrent"
@@ -298,6 +301,7 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
     private val videoSizeCache = HashMap<String, Long>()
     private val probedVideoSizeUrls = HashSet<String>()
     private var videoSizeProbeJob: Job? = null
+    private var downloadSizeJob: Job? = null
     private var qualityDialogVideos: List<Video>? = null
     private var cloudstreamLinkJob: Job? = null
     private var cloudstreamFallbackJob: Job? = null
@@ -2991,14 +2995,24 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
         if (anchorBounds != IntRect.Zero) {
             lastMoreAnchorBounds = anchorBounds
         }
+        // Ordered by section: the diagnostic entry is last even though it is declared in the middle of the list, so the
+        // menu never puts a codec dump between "save to library" and "settings".
         actionDialogState = VideoActionDialogState(
             title = getString(R.string.options),
-            items = listOfNotNull(
+            items = orderVideoPlayerMoreItems(listOfNotNull(
                 VideoActionDialogItem(
                     title = getString(R.string.video_quality),
                     iconRes = R.drawable.ic_settings,
                     onClick = { onComposePlayerAction(VideoPlayerAction.OpenQuality(lastMoreAnchorBounds)) },
                 ).takeIf { availableVideos.isNotEmpty() },
+                // The row drops the speed label at the narrowest tier, and the note button below it, so both controls
+                // have to stay reachable from this menu.
+                VideoActionDialogItem(
+                    title = getString(R.string.video_playback_speed),
+                    subtitle = composeControlState.playbackSpeedLabel,
+                    iconRes = R.drawable.ic_timelapse,
+                    onClick = { onComposePlayerAction(VideoPlayerAction.OpenPlaybackSpeed(lastMoreAnchorBounds)) },
+                ),
                 VideoActionDialogItem(
                     title = getString(R.string.video_mark_intro),
                     iconRes = R.drawable.ic_fast_forward,
@@ -3052,6 +3066,7 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
                 VideoActionDialogItem(
                     title = getString(R.string.video_detail),
                     iconRes = R.drawable.ic_info_outline,
+                    section = VideoPlayerMoreSection.DIAGNOSTICS,
                     onClick = ::openVideoDetails,
                 ),
                 VideoActionDialogItem(
@@ -3064,7 +3079,7 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
                         )
                     },
                 ),
-            ),
+            )) { it.section },
             anchorBounds = lastMoreAnchorBounds,
             columns = 2,
         )
@@ -3182,6 +3197,28 @@ class VideoPlayerActivity : BaseComposeFullscreenActivity(), ReaderNavigationCal
             showPlayerMessage(R.string.operation_not_supported)
             return
         }
+        val url = currentMediaUrl
+        val headers = currentMediaHeaders.orEmpty()
+        downloadSizeJob?.cancel()
+        downloadSizeJob = lifecycleScope.launch {
+            val size = url
+                ?.takeIf { it.isNotBlank() }
+                ?.let { withTimeoutOrNull(VIDEO_SIZE_MEASURE_TIMEOUT_MS) { videoSizeProbe.measure(it, headers) } }
+                ?.takeIf { it.bytes > 0 }
+                ?.let { (if (it.isEstimated) "~" else "") + formatVideoSize(it.bytes) }
+            when {
+                size == null -> startChapterDownload(manga, chapterId)
+                else -> MaterialAlertDialogBuilder(this@VideoPlayerActivity)
+                    .setTitle(R.string.save_manga_video)
+                    .setMessage(getString(R.string.size_s, size))
+                    .setPositiveButton(R.string.confirm) { _, _ -> startChapterDownload(manga, chapterId) }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        }
+    }
+
+    private fun startChapterDownload(manga: Content, chapterId: Long) {
         val task = DownloadTask(
             mangaId = manga.id,
             displayMangaId = manga.id,

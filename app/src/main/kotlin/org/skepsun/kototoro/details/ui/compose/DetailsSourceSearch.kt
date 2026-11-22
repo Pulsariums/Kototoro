@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.kyant.shapes.RoundedRectangle
 import androidx.compose.foundation.lazy.LazyRow
@@ -33,8 +34,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +72,7 @@ import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.rememberTvTextFieldReadOnlyState
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
 import org.skepsun.kototoro.core.ui.adaptive.tvTextInputFocusEscape
+import org.skepsun.kototoro.core.ui.buttons.FilledTonalButton
 import org.skepsun.kototoro.core.ui.compose.SheetDragHandle
 import org.skepsun.kototoro.core.ui.compose.rememberSafePainter
 import org.skepsun.kototoro.core.ui.compose.rememberResolvedSourceTitle
@@ -80,6 +80,7 @@ import org.skepsun.kototoro.core.ui.glass.GlassDefaults
 import org.skepsun.kototoro.core.ui.glass.GlassSurface
 import org.skepsun.kototoro.core.ui.glass.rememberGlassPrefsOrFallback
 import org.skepsun.kototoro.core.ui.glass.rememberGlassSurfaceColors
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
 import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 import org.skepsun.kototoro.core.util.ext.mangaSourceExtra
 import org.skepsun.kototoro.core.util.ext.takeIfUsableImageUri
@@ -199,6 +200,9 @@ internal fun SourceSearchField(
 @Composable
 internal fun DetailsSourceOverlayDialog(
     onDismissRequest: () -> Unit,
+    heightFraction: Float = 0.92f,
+    maxWidth: Dp = Dp.Infinity,
+    floating: Boolean = false,
     content: @Composable (panelDragModifier: Modifier) -> Unit,
 ) {
     var panelOffsetY by remember { mutableFloatStateOf(0f) }
@@ -209,7 +213,10 @@ internal fun DetailsSourceOverlayDialog(
     // key until BACK. There is no touch on TV, so skip those two nodes there entirely.
     val isTvPresentation = LocalUiPresentationConfig.current.isTv
     val panelColors = rememberGlassSurfaceColors(
-        style = GlassDefaults.regularStyle(),
+        style = if (floating) GlassDefaults.prominentStyle().copy(
+            containerAlpha = 0.8f,
+            minimumContainerAlpha = 0.6f,
+        ) else GlassDefaults.regularStyle(),
         glassPrefs = rememberDetailsSourceOverlayGlassPrefs(),
     )
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -241,7 +248,7 @@ internal fun DetailsSourceOverlayDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.18f))
+                .background(Color.Black.copy(alpha = if (floating) 0.08f else 0.18f))
                 .then(
                     if (isTvPresentation) {
                         Modifier
@@ -257,8 +264,10 @@ internal fun DetailsSourceOverlayDialog(
         ) {
             Surface(
                 modifier = Modifier
+                    .widthIn(max = maxWidth)
+                    .padding(horizontal = if (floating) 12.dp else 0.dp, vertical = if (floating) 8.dp else 0.dp)
                     .fillMaxWidth()
-                    .fillMaxHeight(0.92f)
+                    .fillMaxHeight(heightFraction)
                     .offset { IntOffset(0, panelOffsetY.roundToInt()) }
                     .then(
                         if (isTvPresentation) {
@@ -271,7 +280,10 @@ internal fun DetailsSourceOverlayDialog(
                             )
                         },
                     ),
-                shape = RoundedCornerShape(topStart = if (expressive) 36.dp else 28.dp, topEnd = if (expressive) 36.dp else 28.dp),
+                shape = if (floating) RoundedCornerShape(28.dp) else RoundedCornerShape(
+                    topStart = if (expressive) 36.dp else 28.dp,
+                    topEnd = if (expressive) 36.dp else 28.dp,
+                ),
                 color = panelColors.containerColor.detailsPanelContainerColor(),
                 border = panelColors.border,
                 tonalElevation = 0.dp,
@@ -683,7 +695,7 @@ private fun TrackingSearchResultCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = stringResource(R.string.migrate),
+                        text = stringResource(R.string.details_tracking_link),
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }

@@ -81,6 +81,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.request.ImageRequest
 import org.skepsun.kototoro.R
+import org.skepsun.kototoro.community.domain.CommunityExternalRef
+import org.skepsun.kototoro.community.domain.CommunityExternalService
+import org.skepsun.kototoro.community.ui.CommunityRatingSection
 import org.skepsun.kototoro.core.model.LocalMangaSource
 import org.skepsun.kototoro.core.model.appUrl
 import org.skepsun.kototoro.core.model.getLocalizedTitle
@@ -184,6 +187,11 @@ internal fun DetailsScrollableContent(
     content: org.skepsun.kototoro.parsers.model.Content?,
     isTemporaryReadOnly: Boolean,
     isWorkDetails: Boolean,
+    /** Inline source-health warning (message + Migrate), null when the source is fine. */
+    sourceHealthNotice: String? = null,
+    onMigrateSource: () -> Unit = {},
+    /** "Don't show again" for the warning; null when this warning cannot be silenced. */
+    onDisableSourceNotice: (() -> Unit)? = null,
     scrollState: androidx.compose.foundation.ScrollState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -239,6 +247,16 @@ internal fun DetailsScrollableContent(
         }
         if (isTemporaryReadOnly || !isWorkDetails) {
             TemporaryDetailsReadOnlyNotice(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = outerHorizontalPadding, vertical = 8.dp),
+            )
+        }
+        if (sourceHealthNotice != null) {
+            DetailsSourceHealthNotice(
+                message = sourceHealthNotice,
+                onMigrate = onMigrateSource,
+                onDisable = onDisableSourceNotice,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = outerHorizontalPadding, vertical = 8.dp),
@@ -341,6 +359,29 @@ internal fun DetailsScrollableContent(
                 onActionClick(DetailsAction.ManageTrackingBinding(match.service, match.remoteId, match.title, match.url))
             },
         )
+        val communityContent = remember(mangaDetails) { mangaDetails?.toContent() }
+        if (!preferLightweightFirstFrame && communityContent != null) {
+            val trackerRefs = remember(linkedTrackingItems) {
+                linkedTrackingItems.mapNotNull { item ->
+                    CommunityExternalService.of(item.service.name)?.let { CommunityExternalRef(it, item.remoteId) }
+                }
+            }
+            CommunityRatingSection(
+                content = communityContent,
+                trackerRefs = trackerRefs,
+                container = { row ->
+                    DetailsReadableSurface(
+                        panoramaEnabled = settings.isPanoramaCoverEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = outerHorizontalPadding, vertical = 6.dp),
+                    ) { row() }
+                },
+                railPadding = outerHorizontalPadding,
+                onSearchTitle = { title -> onActionClick(DetailsAction.SearchTitleEverywhere(title)) },
+                onOpenContent = { content -> onActionClick(DetailsAction.OpenContent(content)) },
+            )
+        }
         if (!preferLightweightFirstFrame &&
             mediaStylePolicy.useInlineEpisodePreview &&
             !isWideAdaptiveLayout &&

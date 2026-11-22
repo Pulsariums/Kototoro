@@ -3,6 +3,7 @@ package org.skepsun.kototoro.ios
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -22,6 +23,18 @@ internal object IosHttp : TvBoxHttp {
                 requestTimeoutMillis = 30_000
             }
         }
+    }
+
+    internal val communitySnapshot by lazy {
+        org.skepsun.kototoro.community.snapshot.CommunitySnapshotFetcher(client)
+    }
+
+    internal val communityRelays by lazy {
+        val sockets = client.config { install(WebSockets) }
+        org.skepsun.kototoro.community.nostr.NostrRelayClient(
+            org.skepsun.kototoro.community.nostr.KtorNostrRelayConnector(sockets),
+            connectTimeoutMillis = 5_000L,
+        )
     }
 
     override suspend fun get(url: String, headers: Map<String, String>): String {

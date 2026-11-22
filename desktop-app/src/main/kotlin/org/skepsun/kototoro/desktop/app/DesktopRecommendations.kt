@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
 import org.skepsun.kototoro.core.ui.settings.SettingsGroup
 import org.skepsun.kototoro.core.ui.settings.SettingsInfoRow
 import org.skepsun.kototoro.core.ui.settings.SettingsRowDivider
@@ -77,6 +77,17 @@ internal fun DesktopRecommendations(controller: DesktopController, state: Deskto
         }
         SettingsSectionHeader(desktopText("settings.suggestionsTags"))
         SettingsGroup {
+            org.skepsun.kototoro.core.ui.suggestions.SuggestionLanguageSelector(
+                selected = settings.language,
+                only = settings.languageOnly,
+                onSelect = { controller.suggestionSettings(settings.copy(language = it,
+                    languageOnly = settings.languageOnly && it != org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ALL)) },
+                onOnlyChanged = { controller.suggestionSettings(settings.copy(languageOnly = it)) },
+                modifier = Modifier.padding(16.dp),
+                enabled = enabled,
+            )
+        }
+        SettingsGroup {
             SettingsValueRow(desktopText("settings.suggestionsExcludeTags"), desktopText("settings.tagSeparator"),
                 settings.tagBlacklist.showAsList(), enabled, { dialog = RecommendationDialog.EXCLUDED_TAGS },
                 testTag = "settings-suggestions-exclude-tags")
@@ -87,6 +98,16 @@ internal fun DesktopRecommendations(controller: DesktopController, state: Deskto
         }
         SettingsSectionHeader(desktopText("settings.suggestionsSources"))
         SettingsGroup {
+            SettingsSwitchRow(AndroidStrings["suggestions_favourite_sources"],
+                AndroidStrings["suggestions_favourite_sources_summary"], settings.favouriteSourcesFirst, enabled,
+                { controller.suggestionSettings(settings.copy(favouriteSourcesFirst = it)) },
+                testTag = "settings-suggestions-favourite-sources")
+            SettingsRowDivider()
+            SettingsSwitchRow(AndroidStrings["suggestions_popular_sources"],
+                AndroidStrings["suggestions_popular_sources_summary"], settings.popularSourcesFirst, enabled,
+                { controller.suggestionSettings(settings.copy(popularSourcesFirst = it)) },
+                testTag = "settings-suggestions-popular-sources")
+            SettingsRowDivider()
             // Android shows the chosen names in the preference summary (three, then "+N"), not in a value label.
             val preferredEmpty = AndroidStrings["suggestions_preferred_sources_summary"]
             val excludedEmpty = AndroidStrings["suggestions_excluded_sources_summary"]

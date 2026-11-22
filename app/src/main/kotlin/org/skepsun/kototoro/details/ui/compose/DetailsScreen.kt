@@ -131,6 +131,11 @@ import org.skepsun.kototoro.core.nav.ReaderIntent
 import org.skepsun.kototoro.core.util.ext.findActivity
 import org.skepsun.kototoro.reader.ui.ReaderNavigationCallback
 import org.skepsun.kototoro.core.exceptions.resolve.SnackbarErrorObserver
+import org.skepsun.kototoro.core.exceptions.UnsupportedSourceException
+import org.skepsun.kototoro.details.domain.DetailsSourceNoticeKind
+import org.skepsun.kototoro.details.domain.detailsOwnsSourceError
+import org.skepsun.kototoro.details.domain.detailsSourceNoticeIsDismissible
+import org.skepsun.kototoro.details.domain.detailsSourceNoticeKind
 import org.skepsun.kototoro.core.util.ext.isHttpUrl
 import org.skepsun.kototoro.core.util.ext.mangaExtra
 import org.skepsun.kototoro.core.util.ext.observeEvent
@@ -288,6 +293,8 @@ private fun DetailsScreenContent(
     val initialInfoCardTopPx by detailsScreenState.initialInfoCardTopPx
     val initialInfoCardMidPx by detailsScreenState.initialInfoCardMidPx
     val interfaceStyleTokens = LocalInterfaceStyleTokens.current
+    var trackingPanelServiceId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val trackingEditBusy by viewModel.trackingEditBusy.collectAsStateWithLifecycle()
     val detailsPrimaryUiState by viewModel.detailsPrimaryUiState.collectAsStateWithLifecycle()
     val localSize by viewModel.localSize.collectAsStateWithLifecycle()
     val readingRecordSnapshot by viewModel.readingRecordSnapshot.collectAsStateWithLifecycle()
@@ -439,6 +446,11 @@ private fun DetailsScreenContent(
             )
         }
     }
+    val chooseReadingSource: (() -> Unit)? = if (isWorkActionEnabled) {
+        { detailsScreenState.setShowReadingSourceDialog(true) }
+    } else {
+        null
+    }
     val readingSourceLabelRes = remember(contentType) {
         when (contentType) {
             ContentType.VIDEO,
@@ -453,11 +465,6 @@ private fun DetailsScreenContent(
     val landscapeLeftScrollState = rememberScrollState()
     LaunchedEffect(activeSpaceId) {
         viewModel.setSpaceContext(activeSpaceId)
-    }
-    LaunchedEffect(showMetadataSourceDialog) {
-        if (showMetadataSourceDialog && !metadataSearchHasSearched && !metadataSearchLoading) {
-            viewModel.searchMetadataBindings()
-        }
     }
     LaunchedEffect(showReadingSourceDialog, isWorkDetails) {
         if (showReadingSourceDialog && isWorkDetails && !readingSearchHasSearched && !readingSearchLoading) {
@@ -570,28 +577,42 @@ private fun DetailsScreenContent(
         val current = content ?: return@LaunchedEffect
         if (isFavourite) duplicateViewModel.loadHealth(current)
     }
-    val healthLabel = when (sourceHealth) {
-        org.skepsun.kototoro.migration.domain.SourceHealthStatus.UNINSTALLED -> stringResource(R.string.migration_health_uninstalled)
-        org.skepsun.kototoro.migration.domain.SourceHealthStatus.BROKEN -> stringResource(R.string.migration_health_broken)
-        org.skepsun.kototoro.migration.domain.SourceHealthStatus.FAILING -> stringResource(R.string.migration_health_failing)
+    val healthKind = when (sourceHealth) {
+        org.skepsun.kototoro.migration.domain.SourceHealthStatus.UNINSTALLED -> DetailsSourceNoticeKind.UNINSTALLED
+        org.skepsun.kototoro.migration.domain.SourceHealthStatus.BROKEN -> DetailsSourceNoticeKind.BROKEN
+        org.skepsun.kototoro.migration.domain.SourceHealthStatus.FAILING -> DetailsSourceNoticeKind.FAILING
         // A disabled or merely suspicious source still works; the entry being open proves it, so no migrate prompt.
         org.skepsun.kototoro.migration.domain.SourceHealthStatus.SUSPICIOUS,
         org.skepsun.kototoro.migration.domain.SourceHealthStatus.DISABLED,
-        org.skepsun.kototoro.migration.domain.SourceHealthStatus.HEALTHY -> null
+        org.skepsun.kototoro.migration.domain.SourceHealthStatus.HEALTHY -> DetailsSourceNoticeKind.NONE
     }
-    val healthMessage = healthLabel?.let { stringResource(R.string.migration_health_details_warning, it) }
-    val migrateLabel = stringResource(R.string.migrate)
-    LaunchedEffect(healthMessage) {
-        val message = healthMessage ?: return@LaunchedEffect
-        val result = snackbarHostState.showSnackbar(
-            message = message,
-            actionLabel = migrateLabel,
-            withDismissAction = true,
-            duration = androidx.compose.material3.SnackbarDuration.Long,
-        )
-        if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
-            content?.let { appRouter.openMigration(longArrayOf(it.id)) }
-        }
+    // A load that failed because the source cannot serve content is the same news as the health
+    // warning, so it feeds the inline notice instead of a snackbar pinned over the "Read" dock.
+    var sourceUnavailable by remember(content?.id) { mutableStateOf(false) }
+    // The same switch as the favourites banner: one "don't show again" silences both guesses.
+    val sourceHealthWarningsEnabled by settings.observeAsState(AppSettings.KEY_SOURCE_HEALTH_BANNER) {
+        isSourceHealthBannerEnabled
+    }
+    val noticeKind = detailsSourceNoticeKind(
+        healthKind = healthKind,
+        sourceUnavailable = sourceUnavailable,
+        healthWarningsEnabled = sourceHealthWarningsEnabled,
+    )
+    val onDisableSourceNotice: (() -> Unit)? = if (detailsSourceNoticeIsDismissible(noticeKind)) {
+        { settings.isSourceHealthBannerEnabled = false }
+    } else {
+        null
+    }
+    val noticeLabel = when (noticeKind) {
+        DetailsSourceNoticeKind.UNINSTALLED -> stringResource(R.string.migration_health_uninstalled)
+        DetailsSourceNoticeKind.BROKEN -> stringResource(R.string.migration_health_broken)
+        DetailsSourceNoticeKind.FAILING -> stringResource(R.string.migration_health_failing)
+        DetailsSourceNoticeKind.NONE -> null
+    }
+    val noticeMessage = noticeLabel?.let { stringResource(R.string.migration_health_details_warning, it) }
+    val onMigrateSource: () -> Unit = {
+        content?.let { appRouter.openMigration(longArrayOf(it.id)) }
+        Unit
     }
     val toolbarGapPx = with(density) { 12.dp.toPx() }
 
@@ -611,7 +632,23 @@ private fun DetailsScreenContent(
         }
     }
     DisposableEffect(lifecycleOwner, rootView, viewModel) {
-        viewModel.onError.observeEvent(lifecycleOwner, SnackbarErrorObserver(rootView))
+        val errorObserver = SnackbarErrorObserver(rootView)
+        // The inline notice above already says the source is unusable, so the "this source is not
+        // supported" snackbar it triggers would be the same sentence twice -- and a floating one.
+        viewModel.onError.observeEvent(
+            lifecycleOwner,
+            object : kotlinx.coroutines.flow.FlowCollector<Throwable> {
+                override suspend fun emit(value: Throwable) {
+                    val isUnsupportedSource = value is UnsupportedSourceException
+                    if (isUnsupportedSource) {
+                        sourceUnavailable = true
+                    }
+                    if (!detailsOwnsSourceError(isUnsupportedSource)) {
+                        errorObserver.emit(value)
+                    }
+                }
+            },
+        )
         viewModel.onActionDone.observeEvent(lifecycleOwner, ReversibleActionObserver(rootView))
         viewModel.onDownloadStarted.observeEvent(lifecycleOwner, DownloadStartedObserver(rootView))
         val sourceBindingsObserver = LifecycleEventObserver { _, event ->
@@ -889,6 +926,18 @@ private fun DetailsScreenContent(
             return@handleDetailsAction
         }
         when (action) {
+            is DetailsAction.ManageTrackingBinding -> {
+                trackingPanelServiceId = action.service.id
+                detailsScreenState.setShowMetadataSourceDialog(true)
+            }
+            is DetailsAction.BindTrackingMatch -> {
+                trackingPanelServiceId = action.match.service.id
+                detailsScreenState.setShowMetadataSourceDialog(true)
+            }
+            is DetailsAction.RemoveTrackingMatch -> {
+                trackingPanelServiceId = action.match.service.id
+                detailsScreenState.setShowMetadataSourceDialog(true)
+            }
             DetailsAction.ToggleList -> {
                 openPaneTab(DETAILS_TAB_CHAPTERS)
             }
@@ -1471,6 +1520,9 @@ private fun DetailsScreenContent(
                                         content = content,
                                         isTemporaryReadOnly = isTemporaryReadOnly,
                                         isWorkDetails = isWorkDetails,
+                                        sourceHealthNotice = noticeMessage,
+                                        onMigrateSource = onMigrateSource,
+                                        onDisableSourceNotice = onDisableSourceNotice,
                                         sharedElementKey = sharedElementKey,
                                         pendingTagSearch = { detailsScreenState.setPendingTagSearch(it) },
                                         pendingAuthorSearch = { author, source ->
@@ -1498,7 +1550,10 @@ private fun DetailsScreenContent(
                                             }
                                         },
                                         onOpenMetadataSourceSheet = {
-                                            if (!isTemporaryReadOnly) detailsScreenState.setShowMetadataSourceDialog(true)
+                                            if (!isTemporaryReadOnly) {
+                                                trackingPanelServiceId = null
+                                                detailsScreenState.setShowMetadataSourceDialog(true)
+                                            }
                                         },
                                         onOpenReadingSourceSheet = {
                                             if (isWorkActionEnabled) detailsScreenState.setShowReadingSourceDialog(true)
@@ -1566,6 +1621,7 @@ private fun DetailsScreenContent(
                                     },
                                     // A single reading source: its chapter tab has nothing to switch to.
                                     onSelectReadingChapterTab = {},
+                                    onChooseReadingSource = chooseReadingSource,
                                     selectedTabId = sheetTabSelection,
                                     availableTabIds = availableTabIds,
                                     isSheetFullyExpanded = false,
@@ -1673,6 +1729,9 @@ private fun DetailsScreenContent(
                                 content = content,
                                 isTemporaryReadOnly = isTemporaryReadOnly,
                                 isWorkDetails = isWorkDetails,
+                                sourceHealthNotice = noticeMessage,
+                                onMigrateSource = onMigrateSource,
+                                onDisableSourceNotice = onDisableSourceNotice,
                                 sharedElementKey = sharedElementKey,
                                 pendingTagSearch = { detailsScreenState.setPendingTagSearch(it) },
                                 pendingAuthorSearch = { author, source ->
@@ -1700,7 +1759,10 @@ private fun DetailsScreenContent(
                                     }
                                 },
                                 onOpenMetadataSourceSheet = {
-                                    if (!isTemporaryReadOnly) detailsScreenState.setShowMetadataSourceDialog(true)
+                                    if (!isTemporaryReadOnly) {
+                                        trackingPanelServiceId = null
+                                        detailsScreenState.setShowMetadataSourceDialog(true)
+                                    }
                                 },
                                 onOpenReadingSourceSheet = {
                                     if (isWorkActionEnabled) detailsScreenState.setShowReadingSourceDialog(true)
@@ -1779,6 +1841,7 @@ private fun DetailsScreenContent(
                             },
                             // A single reading source: its chapter tab has nothing to switch to.
                             onSelectReadingChapterTab = {},
+                            onChooseReadingSource = chooseReadingSource,
                             selectedTabId = sheetTabSelection,
                             availableTabIds = availableTabIds,
                             isSheetFullyExpanded = isCompactPaneFullyExpanded,
@@ -2053,6 +2116,7 @@ private fun DetailsScreenContent(
 
             if (showMetadataSourceDialog) {
                 MetadataSourceSheet(
+                    initialServiceId = trackingPanelServiceId,
                     currentOptions = metadataSourceOptions,
                     selectedOption = metadataSourceOptions.firstOrNull { it.isSelected },
                     searchServices = metadataSearchServices,
@@ -2076,21 +2140,16 @@ private fun DetailsScreenContent(
                     onSelectOption = viewModel::selectMetadataSource,
                     onRemoveOption = viewModel::removeMetadataSourceBinding,
                     onSearchQueryChange = viewModel::updateMetadataSearchQuery,
-                    onSearch = viewModel::searchMetadataBindings,
-                    onBindResult = viewModel::bindMetadataSource,
+                    busy = trackingEditBusy,
+                    onSearch = { service ->
+                        viewModel.setMetadataSearchService(service)
+                        viewModel.searchMetadataBindings()
+                    },
+                    onBindResult = viewModel::bindTrackingSource,
                     onOpenResult = { item ->
                         onActionClick(DetailsAction.OpenTrackingDetails(item.service, item.remoteId, item.url))
                     },
-                    onOpenLinkedTracking = { linked ->
-                        onActionClick(DetailsAction.OpenTrackingDetails(linked.service, linked.remoteId, linked.url))
-                    },
-                    onUpdateLinkedTrackingStatus = { linked, status ->
-                        viewModel.updateScrobbling(
-                            scrobblerServiceId = linked.service.id,
-                            rating = linked.rating ?: 0f,
-                            status = status,
-                        )
-                    },
+                    onSaveTracking = viewModel::saveTrackingProgress,
                 )
             }
 

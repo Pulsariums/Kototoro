@@ -4,10 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -36,7 +32,7 @@ fun ChoiceChipFlow(
     )
 }
 
-/** One chip of [ChoiceChipFlow]: Android's 36dp height and label style, so a shared row looks the same on both hosts. */
+/** Existing option sets use the shared compact toggle treatment on both hosts. */
 @Composable
 fun ChoiceChip(
     selected: Boolean,
@@ -46,14 +42,12 @@ fun ChoiceChip(
     trailingIcon: (@Composable () -> Unit)? = null,
     label: @Composable () -> Unit,
 ) {
-    FilterChip(
+    CompactChoicePill(
         selected = selected,
         onClick = onClick,
-        modifier = modifier.heightIn(min = 36.dp),
+        modifier = modifier,
         enabled = enabled,
-        label = {
-            ProvideTextStyle(MaterialTheme.typography.labelLarge) { label() }
-        },
         trailingIcon = trailingIcon,
+        label = label,
     )
 }

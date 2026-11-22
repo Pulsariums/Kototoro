@@ -277,8 +277,8 @@ fun ContentSource.getTitle(context: Context): String {
     val baseTitle = when (val source = unwrap()) {
         is KotatsuParserSource -> source.title
         LocalMangaSource -> context.getString(R.string.local_storage)
-        LocalNovelSource -> context.getString(R.string.domain_novel) + " " + context.getString(R.string.local_storage)
-        LocalVideoSource -> context.getString(R.string.domain_video) + " " + context.getString(R.string.local_storage)
+        LocalNovelSource -> context.getString(R.string.local_novel_storage)
+        LocalVideoSource -> context.getString(R.string.local_video_storage)
         TestContentSource -> context.getString(R.string.test_parser)
         is ExternalContentSource -> source.resolveName(context)
         is org.skepsun.kototoro.core.jsonsource.JsonContentSource -> source.displayName.ifBlank { source.name }
@@ -391,6 +391,9 @@ private class AnonymousContentSource(
         name.startsWith("MIHON_") -> ContentType.MANGA
         name.startsWith("IREADER_") -> ContentType.NOVEL
         name.startsWith("TSUNDOKU_") -> ContentType.NOVEL
+        // Tracking sites that only list one kind of work; the others (AniList, Bangumi…) list several.
+        name.startsWith("TRACKING_TMDB") || name.startsWith("TRACKING_SIMKL") -> ContentType.VIDEO
+        name.startsWith("TRACKING_MANGAUPDATES") || name.startsWith("TRACKING_MANGABAKA") -> ContentType.MANGA
         fallbackContentType != null && fallbackContentType != ContentType.OTHER -> fallbackContentType
         else -> ContentType.OTHER
     }

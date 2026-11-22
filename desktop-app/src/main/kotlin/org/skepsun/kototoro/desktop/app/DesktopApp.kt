@@ -1,5 +1,11 @@
 package org.skepsun.kototoro.desktop.app
 
+import org.skepsun.kototoro.core.ui.buttons.Button
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 import org.skepsun.kototoro.core.ui.topbar.SourceResultsTopBar
 import org.skepsun.kototoro.core.ui.topbar.FloatingTopBarScaffold
 import org.skepsun.kototoro.list.ui.compose.ContentCollectionError
@@ -165,6 +171,7 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                             DesktopScreen.FEED -> DesktopFeedPanel(controller, listState, !closing)
                             DesktopScreen.UPDATED -> DesktopUpdatesPage(controller, state, !closing)
                             DesktopScreen.SUGGESTIONS -> DesktopSuggestionsPage(controller, state, !closing)
+                            DesktopScreen.SEARCH -> DesktopGlobalSearchPage(controller, listState, !closing)
                             DesktopScreen.EXPLORE -> Browse(controller, listState, !closing)
                             DesktopScreen.LIBRARY, DesktopScreen.HISTORY -> DesktopLibraryPanel(controller, listState, !closing,
                                 if (listState.screen == DesktopScreen.HISTORY) historyCollection else favouritesCollection)
@@ -218,6 +225,8 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                 DesktopIncognitoDialog(prompt, !closing, controller::resolveIncognitoPrompt,
                     controller::setIncognitoPromptDontAskAgain, controller::dismissIncognitoPrompt)
             }
+            // A community work's other sources, from a chart or a similar-works rail on whichever page is showing.
+            DesktopCommunitySourcePicker(controller)
         }
     }
 }
@@ -247,7 +256,9 @@ internal fun DesktopSourcePane(controller: DesktopController, state: DesktopAppS
         }, enabled = enabled, modifier = Modifier.fillMaxWidth()) { Text(desktopText("browse.importExtension")) }
         HorizontalDivider()
         Text(desktopText("browse.sources", sources.size), fontWeight = FontWeight.SemiBold)
-        DesktopSearchField(filter, { filter = it }, desktopText("browse.findSource"), modifier = Modifier.fillMaxWidth())
+        // On the rail card: the field contributes its outline, not a second tinted block inside the card.
+        DesktopSearchField(filter, { filter = it }, desktopText("browse.findSource"),
+            modifier = Modifier.fillMaxWidth(), onCard = true)
         DesktopSourceFilterControls(
             state.exploreFilter, state.enabledSources, controller::exploreFilter, enabled, "rail",
         )
@@ -276,7 +287,7 @@ private val ScrollUnderScreens = setOf(DesktopScreen.MORE, DesktopScreen.SERVICE
     DesktopScreen.REPLACE_RULES, DesktopScreen.SOURCE_TEST, DesktopScreen.EXTENSION_SETTINGS, DesktopScreen.SETUP_WIZARD, DesktopScreen.RECOMMENDATIONS,
     DesktopScreen.PREFERENCES, DesktopScreen.BACKUPS, DesktopScreen.UPDATED, DesktopScreen.SUGGESTIONS,
     DesktopScreen.BOOKMARKS, DesktopScreen.DOWNLOADS, DesktopScreen.CHANGELOG, DesktopScreen.CRASH_LOGS,
-    DesktopScreen.DICTIONARY_RULES, DesktopScreen.TAG_BLACKLIST)
+    DesktopScreen.DICTIONARY_RULES, DesktopScreen.TAG_BLACKLIST, DesktopScreen.SEARCH)
 
 /**
  * Where a page with its own floating bar starts that bar: below the window's notices, or at the page margin. The page
@@ -305,6 +316,7 @@ private fun Header(state: DesktopAppState, controller: DesktopController, enable
         DesktopScreen.FEED -> AndroidStrings["feed"]
         DesktopScreen.UPDATED -> AndroidStrings["updated"]
         DesktopScreen.SUGGESTIONS -> AndroidStrings["suggestions"]
+        DesktopScreen.SEARCH -> AndroidStrings["global_search"]
         DesktopScreen.EXPLORE -> state.selectedSource?.displayName ?: desktopText("screens.browseSource")
         DesktopScreen.LIBRARY -> desktopText("nav.favourites")
         DesktopScreen.HISTORY -> desktopText("screens.history")
@@ -559,6 +571,7 @@ internal fun ContentGrid(contents: List<SourceContent>, enabled: Boolean, covers
     /** Android's grid size, percent of the default card width (the shelves' display options). */
     gridSize: Int = 100,
     metaOf: (SourceContent) -> String = { it.authors.joinToString().ifBlank { it.source.name } },
+    captionOf: (SourceContent) -> String? = { null },
     /** Shared near-end loading requests one more batch per observed item count. */
     onReachEnd: (() -> Unit)? = null,
     /** Set when the source has no more batches: the footer then stops asking and the row below says so. */
@@ -617,6 +630,7 @@ internal fun ContentGrid(contents: List<SourceContent>, enabled: Boolean, covers
             // Android's compact grid lifts the bottom badges clear of the title on the scrim.
             val bottomLift = if (titleOverlay) (style.posterHeight.value * 0.28f).dp.coerceIn(32.dp, 44.dp) else 0.dp
             ContentPosterCard(ContentCardPresentation(content.id, content.title), style,
+                caption = captionOf(content),
                 rimBorderBrush = rimBorderBrush,
                 onClick = { if (selecting) onToggleSelection(content) else onOpen(content) },
                 onLongClick = { onToggleSelection(content) },

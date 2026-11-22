@@ -74,11 +74,15 @@ fun ListConfigRoute(
             section == ListConfigSection.HomeHistory ||
             section == ListConfigSection.HomeUpdates ||
             section == ListConfigSection.HomeRecommendations,
+        gridSizeIsSectionLocal = section == ListConfigSection.HomeHistory ||
+            section == ListConfigSection.HomeUpdates ||
+            section == ListConfigSection.HomeRecommendations,
         gridSize = pendingGridSize,
         onGridSizeChange = {
             pendingGridSize = it
             viewModel.updateGridSize(it)
         },
+        section = section.toDisplaySection(),
         railRows = railRows,
         onRailRowsChange = railRows?.let { rows ->
             { value: Int -> viewModel.updateRailRows(value) }

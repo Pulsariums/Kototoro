@@ -26,11 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,6 +74,8 @@ import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
 import org.skepsun.kototoro.core.ui.adaptive.tvHorizontalEdgeGuard
 import org.skepsun.kototoro.core.ui.adaptive.tvVerticalEdgeGuard
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.reader.core.ZoomMode
 import org.skepsun.kototoro.reader.domain.ReaderColorFilter
 import org.skepsun.kototoro.reader.ui.colorfilter.ReaderColorCorrectionControls
@@ -126,6 +126,8 @@ data class ComposeReaderOptionsState(
     val optimization: Boolean = false,
     val preloadReduction: Boolean = false,
     val chapterTitleAtBottom: Boolean = false,
+    /** Keeps the floating column on screen while the rest of the chrome hides (issue #683). */
+    val floatingControlsPinned: Boolean = false,
     val superResolution: Boolean = false,
     val appearancePreviewOriginalUri: String? = null,
     val appearancePreviewProcessedUri: String? = null,
@@ -360,6 +362,11 @@ fun ReaderOptionsDetailTabs(
     settingsDescription: String,
     onOpenSettings: (() -> Unit)?,
     dragModifier: Modifier,
+    /**
+     * One line saying what the panel's adjustments change: which of them are remembered per title and which are
+     * written back as the default experience. Blank on hosts that have no such split.
+     */
+    scopeNote: String = "",
 ) {
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
@@ -424,6 +431,17 @@ fun ReaderOptionsDetailTabs(
                 .weight(1f),
         ) { page ->
             tabs[page].content()
+        }
+        if (scopeNote.isNotBlank()) {
+            Text(
+                text = scopeNote,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("reader-options-scope-note")
+                    .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 8.dp),
+            )
         }
     }
 }

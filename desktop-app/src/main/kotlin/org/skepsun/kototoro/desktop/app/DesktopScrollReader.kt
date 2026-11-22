@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.animateScrollBy
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.reader.ui.compose.readerTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,10 +14,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -34,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.skepsun.kototoro.core.ui.chapters.ChapterBreakCard
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -46,7 +48,7 @@ import kotlin.math.roundToInt
 internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAppState, focus: FocusRequester,
     closing: Boolean, modifier: Modifier, onToggleControls: () -> Unit = {},
     autoScroll: DesktopReaderAutoScroll = remember { DesktopReaderAutoScroll() }, onShowMenu: () -> Unit = {},
-    horizontal: Boolean = false, reversed: Boolean = false) {
+    horizontal: Boolean = false, reversed: Boolean = false, controlsVisible: Boolean = true) {
     BoxWithConstraints(modifier) {
         val density = LocalDensity.current
         val viewportHeight = maxHeight.coerceAtLeast(1.dp)
@@ -61,11 +63,16 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
         // The horizontal strip has no such switch on Android, so its pages stay flush.
         val gap = if (!horizontal && state.readerSettings.webtoonGaps) WEBTOON_PAGE_GAP_DP.dp else 0.dp
         val spacing = with(density) { gap.roundToPx() }
-        val layout: DesktopStripLayout = remember(state.pages, state.readerImages, state.readerGeometry, width, height,
+        // The strip can be zoomed in: pages grow past the window across the strip and it pans in that direction. The restore key
+        // stays on the window width, so zooming keeps the position instead of replaying the saved one.
+        var zoom by remember { mutableFloatStateOf(1f) }
+        val contentWidth = if (horizontal) width else (width * zoom).roundToInt().coerceAtLeast(1)
+        val contentHeight = if (horizontal) (height * zoom).roundToInt().coerceAtLeast(1) else height
+        val layout: DesktopStripLayout = remember(state.pages, state.readerImages, state.readerGeometry, contentWidth, contentHeight,
             spacing, horizontal, reversed) {
-            if (horizontal) DesktopHorizontalScrollLayout(state.pages, state.readerImages, width, height, spacing,
+            if (horizontal) DesktopHorizontalScrollLayout(state.pages, state.readerImages, width, contentHeight, spacing,
                 reversed, state.readerGeometry)
-            else DesktopScrollLayout(state.pages, state.readerImages, width, height, spacing, state.readerGeometry)
+            else DesktopScrollLayout(state.pages, state.readerImages, contentWidth, contentHeight, spacing, state.readerGeometry)
         }
         val chapterId = state.chapter?.id ?: return@BoxWithConstraints
         val list = remember(chapterId) { LazyListState(state.pageIndex.coerceIn(state.pages.indices), 0) }
@@ -122,9 +129,23 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                 list.scrollBy(step)
             }
         }
-        val visibleFrame by remember(layout, list) { derivedStateOf {
-            layout.frame(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset)
-        } }
+        var appliedZoom by remember { mutableFloatStateOf(1f) }
+        LaunchedEffect(zoom) {
+            if (zoom == appliedZoom) return@LaunchedEffect
+            val ratio = zoom / appliedZoom
+            appliedZoom = zoom
+            list.scrollToItem(list.firstVisibleItemIndex, (list.firstVisibleItemScrollOffset * ratio).roundToInt())
+        }
+        val panState = rememberScrollState()
+        // The chapter break card is one more item after the last page. Scrolled to, it counts as the end of that page,
+        // so progress and anchors never see an index the scene does not know.
+        fun frameOf(geometry: DesktopStripLayout, pageCount: Int): org.skepsun.kototoro.reader.core.ReaderFrame {
+            val first = list.firstVisibleItemIndex
+            return if (first >= pageCount && pageCount > 0) {
+                geometry.frame(pageCount - 1, geometry.extent(pageCount - 1).roundToInt() + list.firstVisibleItemScrollOffset)
+            } else geometry.frame(first, list.firstVisibleItemScrollOffset)
+        }
+        val visibleFrame by remember(layout, list) { derivedStateOf { frameOf(layout, state.pages.size) } }
 
         LaunchedEffect(chapterId, state.readerNavigation, width, targetLoaded, state.busy) {
             if (state.busy || restored) return@LaunchedEffect
@@ -142,10 +163,12 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                 val geometry = currentLayout
                 val snapshot = currentState
                 val indices = info.visibleItemsInfo.map { it.index }.filter { it in snapshot.pages.indices }
-                val frame = geometry.frame(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset)
+                val frame = frameOf(geometry, snapshot.pages.size)
                 val first = frame.progress.activePageId?.let(geometry.scene::indexOf) ?: -1
                 val last = frame.progress.lastVisiblePageId?.let(geometry.scene::indexOf) ?: -1
-                val matched = info.visibleItemsInfo.all { item -> geometry.extent(item.index).roundToInt() == item.size }
+                val matched = info.visibleItemsInfo.all { item ->
+                    item.index >= snapshot.pages.size || geometry.extent(item.index).roundToInt() == item.size
+                }
                 ObservedViewport(indices, first, frame.progress.intraPageOffsetPx, last, !list.canScrollForward,
                     restored && matched && !snapshot.busy,
                     indices.all { snapshot.pages[it].id in snapshot.readerImages &&
@@ -155,7 +178,7 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                     controller.continuousImages(chapterId, viewport.indices)
                     // Android's continuous prediction (reader-core): pages within the lookahead load in the background.
                     val geometry = currentLayout
-                    val frame = geometry.frame(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset)
+                    val frame = frameOf(geometry, currentState.pages.size)
                     controller.prefetchPages(chapterId, prediction.predict(geometry.scene, frame)
                         .filter { it.priority != org.skepsun.kototoro.reader.core.PrefetchPriority.IMMEDIATE }
                         .map { geometry.scene.indexOf(it.pageId) }.filter { it >= 0 && it !in viewport.indices })
@@ -187,6 +210,16 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                     if (image?.tiled == true) DesktopTiledImage(image,
                         visibleFrame.visibleNodes.firstOrNull { it.pageId.value == page.id }, modifier = item)
                     else ReaderImage(image, index, item)
+                }
+            }
+            if (state.readerSettings.chapterBreak && state.pages.isNotEmpty()) item(key = "chapter-break") {
+                val next = state.adjacentChapter(true)
+                // A low band, not a screen: it marks the boundary and the chapter then runs on as usual.
+                val band = if (horizontal) Modifier.fillMaxHeight().width(maxOf(with(density) { width.toDp() } / 3, 280.dp))
+                    else Modifier.fillMaxWidth().height(viewportHeight / 3)
+                Box(band.testTag("reader-chapter-break"), contentAlignment = Alignment.Center) {
+                    ChapterBreakCard(state.chapter?.title,
+                        next?.let { it.title?.takeIf(String::isNotBlank) ?: it.number.toString().removeSuffix(".0") })
                 }
             }
         }
@@ -274,6 +307,10 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                             dragged = true
                             velocity.addPosition(change.uptimeMillis, change.position)
                             list.dispatchRawDelta(advance)
+                            // A zoomed strip is wider than the window: the sideways part of the drag pans it.
+                            if (zoom > 1f) panState.dispatchRawDelta(
+                                if (horizontal) -(change.position.y - change.previousPosition.y)
+                                else -(change.position.x - change.previousPosition.x))
                             change.consume()
                         }
                         if (!dragged) return@awaitEachGesture
@@ -287,13 +324,38 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
                     }
                 }) {
                 if (horizontal) {
-                    LazyRow(state = list, userScrollEnabled = !closing && restored, reverseLayout = reversed,
-                        horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.fillMaxSize()
-                            .padding(bottom = 16.dp).testTag("reader-scroll-list"), content = pageContent)
+                    Box(Modifier.fillMaxSize().padding(bottom = 16.dp).verticalScroll(panState)) {
+                        LazyRow(state = list, userScrollEnabled = !closing && restored, reverseLayout = reversed,
+                            horizontalArrangement = Arrangement.spacedBy(gap),
+                            modifier = Modifier.fillMaxWidth().height(with(density) { contentHeight.toDp() })
+                                .testTag("reader-scroll-list"), content = pageContent)
+                    }
                 } else {
-                    LazyColumn(state = list, userScrollEnabled = !closing && restored,
-                        verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.fillMaxSize()
-                            .padding(end = 16.dp).testTag("reader-scroll-list"), content = pageContent)
+                    Box(Modifier.fillMaxSize().padding(end = 16.dp).horizontalScroll(panState)) {
+                        LazyColumn(state = list, userScrollEnabled = !closing && restored,
+                            verticalArrangement = Arrangement.spacedBy(gap),
+                            modifier = Modifier.width(with(density) { contentWidth.toDp() }).fillMaxHeight()
+                                .testTag("reader-scroll-list"), content = pageContent)
+                    }
+                }
+                if (controlsVisible) androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.material3.LocalContentColor provides LocalDesktopReaderPageStyle.current.text,
+                ) {
+                    org.skepsun.kototoro.reader.ui.compose.design.ReaderZoomControls(
+                        onZoomIn = { zoom = (zoom * 1.25f).coerceAtMost(MAX_STRIP_ZOOM); focus.requestFocus() },
+                        onZoomOut = { zoom = (zoom / 1.25f).coerceAtLeast(1f); focus.requestFocus() },
+                        zoomInDescription = AndroidStrings["zoom_in"],
+                        zoomOutDescription = AndroidStrings["zoom_out"],
+                        zoomInEnabled = restored && zoom < MAX_STRIP_ZOOM,
+                        zoomOutEnabled = restored && zoom > 1f,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+                    ) {
+                        Text("${(zoom * 100).roundToInt()}%",
+                            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.clip(androidx.compose.foundation.shape.CircleShape)
+                                .clickable(enabled = restored) { zoom = 1f; focus.requestFocus() }
+                                .padding(horizontal = 8.dp, vertical = 6.dp).testTag("reader-zoom"))
+                    }
                 }
                 if (restored) {
                     if (horizontal) {
@@ -311,3 +373,6 @@ internal fun DesktopScrollReader(controller: DesktopController, state: DesktopAp
 
 private data class ObservedViewport(val indices: List<Int>, val first: Int, val offset: Float, val last: Int,
     val atEnd: Boolean, val stable: Boolean, val loaded: Boolean)
+
+/** Largest zoom of the continuous vertical strip, as a multiple of the window width. */
+private const val MAX_STRIP_ZOOM = 4f

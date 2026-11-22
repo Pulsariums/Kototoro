@@ -1,5 +1,6 @@
 package org.skepsun.kototoro.suggestions.ui
 
+import org.skepsun.kototoro.list.ui.ListDisplaySection
 import org.skepsun.kototoro.search.domain.LibrarySearchQueries
 import org.skepsun.kototoro.search.domain.LibrarySearchScope
 import org.skepsun.kototoro.search.domain.matchLibraryText
@@ -69,9 +70,11 @@ class SuggestionsViewModel @Inject constructor(
     private val globalFavoritesState: org.skepsun.kototoro.favourites.domain.GlobalFavoritesState,
     private val librarySearchQueries: LibrarySearchQueries,
     spaceBrowseScope: SpaceBrowseScope,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) : ContentListViewModel(settings, dataRepository, localStorageChanges), QuickFilterListener by quickFilter,
     SpaceBindableViewModel {
     private val spaceBinding = spaceBrowseScope.createBinding(viewModelScope + Dispatchers.Default)
+    private val reasonStrings = org.skepsun.kototoro.core.ui.text.AndroidUiStrings(context)
 
     override val isFilterBarVisible = MutableStateFlow(true)
 
@@ -85,8 +88,15 @@ class SuggestionsViewModel @Inject constructor(
         .map { it < Int.MAX_VALUE }
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
-    override val listMode = settings.observeAsFlow(AppSettings.KEY_LIST_MODE) { this.listMode }
-        .stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, settings.listMode)
+    override fun displaySection() = ListDisplaySection.SUGGESTIONS
+
+    override val listMode = settings.observeAsFlow(AppSettings.listModeKeysOf(ListDisplaySection.SUGGESTIONS)) {
+        listModeOf(ListDisplaySection.SUGGESTIONS)
+    }.stateIn(
+        viewModelScope + Dispatchers.Default,
+        SharingStarted.Eagerly,
+        settings.listModeOf(ListDisplaySection.SUGGESTIONS),
+    )
 
     override val currentGroupTab = globalFavoritesState.selectedGroupTab.scopedToSpace(
         spaceGroupTab = spaceBinding.groupTab,
@@ -105,14 +115,36 @@ class SuggestionsViewModel @Inject constructor(
 
     private val loadParams = quickFilter.appliedOptions.combineWithSettings()
 
+    private val requestedDirection = MutableStateFlow<org.skepsun.kototoro.suggestions.domain.SuggestionDirection?>(null)
+
+    /** The community tab is offered whenever the community is on; it explains itself while it has no picks yet. */
+    val hasCommunity = settings.observeAsFlow(AppSettings.KEY_COMMUNITY_ENABLED) { isCommunityEnabled }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), settings.isCommunityEnabled)
+
+    val direction = combine(requestedDirection, hasCommunity) { selected, available ->
+        selected.takeUnless { !available && it == org.skepsun.kototoro.suggestions.domain.SuggestionDirection.COMMUNITY }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val language = settings.observeAsFlow(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.PREFERENCE_KEY) {
+        suggestionsLanguage
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), settings.suggestionsLanguage)
+
+    val languageOnly = settings.observeAsFlow(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ONLY_PREFERENCE_KEY) {
+        suggestionsLanguageOnly
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), settings.suggestionsLanguageOnly)
+
+    fun selectDirection(value: org.skepsun.kototoro.suggestions.domain.SuggestionDirection?) {
+        requestedDirection.value = value
+    }
+
     /** Text typed in the overlay's "Suggestions" tab; narrows the loaded suggestions in memory. */
     val libraryQuery: StateFlow<String> = librarySearchQueries.query(LibrarySearchScope.SUGGESTIONS)
 
     fun clearLibraryQuery() = librarySearchQueries.clear(LibrarySearchScope.SUGGESTIONS)
 
     override val content = combine(
-        loadParams.flatMapLatest { filterOptions ->
-            repository.observeAll(200, filterOptions)
+        combine(loadParams, direction) { filters, direction -> filters to direction }.flatMapLatest { (filters, direction) ->
+            repository.observeAll(2000, filters, direction = direction)
         },
         quickFilter.appliedOptions,
         observeListModeWithTriggers(),
@@ -125,6 +157,7 @@ class SuggestionsViewModel @Inject constructor(
                 else sourcePresetsRepository.observe(id)
             },
         libraryQuery,
+        repository.observeReasons(),
     ) { values: Array<Any?> ->
         val list = values[0] as List<Content>
         val libraryQuery = values[7] as String
@@ -133,6 +166,13 @@ class SuggestionsViewModel @Inject constructor(
         val groupTab = values[3] as BrowseGroupTab
         val sourceTags = values[4] as Set<SourceTag>
         val preset = values[6] as? SourcePreset
+        quickFilter.useScope(groupTab to preset?.id) { source ->
+            preset.matches(source) &&
+                groupTab.matchesContentGroup(sourceGroupManager.getContentGroup(source)) &&
+                groupTab.matchesOriginGroup(sourceGroupManager.getOriginGroup(source))
+        }
+        @Suppress("UNCHECKED_CAST")
+        val reasons = values[8] as Map<Long, Pair<org.skepsun.kototoro.suggestions.domain.SuggestionDirection, String?>>
         val filteredList = list.filter { manga ->
             val source = manga.source
             if (!preset.matches(source)) {
@@ -160,7 +200,17 @@ class SuggestionsViewModel @Inject constructor(
 
         if (visibleList.isEmpty()) {
             groupedSuggestionIds = emptyMap()
-            if (filters.isEmpty() && groupTab == BrowseGroupTab.All && sourceTags.isEmpty() && libraryQuery.isEmpty()) {
+            val unfiltered = filters.isEmpty() && groupTab == BrowseGroupTab.All && sourceTags.isEmpty() && libraryQuery.isEmpty()
+            if (unfiltered && direction.value == org.skepsun.kototoro.suggestions.domain.SuggestionDirection.COMMUNITY) {
+                resultList.add(
+                    EmptyState(
+                        icon = R.drawable.ic_empty_common,
+                        textPrimary = R.string.community_picks_empty_title,
+                        textSecondary = R.string.community_picks_empty_summary,
+                        actionStringRes = 0,
+                    )
+                )
+            } else if (unfiltered) {
                 resultList.add(
                     EmptyState(
                         icon = R.drawable.ic_empty_common,
@@ -186,7 +236,18 @@ class SuggestionsViewModel @Inject constructor(
             quickFilter.filterItem(filters)?.let { resultList.add(it) }
             for (group in groupedList) {
                 val model = mangaListMapper.toListModel(group.representative, mode)
-                resultList += model.toGroupedListModel(group)
+                val reason = reasons[group.representative.id]?.let { (direction, key) ->
+                    org.skepsun.kototoro.core.ui.suggestions.suggestionReasonText(
+                        reasonStrings, direction, key,
+                        context.resources.configuration.locales[0].language,
+                    )
+                }
+                resultList += when (val grouped = model.toGroupedListModel(group)) {
+                    is ContentGridModel -> grouped.copy(recommendationReason = reason)
+                    is ContentCompactListModel -> grouped.copy(subtitle = reason ?: grouped.subtitle)
+                    is ContentDetailedListModel -> grouped.copy(subtitle = reason ?: grouped.subtitle)
+                    else -> grouped
+                }
             }
         }
         resultList as List<ListModel>
@@ -205,6 +266,9 @@ class SuggestionsViewModel @Inject constructor(
         updateSuggestions()
     }
 
+    val visibleCount = content.map { items -> items.count { it is org.skepsun.kototoro.list.ui.model.ContentListModel } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     override fun onRetry() = Unit
 
     fun updateSuggestions() {
@@ -216,6 +280,10 @@ class SuggestionsViewModel @Inject constructor(
     fun requestMoreItems() {
         if (isPaginationReady.compareAndSet(true, false)) {
             limit.value += PAGE_SIZE
+            // Everything stored is on screen: fetch the next pages of the sources.
+            launchJob(Dispatchers.Default) {
+                suggestionsScheduler.startMore()
+            }
         }
     }
 

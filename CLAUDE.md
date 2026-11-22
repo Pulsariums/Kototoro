@@ -123,7 +123,7 @@ npm run docs:build
 - **Kotlin** 2.4.0 / **AGP** 9.3.1 / **Gradle** 9.7.0（使用 `gradle/libs.versions.toml` 版本目录）
 - **compileSdk** 37.1（app；Compose ui 1.13 要求该小版本 SDK）/ **minSdk** 26 / **targetSdk** 37
 - **JVM 目标**: Java 11（开启 desugaring 以使用现代 API）
-- **UI**: Jetpack Compose（BOM 2026.08.00；ui/runtime 1.13.0-rc01 覆盖 BOM 的 1.12.x，用于边缘渐进模糊的 `BlurRadiusSpec`）+ Material3（1.5.0-alpha26 覆盖 BOM 的 1.4.0）+ ViewBinding（混合过渡期）
+- **UI**: Jetpack Compose（BOM 2026.08.00；ui/runtime/foundation/animation 1.13.0-rc01 覆盖 BOM 的 1.12.x，用于边缘渐进模糊的 `BlurRadiusSpec`）+ Material3（1.5.0-rc01 覆盖 BOM 的 1.4.0；共享的 `core-ui` 与桌面用 JetBrains material3 1.13.0-beta02 + Compose Multiplatform 1.13.0-beta02，两边 API 一致，升级时必须一起动）+ ViewBinding（混合过渡期）
 - **数据库**: Room 2.8.4，KSP 代码生成
 - **DI**: Hilt/Dagger（dagger 2.60.1，androidx.hilt 1.3.0）
 - **网络**: OkHttp 5.4.0
@@ -237,6 +237,18 @@ Android 与桌面的 UI 按 CMP 共享呈现演进；Windows 与 macOS 始终共
 - `parser-host/` - JVM 上加载 kototoro-parsers / kotatsu-parsers / UMA（Tsuki）插件 JAR：子优先 classloader、
   宿主共享 ABI、`ParserSourceRuntime`（OFFSET 分页、小说 `getChapterContent`）；真实插件用 `-PkototoroParsersJar`、
   `-PdexPluginJar`、`-PparserHostOnline` 选择性验证。
+- `community-indexer/` - 社区评分/评论的 Nostr 索引器（JVM，`application`，不随应用发布）：
+  - 从中继拉取带 `org.kototoro` 标签的事件，存进 `Kototoro-app/community-index` 的 `archive` 分支；
+  - 再从完整存档重建静态快照，发布到该仓库的 Pages（`https://kototoro-app.github.io/community-index/v1/manifest.json`）。
+  - 共享代码：作品标识、归一与外部 ID 匹配在 `core-domain` 的 `community/domain`（快照格式 `CommunitySnapshot.kt` 也在这里）；
+    Nostr 协议栈与事件格式 `CommunityEventSchema` 在 `core-net` 的 `community/nostr`（secp256k1-kmp 固定 0.15.0，
+    更新的版本要求 Java 17/21）。
+  - workflow 模板 `deploy/build-index.yml` 在 community-index 仓库内运行。
+  - 维护者审核：`deploy/maintainer.sh`（私钥只在本机登录钥匙串，CI 只有仓库变量 `MAINTAINER_NPUB`），
+    `mute show|add|remove` 签发 kind 10000 屏蔽列表，见计划 §11。
+  - 线上测试都要显式开启：`-PnostrLiveRelays`，再加 `-PnostrLivePublish=true` 才会真的发布；
+    `-PcommunityResolveBackup` 会查询 AniList/Bangumi。
+  - 设计与实测记录见 `docs/architecture/community-nostr-plan-2026-11.md`。
 - `dex-convert/` - Android DEX/APK → JVM JAR（dex2jar 2.4.38 + `computeFrames` + `dontSanitizeNames`），
   `DexRepair` 在转换前修复 R8 内联构造器（`new-instance T` + 祖先 `<init>`），`ApkManifestReader` 解码二进制清单，
   `ApkExtensionConverter` 产出带文本清单的扩展 JAR；`-PrealApkDirectory` 用真实 APK 验证并逐类链接校验。
@@ -346,6 +358,35 @@ Android 与桌面的 UI 按 CMP 共享呈现演进；Windows 与 macOS 始终共
   回归用 `DesktopModeDetectTest`（探针 `reader-mode-detect`，fixture 新增 `fixture.reader.probe.tall` 把第 2 页变 400x2400：
   关开关仍是分页、开开关出条带、再关开关仍是条带，且离开后偏好里的模式未变）。
   `DesktopProbes` 的白名单同时开始透传 `fixture.*`；`:reader-core:jvmTest` 的隔离守卫也补上 `reader.image` 包。
+  社区评分与评论也接上了（§206）：引擎是 `core-library` 的 `core/library/community/CommunityService`
+  （Android 三个社区仓库在 `SourceContent` 与共享库上的版本：作品键/AniList·Bangumi 解析、评分与撤回、发件箱、评论/举报/屏蔽、
+  昵称、榜单、推荐候选；快照缓存 `CommunitySnapshots` 由平台注入存储），界面是 `core-ui` 的
+  `community/ui`（评分卡 `CommunityRatingCard`、评论 `CommunityCommentsContent`、设置对话框 `CommunitySettingsDialogs`、
+  榜单 `CommunityChartSection`、轨道 `CommunityWorksRail`），Android 的同名入口只剩 ViewModel 与外壳（Android 的数据层仍是
+  `CommunityRepository`/`CommunityCommentsRepository`/`CommunitySnapshotRepository` 现在只是这份引擎的 Hilt 外壳，
+  `CommunitySuggestionsRepository` 仍是 Android 自己的）。发件箱从 v91 起分两段：没有中继接受的事件按退避重试并计入待发数；
+  只有一个中继接受的事件（`published_at`/`accepted_relays`）不再计入，却留着每小时补发给其他中继，直到两个中继持有、
+  或快照生成时间晚于发布时间 10 分钟（索引器已归档）、或满 3 天。详情页评分卡另显示快照之后的新评分数
+  （`freshRatings`，按 `#i` 直接问中继，自己的评分即使离线也计入）。评分事件带上作品标签映射到的分类 ID
+  （多字母 `genre` 标签，`core-domain` 的 `CommunityGenres`，不发来源原始标签），索引器按“过半评分者一致”保留作品标签，
+  评分相似作品不足 20 个时用标签相似（稀有度加权余弦、至少 2 个相同标签、分数 ×0.5，`coRaters` 为 0、`sharedTags` 记数）补齐；
+  `CommunityRecommendations.rank` 按评分人数对数压制热门并做 MMR 去重复（重叠度取索引相似度或标签 Jaccard）。
+  榜单与相似作品点开走 `CommunityService.findWork`：书库已有的那一份（只用已缓存的键分片），否则在前 4 个非成人来源里按标题搜索、
+  命中同组或同标题键的条目直接打开详情，都没有才退回全局搜索（Android `CommunityWorkFinder`、桌面 `openCommunityWork`；iOS 仍是搜索）。
+  评分与评论还可附带 `["source", 来源 ID, 地址, 域名]`（`community_share_sources`，默认开；本地与 `JSON_` 来源从不附带，成人来源只在开启 `community_nsfw_ratings` 后附带与检索，
+  规则在 `core-domain` 的 `CommunitySources`），索引器汇总成作品摘要的 `sources`，`findWork` 先在读者装了的同 ID 来源、
+  再在同站点来源里按记录的地址检索；长按卡片打开共享的 `CommunitySourcePicker`（「其他来源」），见计划 §10.3。Windows 的 `DesktopCommunity` 有自己的 StateFlow：私钥存系统凭据库
+  （`desktopCommunityCredentialStore`，与 Drive 令牌同一套），公钥与屏蔽/举报存 `desktop_community`，开关是
+  `desktop_services` 的 `community_enabled`/`community_nsfw_ratings`；中继与索引走 OkHttp（代理页的 selector 与认证，
+  HTTP/SOCKS 都行），中继 WebSocket 是 `desktop-runtime` 的 `OkHttpNostrRelayConnector`，直连时中继域名由自写 RFC 8484 的
+  `DesktopRelayDns` 解析；AniList·Bangumi 仍走 Ktor Java 引擎（同一 selector，HTTP 代理凭据经 `java.net.Authenticator`），
+  发件箱每 10 分钟重试；Android 与桌面的 DoH 都同时问 DNSPod/Cloudflare/Google，只有后两者 1.5 s 内都连不上时才用 DNSPod 的答案
+  （`core-library` jvmMain 的 `CommunityRelayAnswers`；2026-11-21 实测 DNSPod 把 nos.lol 解析成被污染的地址）；详情页在信息卡后画评分卡、评论开对话框，
+  推荐页有社区标签、榜单与社区候选。标题归一用 `core-domain` 的 `core/text/ChineseScript`（原 catvod `Trans` 的繁简表，
+  `Trans` 现委托给它）。iOS 的 `IosCommunityDetails` 发布/发件箱/昵称/评论已走同一引擎
+  （Swift API 不变，身份每次调用传入），概览与榜单仍读 `IosCommunityIndex`，评论在审核文件读不到时照旧拒绝显示；
+  `IosSuggestions` 的社区候选还是 iOS 自己那份。回归：`DesktopCommunityTest`（假中继）、
+  `DesktopCommunityViewsTest`、`DesktopServicesProbe` 的社区引导段。
   .pb/新版 JSON 仓库添加/列表/搜索、JAR 安装/更新/导入及身份恢复；新产物保存到应用管理的 SHA 目录。
   仓库可“忘记”（只删索引条目，已安装扩展与 JAR 保留，重新添加即恢复）。
   来源浏览/搜索、详情、收藏、分页图片阅读、历史与源设置，以及可选网页/HTML/JS 调试。
@@ -497,7 +538,8 @@ Android 与桌面的 UI 按 CMP 共享呈现演进；Windows 与 macOS 始终共
   `app-update-changelog` 进新页“更新日志”（`DesktopScreen.CHANGELOG`，对齐 Android 的 `ChangelogScreen`）：
   本频道所有可安装版本按新→旧一张卡一版，带当前版本徽标、日期、包大小与各版说明，每次会话只拉一次、
   “重新加载”才重拉。Markdown 解析 `core-ui` 的 `parseMarkdownBlocks`/`parseMarkdownInline`、
-  渲染 `MarkdownText`/`markdownPlainText` 都在 `core/ui/markdown/`（纯共享、无新依赖，Android 仍用 Markwon）；
+  渲染 `MarkdownText`/`markdownPlainText` 都在 `core/ui/markdown/`（纯共享、无新依赖；Android 的更新页与
+  更新日志也用这一套，Markwon 依赖已移除，桌面与安卓画出的说明是同一份文本）；
   `desktop-runtime` 的 `DesktopAppUpdateClient.releases()` 与更新检查共用 `offerableFor(channel)`
   过滤（有包有下载地址、stable 不列预发布），所以说明列出的版本就是它真会装的版本，见计划 §163。
   同一张卡还有 Android 的 `allow_unstable_updates`（`app-update-unstable`）：稳定版可以让更新器改跟 nightly 仓库，
@@ -682,8 +724,8 @@ KMP/iOS 方案与进度见 `docs/architecture/kmp-ios-plan-2026-10.md`。KMP 模
 - 处理 Cloudflare 挑战和 Cookie 同步
 
 **数据库**：
-- Room 数据库（`MangaDatabase`）在 KMP 模块 `core-db/`，DATABASE_VERSION = 88（`core-db/src/commonMain/.../core/db/MangaDatabase.kt`）；导出的 schema 仍位于 `app/schemas/org.skepsun.kototoro.core.db.MangaDatabase/`（已提交，由 `core-db` 的 Room 插件导出，`app` 的 androidTest 以 assets 读取）
-- 迁移文件 `core-db/src/androidMain/kotlin/org/skepsun/kototoro/core/db/migrations/Migration1To2.kt` 到 `Migration83To84.kt`（另含历史遗留的降级迁移 `Migration24To23.kt`，仍保留在 `getDatabaseMigrations` 列表中，位于 `core-db` 的 `MangaDatabaseMigrations.kt`）；84→85 起的迁移在 commonMain（`Migration84To85.kt` 到 `Migration87To88.kt`，注册在 `sharedDatabaseMigrations()`），Android/Windows/iOS 三端共用
+- Room 数据库（`MangaDatabase`）在 KMP 模块 `core-db/`，DATABASE_VERSION = 91（`core-db/src/commonMain/.../core/db/MangaDatabase.kt`）；导出的 schema 仍位于 `app/schemas/org.skepsun.kototoro.core.db.MangaDatabase/`（已提交，由 `core-db` 的 Room 插件导出，`app` 的 androidTest 以 assets 读取）
+- 迁移文件 `core-db/src/androidMain/kotlin/org/skepsun/kototoro/core/db/migrations/Migration1To2.kt` 到 `Migration83To84.kt`（另含历史遗留的降级迁移 `Migration24To23.kt`，仍保留在 `getDatabaseMigrations` 列表中，位于 `core-db` 的 `MangaDatabaseMigrations.kt`）；84→85 起的迁移在 commonMain（`Migration84To85.kt` 到 `Migration90To91.kt`，注册在 `sharedDatabaseMigrations()`），Android/Windows/iOS 三端共用
 - Android 必须继续使用框架 SQLite 驱动：旧迁移实现的是 `migrate(SupportSQLiteDatabase)`，换成 `BundledSQLiteDriver` 会抛 `NotImplementedError`
 - DAO 的过滤条件使用数据类型 `ListFilterCriteria`（`core-db`）；应用层的 `ListFilterOption`（带资源 id 与图标）在 Repository 边界用 `toCriteria()` 转换
 - 用户状态（收藏/历史/统计/偏好/追踪）直接挂在 `manga` 行上；实体图谱与 work 表已在 v84 移除（`Migration83To84` → `ProjectionOwnershipMigrationResolver`）
@@ -720,7 +762,7 @@ RELEASE_KEY_PASSWORD=***
 - `dandanplay.appId` / `dandanplay.appSecret` - 弹弹 Play API 凭证
 
 ### 版本管理
-当前版本：`versionName 2.4.5` / `versionCode 1262`（`app/build.gradle`）。
+当前版本：`versionName 2.4.13` / `versionCode 1270`（`app/build.gradle`）。
 在 `app/build.gradle` 中更新：
 - `versionCode` - 每次发布递增
 - `versionName` - 语义化版本号（如 "1.0.0.prev"）

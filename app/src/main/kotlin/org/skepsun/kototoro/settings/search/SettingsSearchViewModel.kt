@@ -27,7 +27,7 @@ class SettingsSearchViewModel @Inject constructor(
         if (q == null) {
             emptyList()
         } else {
-            allSettings.filter { it.title.contains(q, ignoreCase = true) }
+            allSettings.searchSettings(q)
         }
     }.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, emptyList())
 
@@ -41,6 +41,8 @@ class SettingsSearchViewModel @Inject constructor(
     val onNavigateToPreference = MutableEventFlow<SettingsItem>()
     val currentQuery: String
         get() = query.value.orEmpty()
+    val isSearching: Boolean
+        get() = query.value != null
 
     fun onQueryChanged(value: String) {
         if (query.value != null) {
@@ -61,7 +63,7 @@ class SettingsSearchViewModel @Inject constructor(
     }
 
     fun navigateToPreference(item: SettingsItem) {
-        discardSearch()
+        // The query survives so the back gesture lands on the same result list instead of an empty root page.
         onNavigateToPreference.call(item)
     }
 }

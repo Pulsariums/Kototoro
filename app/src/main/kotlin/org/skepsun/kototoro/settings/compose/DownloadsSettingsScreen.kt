@@ -1,5 +1,6 @@
 package org.skepsun.kototoro.settings.compose
 
+import org.skepsun.kototoro.core.ui.settings.SettingsSearchLazyReveal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -73,6 +74,7 @@ fun DownloadsSettingsScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
@@ -134,7 +136,9 @@ fun DownloadsSettingsScreen(
                     }
                     item {
                         SettingsInfoPreference(
-                            title = stringResource(R.string.downloads),
+                            // Titled after what the note is about; "Downloads" again, on the
+                            // Downloads page under a "Downloads" header, said nothing.
+                            title = stringResource(R.string.download_slowdown),
                             summary = stringResource(R.string.downloads_settings_info),
                             iconRes = R.drawable.ic_info_outline,
                         )

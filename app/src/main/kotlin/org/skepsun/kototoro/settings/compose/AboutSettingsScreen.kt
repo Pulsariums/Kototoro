@@ -1,5 +1,6 @@
 package org.skepsun.kototoro.settings.compose
 
+import org.skepsun.kototoro.core.ui.settings.SettingsSearchLazyReveal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -54,6 +55,7 @@ fun AboutSettingsScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
@@ -204,11 +206,6 @@ private fun AboutBanner() {
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = stringResource(R.string.about_author),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                 )
             }
         }

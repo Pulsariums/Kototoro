@@ -44,6 +44,8 @@ fun FavoritesShelf(
     sharedElementInstanceKey: String,
     onItemClick: (ContentGridModel, Rect?, String) -> Unit,
     modifier: Modifier = Modifier,
+    /** Drawn at the end of the grid's heading, so a lone control does not take a row of its own. */
+    summaryTrailing: (@Composable () -> Unit)? = null,
 ) {
     if (state.items.isEmpty()) return
     val posterStyle = remember(listMode, gridScale) { listMode.railPosterCardStyle(gridScale) }
@@ -115,16 +117,26 @@ fun FavoritesShelf(
             }
         }
         // Heads the grid below, so it does not read as a continuation of the shelf.
-        Text(
-            text = stringResource(R.string.favourites_shelf_summary, state.totalCount),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(
-                start = AppLayoutTokens.screenHorizontalPadding,
-                end = AppLayoutTokens.screenHorizontalPadding,
-                top = 10.dp,
-            ),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = AppLayoutTokens.screenHorizontalPadding,
+                    end = AppLayoutTokens.screenHorizontalPadding,
+                    top = if (summaryTrailing == null) 10.dp else 4.dp,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.favourites_shelf_summary, state.totalCount),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            summaryTrailing?.invoke()
+        }
     }
 }

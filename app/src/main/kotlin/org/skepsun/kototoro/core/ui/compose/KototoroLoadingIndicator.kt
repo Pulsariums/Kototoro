@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
@@ -45,6 +46,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.android.awaitFrame
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.prefs.AppSettings
+import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 
 private const val IndicatorProgressMax = 10_000
 private const val PullRefreshResistance = 0.52f
@@ -123,7 +125,7 @@ fun KototoroLinearProgressIndicator(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun KototoroPullToRefreshBox(
     isRefreshing: Boolean,
@@ -269,16 +271,26 @@ fun KototoroPullToRefreshBox(
         content()
 
         if (isRefreshing || displayedDistancePx > 0.5f) {
-            PullToRefreshDefaults.Indicator(
-                state = indicatorState,
-                isRefreshing = isRefreshing,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(
-                        y = indicatorTopInset.calculateTopPadding() +
-                            with(density) { (displayedDistancePx * indicatorOffsetFactor).toDp() },
-                    ),
-            )
+            val indicatorModifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(
+                    y = indicatorTopInset.calculateTopPadding() +
+                        with(density) { (displayedDistancePx * indicatorOffsetFactor).toDp() },
+                )
+            if (LocalMaterialExpressiveComponentsEnabled.current) {
+                // Expressive: the morphing loading indicator instead of the spinning arrow.
+                PullToRefreshDefaults.LoadingIndicator(
+                    state = indicatorState,
+                    isRefreshing = isRefreshing,
+                    modifier = indicatorModifier,
+                )
+            } else {
+                PullToRefreshDefaults.Indicator(
+                    state = indicatorState,
+                    isRefreshing = isRefreshing,
+                    modifier = indicatorModifier,
+                )
+            }
         }
     }
 }
@@ -310,7 +322,14 @@ private fun rememberLoadingIndicatorStyle(style: AppSettings.LoadingCircleStyle?
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
-    return resolvedStyle
+    // Waves are the Expressive treatment; the other interface styles keep the same weight without them.
+    return if (LocalMaterialExpressiveComponentsEnabled.current) resolvedStyle else resolvedStyle.straight()
+}
+
+private fun AppSettings.LoadingCircleStyle.straight(): AppSettings.LoadingCircleStyle = when (this) {
+    AppSettings.LoadingCircleStyle.THICK_WAVY -> AppSettings.LoadingCircleStyle.THICK_STRAIGHT
+    AppSettings.LoadingCircleStyle.THIN_WAVY -> AppSettings.LoadingCircleStyle.THIN_STRAIGHT
+    else -> this
 }
 
 private val AppSettings.LoadingCircleStyle.themeOverlayResId: Int

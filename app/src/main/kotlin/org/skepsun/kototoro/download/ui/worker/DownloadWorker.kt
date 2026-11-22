@@ -119,6 +119,8 @@ import org.skepsun.kototoro.video.data.TorrentResolvedStream
 import org.skepsun.kototoro.video.data.TorrentStreamService
 import org.skepsun.kototoro.video.domain.resolveVideoCandidates
 import org.skepsun.kototoro.video.player.PlaybackMediaKind
+import org.skepsun.kototoro.video.player.estimateHlsBytes
+import org.skepsun.kototoro.video.player.parseHlsMediaPlaylist
 import org.skepsun.kototoro.parsers.exception.TooManyRequestExceptions
 import org.skepsun.kototoro.parsers.model.Content
 import org.skepsun.kototoro.parsers.model.ContentChapter
@@ -574,7 +576,20 @@ class DownloadWorker @AssistedInject constructor(
         val storedContent = checkNotNull(mangaDataRepository.findContentById(task.executionMangaId, withChapters = true)) {
             "Cannot load content ${task.executionMangaId}"
         }
-        val chapters = getChapters(storedContent, task).filter { isPreparationChapterEligible(it.value) }
+        var workContent = storedContent
+        var chapters = getChapters(storedContent, task).filter { isPreparationChapterEligible(it.value) }
+        if (chapters.isEmpty()) {
+            // The stored record of a source title keeps the source's own chapter links; once downloaded, the same
+            // chapters (same ids) live in the local copy, which is what has pages to translate.
+            val local = runCatchingCancellable { localContentRepository.getDetails(storedContent) }.getOrNull()
+            val localChapters = local?.let {
+                runCatching { getChapters(it, task) }.getOrNull()?.filter { chapter -> isPreparationChapterEligible(chapter.value) }
+            }.orEmpty()
+            if (localChapters.isNotEmpty()) {
+                workContent = checkNotNull(local)
+                chapters = localChapters
+            }
+        }
         check(chapters.isNotEmpty()) { "No downloaded chapter to translate for ${storedContent.title}" }
         val forceRetranslation = task.isRetranslation
         val languagePair = resolveChapterTranslationLanguagePair(
@@ -594,7 +609,7 @@ class DownloadWorker @AssistedInject constructor(
                         // "Translate again" must not hand back the paragraphs cached by the previous run.
                         novelTranslationProcessor.clearCache()
                     }
-                    translateNovelChapters(context, storedContent, task, chapters, languagePair)
+                    translateNovelChapters(context, workContent, task, chapters, languagePair)
                 }
 
                 else -> {
@@ -2264,7 +2279,11 @@ class DownloadWorker @AssistedInject constructor(
                     currentChapterTitle = chapter.value.title?.takeIf { totalChapters > 1 },
                 ),
             )
-            val target = resolveVideoTarget(repo, chapter.value, task) ?: continue
+            // An episode the source offers no stream for fails the task: skipping it left a "downloaded" task with
+            // nothing on disk (issue #707). Not an IOException, which would be retried as a network error.
+            val target = checkNotNull(resolveVideoTarget(repo, chapter.value, task)) {
+                "No downloadable video for episode: ${chapter.value.title ?: chapter.value.id}"
+            }
             val torrentStream = if (target.isTorrent) {
                 torrentStreamService.openStream(target.url, target.headers.orEmpty())
             } else {
@@ -2553,9 +2572,14 @@ class DownloadWorker @AssistedInject constructor(
             outputFile.openOutputStream(false).use { it.flush() }
         }
         var writtenTotal = if (resumeIndex > 0) outputFile.length().coerceAtLeast(0L) else 0L
+        val priorTotalBytes = estimateHlsTotalBytes(source, mediaUrl, mediaText, headers)
         outputFile.openOutputStream(resumeIndex > 0).sink().buffer().use { sink ->
             val total = segments.size.coerceAtLeast(1)
-            onProgress(resumeIndex, total, DownloadByteProgress.forSegments(writtenTotal, resumeIndex, total))
+            onProgress(
+                resumeIndex,
+                total,
+                DownloadByteProgress.forSegments(writtenTotal, resumeIndex, total, priorTotalBytes),
+            )
             val remaining = segments.withIndex().drop(resumeIndex)
             remaining.chunked(DownloadPolicy.HLS_SEGMENT_CONCURRENCY).forEach { batch ->
                 val downloaded = coroutineScope {
@@ -2595,7 +2619,7 @@ class DownloadWorker @AssistedInject constructor(
                     onProgress(
                         indexed.index + 1,
                         total,
-                        DownloadByteProgress.forSegments(writtenTotal, indexed.index + 1, total),
+                        DownloadByteProgress.forSegments(writtenTotal, indexed.index + 1, total, priorTotalBytes),
                     )
                     sink.flush()
                     stateFile?.openOutputStream(false)?.bufferedWriter()?.use { state ->
@@ -2611,6 +2635,34 @@ class DownloadWorker @AssistedInject constructor(
             "DownloadWorker",
             "HLS complete: written=$writtenTotal out=${outputFile.length()} segments=${segments.size}",
         )
+    }
+
+    /**
+     * A rough total size for the progress display, sampled from a few segments before the download starts.
+     * It is only a hint, so a slow or failing probe must never delay or break the download.
+     */
+    private suspend fun estimateHlsTotalBytes(
+        source: ContentSource,
+        mediaUrl: String,
+        mediaText: String,
+        headers: Map<String, String>?,
+    ): Long? = withTimeoutOrNull(HLS_ESTIMATE_TIMEOUT_MS) {
+        runCatchingCancellable {
+            estimateHlsBytes(parseHlsMediaPlaylist(mediaUrl, mediaText)) { segment ->
+                runCatchingCancellable {
+                    val request = PageLoader.createPageRequest(segment.url, source, headers)
+                        .newBuilder()
+                        .head()
+                        .build()
+                    okHttp.newCall(request).await().use { response ->
+                        response.takeIf { it.isSuccessful }
+                            ?.header("Content-Length")
+                            ?.toLongOrNull()
+                            ?.takeIf { it > 0 }
+                    }
+                }.getOrNull()
+            }
+        }.getOrNull()
     }
 
     private suspend fun downloadHlsSegment(
@@ -3344,6 +3396,7 @@ class DownloadWorker @AssistedInject constructor(
         const val TAG = "download"
         private const val PAGE_NAME_PATTERN = "%08d_%04d%04d"
         private const val VIDEO_PROBE_BYTE_LIMIT = 1024L
+        private const val HLS_ESTIMATE_TIMEOUT_MS = 8_000L
     }
 
     @AssistedFactory

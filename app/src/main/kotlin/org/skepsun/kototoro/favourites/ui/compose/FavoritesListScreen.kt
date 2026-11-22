@@ -34,6 +34,7 @@ import org.skepsun.kototoro.list.ui.model.ContentListModel
 import org.skepsun.kototoro.details.ui.model.DetailsOrigin
 import org.skepsun.kototoro.parsers.model.Content
 import org.skepsun.kototoro.search.ui.compose.LibrarySearchBanner
+import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 
 @Composable
 fun KototoroFavoritesListScreen(
@@ -59,6 +60,7 @@ fun KototoroFavoritesListScreen(
     // The state holder is the favourites container, handed in as a per-category slice:
     // there is no page-level ViewModel and no space binding to do here (Phase 6).
     val quickFilter by listHost.topQuickFilter.collectAsStateWithLifecycle()
+    val isTvPresentation = LocalUiPresentationConfig.current.isTv
     val shelf by listHost.shelf.collectAsStateWithLifecycle()
     val gridScale by listHost.gridScale.collectAsStateWithLifecycle()
     val listMode by listHost.listMode.collectAsStateWithLifecycle()
@@ -99,7 +101,13 @@ fun KototoroFavoritesListScreen(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     )
                 }
-                if (quickFilter != null) {
+                // Without a quick-filter rail (setting off) the rail would be just the sort button. It then
+                // joins the grid's heading instead of holding an otherwise empty row above the shelf.
+                val sortInSummary = sortControl != null && !isTvPresentation && shelf.items.isNotEmpty() &&
+                    quickFilter == null
+                if (sortInSummary) {
+                    // Drawn by the shelf below.
+                } else if (quickFilter != null) {
                     QuickFilterSection(
                         quickFilter = quickFilter!!,
                         onQuickFilterOptionClick = listHost::toggleFilterOption,
@@ -120,6 +128,7 @@ fun KototoroFavoritesListScreen(
                     gridScale = gridScale,
                     listMode = listMode,
                     sharedElementInstanceKey = shelfInstanceKey,
+                    summaryTrailing = sortControl.takeIf { sortInSummary },
                     onItemClick = { item, _, sharedKey ->
                         if (onNavigateToDetails != null) {
                             onNavigateToDetails(item.manga, sharedKey)

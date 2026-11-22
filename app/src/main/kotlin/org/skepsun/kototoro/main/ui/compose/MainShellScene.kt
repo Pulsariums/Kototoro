@@ -764,12 +764,9 @@ internal fun BrowseTopLevelRouteContent(
                             }
                         }
                     },
-                    KototoroTopBarMenuAction(
-                        org.skepsun.kototoro.R.string.manage_sources,
-                        org.skepsun.kototoro.R.drawable.ic_manga_source,
-                    ) {
-                        appRouter.openManageSources()
-                    },
+                    // No "manage sources" action here: the menu's own "Extension management" entry
+                    // already opens that page, and a second row with another name for it only made
+                    // the menu longer.
                     KototoroTopBarMenuAction(
                         if (isEmptySourcesHidden) {
                             org.skepsun.kototoro.R.string.show_empty_sources
@@ -1024,6 +1021,13 @@ internal fun FeedTopLevelRouteContent(
                 viewModel.onItemClick(item)
                 appRouter.openReader(item.toContentWithOverride())
             },
+            onFeedItemReadChapter = { item, chapterId ->
+                viewModel.onItemClick(item)
+                appRouter.openReader(
+                    item.toContentWithOverride(),
+                    state = org.skepsun.kototoro.reader.ui.ReaderState(chapterId = chapterId, page = 0, scroll = 0),
+                )
+            },
             onUpdatedContentItemClick = { contentItem, _ ->
                 val content = contentItem.model.toContentWithOverride()
                 val sharedElementKey = contentCoverSharedKey(
@@ -1227,6 +1231,16 @@ internal fun SuggestionsTopLevelRouteContent(
 ) {
     val viewModel = spaceBoundHiltViewModel<org.skepsun.kototoro.suggestions.ui.SuggestionsViewModel>("suggestions")
     val suggestionsLibraryQuery by viewModel.libraryQuery.collectAsStateWithLifecycle()
+    val suggestionDirection by viewModel.direction.collectAsStateWithLifecycle()
+    val hasCommunity by viewModel.hasCommunity.collectAsStateWithLifecycle()
+    val suggestionCount by viewModel.visibleCount.collectAsStateWithLifecycle()
+    val suggestionLanguage by viewModel.language.collectAsStateWithLifecycle()
+    val suggestionLanguageOnly by viewModel.languageOnly.collectAsStateWithLifecycle()
+    val suggestionItems by viewModel.content.collectAsStateWithLifecycle()
+    val suggestionQuickFilter = remember(suggestionItems) {
+        suggestionItems.firstOrNull { it is org.skepsun.kototoro.list.ui.model.QuickFilter }
+            as? org.skepsun.kototoro.list.ui.model.QuickFilter
+    }
     val context = LocalContext.current
     var suggestionsContextualTopBarOverride by remember { mutableStateOf<TopBarOverrideState?>(null) }
     var suggestionsFilterRailOverride by remember { mutableStateOf<CompactFilterRailOverrideState?>(null) }
@@ -1249,11 +1263,14 @@ internal fun SuggestionsTopLevelRouteContent(
         }
     }
 
-    CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides animatedVisibilityScope) {
+    CompositionLocalProvider(
+        LocalNavAnimatedVisibilityScope provides animatedVisibilityScope,
+    ) {
         org.skepsun.kototoro.list.ui.compose.AppContentListRoute(
             viewModel = viewModel,
             contentPadding = contentPadding,
             appRouter = appRouter,
+            onLoadMore = viewModel::requestMoreItems,
             listHeader = {
                 Column {
                     if (suggestionsLibraryQuery.isNotEmpty()) {
@@ -1263,18 +1280,42 @@ internal fun SuggestionsTopLevelRouteContent(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         )
                     }
-                    org.skepsun.kototoro.suggestions.ui.compose.SuggestionsHeaderCard(
-                        onRefresh = {
-                            viewModel.updateSuggestions()
-                            android.widget.Toast.makeText(
-                                context,
-                                org.skepsun.kototoro.R.string.suggestions_updating,
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
-                        },
+                    org.skepsun.kototoro.core.ui.suggestions.SuggestionsHeader(
+                        selected = suggestionDirection,
+                        hasCommunity = hasCommunity,
+                        language = suggestionLanguage,
+                        languageOnly = suggestionLanguageOnly,
+                        count = suggestionCount,
+                        onSelect = viewModel::selectDirection,
+                        onRefresh = viewModel::updateSuggestions,
+                        onSettings = appRouter::openSuggestionsSettings,
+                        modifier = Modifier.padding(start = 12.dp, top = 8.dp, end = 12.dp),
                     )
+                    // The quick-filter rail joins the header so summary, directions and filters share one
+                    // 8dp rhythm instead of stacking the header padding, grid row spacing and rail padding.
+                    // 4dp plus the two pills' 2dp touch slack reads as 8dp between the pill rows.
+                    suggestionQuickFilter?.let { filter ->
+                        org.skepsun.kototoro.list.ui.compose.QuickFilterSection(
+                            quickFilter = filter,
+                            onQuickFilterOptionClick = viewModel::toggleFilterOption,
+                            verticalPadding = 0.dp,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    // The community's ratings belong with everything and with its own tab, not the source directions.
+                    if (suggestionDirection == null ||
+                        suggestionDirection == org.skepsun.kototoro.suggestions.domain.SuggestionDirection.COMMUNITY
+                    ) {
+                        org.skepsun.kototoro.community.ui.CommunitySuggestionsSection(
+                            onSearchTitle = { title -> appRouter.openSearch(title) },
+                            onOpenContent = { content -> appRouter.openDetails(content) },
+                            horizontalPadding = 12.dp,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
                 }
             },
+            showQuickFilterInline = false,
             onTopBarOverrideChanged = { suggestionsContextualTopBarOverride = it },
             showRemoveOption = false,
             showScrollbar = true,

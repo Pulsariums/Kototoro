@@ -43,6 +43,8 @@ import org.skepsun.kototoro.details.ui.pager.ChaptersPagesViewModel
 import org.skepsun.kototoro.details.ui.pager.chapters.ChapterGroupsManager
 import org.skepsun.kototoro.details.ui.withVolumeHeaders
 import org.skepsun.kototoro.local.ui.LocalChaptersRemoveService
+import org.skepsun.kototoro.video.domain.formatVideoSize
+import org.skepsun.kototoro.video.player.MeasuredVideoSize
 import org.skepsun.kototoro.parsers.model.ContentType
 import org.skepsun.kototoro.reader.ui.ReaderNavigationCallback
 
@@ -85,13 +87,16 @@ fun ChaptersScreenRoot(
         chapters.withVolumeHeaders(context)
     }
 
-    var groupsVersion by remember { mutableIntStateOf(0) }
-
     val groupsManager = remember { ChapterGroupsManager() }
 
-    val collapsedChapters = remember(chaptersWithHeaders, groupsVersion) {
+    val collapsedChapters = remember(chaptersWithHeaders, groupsManager.collapsedGroups) {
         groupsManager.applyCollapsedState(chaptersWithHeaders)
     }
+    val foldableGroupIds = remember(chaptersWithHeaders) {
+        groupsManager.foldableGroupIds(chaptersWithHeaders)
+    }
+    // Folding moves the rows; once the user folds, the list stays put instead of jumping back to the current chapter.
+    var hasFolded by remember { mutableStateOf(false) }
 
     val selectedItemIds = remember { mutableStateListOf<Long>() }
     var hasShownSelectionHint by remember { mutableStateOf(false) }
@@ -291,8 +296,10 @@ fun ChaptersScreenRoot(
     }
 
     qualityProbeResult?.let { result ->
+        val qualitySizes by viewModel.videoQualitySizes.collectAsStateWithLifecycle()
         VideoQualityDialog(
             qualities = result.qualities,
+            sizes = qualitySizes,
             onDismissRequest = { qualityProbeResult = null },
             onConfirm = { quality ->
                 qualityProbeResult = null
@@ -314,7 +321,7 @@ fun ChaptersScreenRoot(
             filterChips = quickFilter,
             isLoading = isLoading,
         emptyMessageResId = emptyReason?.msgResId,
-        initialChapterId = initialCurrentChapterId,
+        initialChapterId = initialCurrentChapterId.takeUnless { hasFolded },
         onItemDownload = if (rowActions.showDownload) {
             { item -> startDownload(setOf(item.chapter.id)) }
         } else {
@@ -370,9 +377,14 @@ fun ChaptersScreenRoot(
         },
         onHeaderClick = { header ->
             if (header.isCollapsible) {
+                hasFolded = true
                 groupsManager.toggleGroup(header.groupId)
-                groupsVersion++
             }
+        },
+        allGroupsCollapsed = groupsManager.areAllCollapsed(foldableGroupIds),
+        onToggleAllGroups = {
+            hasFolded = true
+            groupsManager.toggleAll(foldableGroupIds)
         },
         onFilterChipClick = { chip ->
             val branch = chip.data as? org.skepsun.kototoro.list.domain.ListFilterOption.Branch
@@ -413,6 +425,7 @@ private fun resolveVisibleSelectionRange(
 @Composable
 private fun VideoQualityDialog(
     qualities: List<String>,
+    sizes: Map<String, MeasuredVideoSize>,
     onDismissRequest: () -> Unit,
     onConfirm: (String?) -> Unit,
 ) {
@@ -443,8 +456,16 @@ private fun VideoQualityDialog(
                         Text(
                             text = option ?: stringResource(R.string.system_default),
                             style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(start = 16.dp),
+                            modifier = Modifier.padding(start = 16.dp).weight(1f),
                         )
+                        option?.let(sizes::get)?.let { size ->
+                            Text(
+                                text = (if (size.isEstimated) "~" else "") + formatVideoSize(size.bytes),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 12.dp),
+                            )
+                        }
                     }
                 }
             }

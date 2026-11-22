@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -35,6 +36,7 @@ import org.skepsun.kototoro.R
 import org.skepsun.kototoro.bookmarks.domain.Bookmark
 import org.skepsun.kototoro.bookmarks.domain.BookmarksRepository
 import org.skepsun.kototoro.core.exceptions.EmptyContentException
+import org.skepsun.kototoro.core.model.getLocalizedTitle
 import org.skepsun.kototoro.core.model.getPreferredBranch
 import org.skepsun.kototoro.core.model.getLocale
 import org.skepsun.kototoro.core.nav.ContentIntent
@@ -91,6 +93,7 @@ import org.skepsun.kototoro.reader.domain.ReaderPageEnhancementController
 import org.skepsun.kototoro.reader.domain.TranslationLayerState
 import org.skepsun.kototoro.reader.translate.domain.normalizeReaderTranslationLanguageTag
 import org.skepsun.kototoro.reader.translate.domain.resolveReaderTranslationSourceLanguage
+import org.skepsun.kototoro.reader.ui.compose.insertChapterBreaks
 import org.skepsun.kototoro.reader.ui.config.ReaderSettings
 import org.skepsun.kototoro.reader.ui.pager.ReaderPage
 import org.skepsun.kototoro.reader.ui.pager.ReaderUiState
@@ -131,6 +134,7 @@ class ReaderViewModel @Inject constructor(
     mangaRepositoryFactory: org.skepsun.kototoro.core.parser.ContentRepository.Factory,
     readerSettingsProducerFactory: ReaderSettings.Producer.Factory,
     chapterTranslationStore: org.skepsun.kototoro.reader.translate.data.ChapterTranslationStore,
+    videoQualitySizeProber: org.skepsun.kototoro.video.player.VideoQualitySizeProber,
 ) : ChaptersPagesViewModel(
     settings = settings,
     interactor = interactor,
@@ -141,6 +145,7 @@ class ReaderViewModel @Inject constructor(
     mangaRepositoryFactory = mangaRepositoryFactory,
     localStorageChanges = localStorageChanges,
     chapterTranslationStore = chapterTranslationStore,
+    videoQualitySizeProber = videoQualitySizeProber,
 ) {
     data class TranslationPageTaskSnapshot(
         val pageId: Long,
@@ -274,6 +279,12 @@ class ReaderViewModel @Inject constructor(
         valueProducer = { isWebtoonGapsEnabled },
     )
 
+    val isChapterBreakEnabled = settings.observeAsStateFlow(
+        scope = viewModelScope + Dispatchers.Default,
+        key = AppSettings.KEY_READER_CHAPTER_BREAK,
+        valueProducer = { isReaderChapterBreakEnabled },
+    )
+
     val isWebtoonPullGestureEnabled = settings.observeAsStateFlow(
         scope = viewModelScope + Dispatchers.Default,
         key = AppSettings.KEY_WEBTOON_PULL_GESTURE,
@@ -365,6 +376,37 @@ class ReaderViewModel @Inject constructor(
 
     private fun getSplitPagesSnapshot(
         currentChapterId: Long? = readingState.value?.chapterId,
+    ): List<org.skepsun.kototoro.reader.ui.pager.ReaderPage> =
+        withChapterBreaks(buildSplitPages(currentChapterId))
+
+    /**
+     * With chapter break cards on, paged readers get an extra page wherever a chapter edge falls in the window:
+     * between two chapters, before the first page of a chapter that has a predecessor, and after the last page of a
+     * chapter, loaded neighbour or not. Chapters still flow into each other; the page only makes the edge visible.
+     */
+    private fun withChapterBreaks(
+        pages: List<org.skepsun.kototoro.reader.ui.pager.ReaderPage>,
+    ): List<org.skepsun.kototoro.reader.ui.pager.ReaderPage> {
+        if (
+            pages.isEmpty() ||
+            readerMode.value?.isPaged != true ||
+            !isChapterBreakEnabled.value
+        ) {
+            return pages
+        }
+        val readingChapters = getReadingChapters()
+        return insertChapterBreaks(
+            pages = pages,
+            previousChapterIdOf = { chapterId ->
+                val index = readingChapters.indexOfFirst { it.id == chapterId }
+                if (index > 0) readingChapters[index - 1].id else null
+            },
+            pageCountOf = { chapterId -> chaptersLoader.getPagesCount(chapterId) },
+        )
+    }
+
+    private fun buildSplitPages(
+        currentChapterId: Long?,
     ): List<org.skepsun.kototoro.reader.ui.pager.ReaderPage> {
         val originalPages = if (readerMode.value?.isPaged == true && currentChapterId != null) {
             chaptersLoader.snapshotReaderWindow(currentChapterId, BOUNDS_PAGE_OFFSET)
@@ -408,6 +450,7 @@ class ReaderViewModel @Inject constructor(
     fun refreshTranslationDisplay() {
         launchJob(Dispatchers.Default) {
             content.value.pages
+                .filterNot { it.isChapterBreak }
                 .distinctBy { it.id }
                 .forEach { page ->
                     pageLoader.invalidateTask(page.toContentPage())
@@ -588,6 +631,7 @@ class ReaderViewModel @Inject constructor(
             manga = getContentOrNull() ?: return,
             readerState = readerState,
             percent = computePercent(readerState.chapterId, readerState.page),
+            finishedChapterIds = finishedChapterIds(readerState.chapterId, readerState.page),
         )
     }
 
@@ -604,6 +648,7 @@ class ReaderViewModel @Inject constructor(
             manga = content,
             readerState = readerState,
             percent = computePercent(readerState.chapterId, readerState.page),
+            finishedChapterIds = finishedChapterIds(readerState.chapterId, readerState.page),
         )
         finishReadingSession(allowShort = true, continueFromEnd = false)?.awaitCompletion()
     }
@@ -783,7 +828,7 @@ class ReaderViewModel @Inject constructor(
     fun onCurrentPageChanged(lowerPos: Int, upperPos: Int, activePageKey: Long? = null) {
         val pages = content.value.pages
         visibleSpreadPages = if (lowerPos in pages.indices && upperPos in lowerPos..pages.lastIndex) {
-            pages.subList(lowerPos, upperPos + 1).distinctBy { it.id }
+            pages.subList(lowerPos, upperPos + 1).filterNot { it.isChapterBreak }.distinctBy { it.id }
         } else {
             emptyList()
         }
@@ -860,7 +905,7 @@ class ReaderViewModel @Inject constructor(
                     boundsPageOffset = BOUNDS_PAGE_OFFSET,
                 )
             }
-            val selectedPage = pages.getOrNull(selectedPos)
+            val selectedPage = pages.getOrNull(selectedPos)?.takeUnless { it.isChapterBreak }
             if (selectedPageKey == null) {
                 Log.d(
                     LOG_TAG,
@@ -955,7 +1000,7 @@ class ReaderViewModel @Inject constructor(
                 }
             }
             if (pageLoader.isPrefetchApplicable()) {
-                pageLoader.prefetch(pages.trySublist(upperPos + 1, upperPos + PREFETCH_LIMIT))
+                pageLoader.prefetch(pages.trySublist(upperPos + 1, upperPos + PREFETCH_LIMIT).filterNot { it.isChapterBreak })
             }
         }
     }
@@ -1143,7 +1188,7 @@ class ReaderViewModel @Inject constructor(
                         if (isIncognitoMode.value == false) {
                             readingState.value?.let {
                                 val percent = computePercent(it.chapterId, it.page)
-                                historyUpdateUseCase(manga, it, percent)
+                                historyUpdateUseCase(manga, it, percent, finishedChapterIds(it.chapterId, it.page))
                             }
                         }
                         notifyStateChanged()
@@ -1364,6 +1409,23 @@ class ReaderViewModel @Inject constructor(
         updateCurrentChapterTranslationProgress()
     }
 
+    /**
+     * The chapters finished by reaching [pageIndex]: empty before the chapter's last page, otherwise the chapter and,
+     * with repeated chapters merged, its repeats, which the reader shows as one. Update tracking needs this directly:
+     * [computePercent] is relative to the reader's own list (merged repeats, reversed order), not the stored one.
+     */
+    private fun finishedChapterIds(chapterId: Long, pageIndex: Int): Set<Long> {
+        val pagesCount = chaptersLoader.getPagesCount(chapterId)
+        if (pagesCount <= 0 || pageIndex + 1 < pagesCount) return emptySet()
+        val details = mangaDetails.value ?: return setOf(chapterId)
+        if (!isMergeRepeatedChapters.value || !details.toContent().source.getContentType().isManga()) {
+            return setOf(chapterId)
+        }
+        val all = details.allChapters
+        val key = all.firstOrNull { it.id == chapterId }?.getMergeKey() ?: return setOf(chapterId)
+        return all.filter { it.getMergeKey() == key }.mapTo(hashSetOf(chapterId)) { it.id }
+    }
+
     private fun computePercent(chapterId: Long, pageIndex: Int): Float {
         val readingChapters = getReadingChapters()
         val chaptersCount = readingChapters.size
@@ -1581,6 +1643,10 @@ class ReaderViewModel @Inject constructor(
                 content.value = ReaderContent(getSplitPagesSnapshot(), currentState)
             }
         }
+        launchJob(Dispatchers.Default) {
+            // The paged readers carry the break pages in their list, so toggling the option rebuilds it.
+            isChapterBreakEnabled.drop(1).collect { rebuildPages() }
+        }
     }
 
     private fun getReadingChapters(): List<ContentChapter> {
@@ -1600,5 +1666,17 @@ class ReaderViewModel @Inject constructor(
             }
         }
         return if (isChapterOrderReversed.value) chapters.asReversed() else chapters
+    }
+
+    /**
+     * Title of the chapter [offset] positions away from [chapterId] in reading order (0 is the chapter itself),
+     * or null when there is no such chapter. Used by the chapter break cards.
+     */
+    fun chapterTitleAt(chapterId: Long, offset: Int, resources: android.content.res.Resources): String? {
+        val readingChapters = getReadingChapters()
+        val index = readingChapters.indexOfFirst { it.id == chapterId }
+        if (index < 0) return null
+        val target = readingChapters.getOrNull(index + offset) ?: return null
+        return target.getLocalizedTitle(resources, index + offset).takeIf { it.isNotBlank() }
     }
 }

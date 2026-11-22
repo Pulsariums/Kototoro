@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,23 +43,20 @@ fun <K> DetailsTagChips(
     onTagClick: ((K) -> Unit)? = null,
     chipModifier: (DetailsTagChip<K>) -> Modifier = { Modifier },
 ) {
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
+    val minimumSize = if (org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig.current.isTv) 48.dp else 24.dp
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides minimumSize) {
         FlowRow(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             tags.forEach { tag ->
                 val container = if (tag.highlighted) {
                     DetailsSensitiveTagColor.copy(alpha = 0.22f)
                 } else {
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.48f)
+                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                 }
-                val rim = if (tag.highlighted) {
-                    DetailsSensitiveTagColor.copy(alpha = 0.68f)
-                } else {
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
-                }
+                val border = if (tag.highlighted) BorderStroke(1.dp, DetailsSensitiveTagColor.copy(alpha = 0.68f)) else null
                 val label: @Composable () -> Unit = {
                     Text(
                         text = tag.title,
@@ -71,30 +66,29 @@ fun <K> DetailsTagChips(
                     )
                 }
                 if (onTagClick != null) {
-                    SuggestionChip(
+                    Surface(
                         onClick = { onTagClick(tag.key) },
                         modifier = chipModifier(tag)
-                            .heightIn(min = 24.dp)
+                            .heightIn(min = minimumSize)
                             .tvFocusable(shape = TagShape, addFocusTarget = false),
-                        shape = TagShape,
-                        label = label,
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = container,
-                            labelColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        border = SuggestionChipDefaults.suggestionChipBorder(enabled = true, borderColor = rim),
-                    )
-                } else {
-                    // The same chip without a click: M3's SuggestionChip always takes one.
-                    Surface(
-                        modifier = chipModifier(tag).heightIn(min = 24.dp),
                         shape = TagShape,
                         color = container,
                         contentColor = MaterialTheme.colorScheme.onSurface,
-                        border = BorderStroke(1.dp, rim),
+                        border = border,
+                    ) {
+                        androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) { label() }
+                    }
+                } else {
+                    // Display-only tags expose no click or selection action.
+                    Surface(
+                        modifier = chipModifier(tag).heightIn(min = minimumSize),
+                        shape = TagShape,
+                        color = container,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        border = border,
                     ) {
                         androidx.compose.foundation.layout.Box(
-                            Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         ) { label() }
                     }
                 }

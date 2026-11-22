@@ -8,19 +8,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.theme.LocalMaterialExpressiveComponentsEnabled
 
 /**
  * The floating "clear / N selected / actions" pill the grids show while a multi-selection is
@@ -35,6 +48,7 @@ import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
  *
  * Placement (alignment, insets, slide-in animation) stays at the call site.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SelectionActionBar(
     selectedCount: Int,
@@ -43,6 +57,28 @@ fun SelectionActionBar(
     actions: @Composable RowScope.() -> Unit,
 ) {
     val isTvPresentation = LocalUiPresentationConfig.current.isTv
+    if (!isTvPresentation && LocalMaterialExpressiveComponentsEnabled.current) {
+        // Expressive: the official floating toolbar, which hugs its actions instead of spanning the screen.
+        HorizontalFloatingToolbar(
+            expanded = true,
+            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+            modifier = modifier,
+        ) {
+            SelectionBarIconButton(onClick = onClearSelection) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.clear),
+                )
+            }
+            Text(
+                text = selectedCount.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.CenterVertically).padding(start = 4.dp, end = 12.dp),
+            )
+            actions()
+        }
+        return
+    }
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = if (isTvPresentation) {
@@ -95,4 +131,16 @@ fun SelectionBarIconButton(
         modifier = modifier.tvFocusable(shape = RoundedCornerShape(12.dp), addFocusTarget = false),
         content = content,
     )
+}
+
+/**
+ * Keeps a bottom-aligned bar on screen while its host hangs below the window, as a partly opened sheet does: the
+ * host's bottom edge is off screen there, so the bar is lifted by however much of it would be cut off.
+ */
+fun Modifier.keepAboveWindowBottom(): Modifier = composed {
+    val windowHeight = LocalWindowInfo.current.containerSize.height
+    var overflow by remember { mutableFloatStateOf(0f) }
+    onGloballyPositioned { coordinates ->
+        overflow = (coordinates.positionInWindow().y + coordinates.size.height - windowHeight).coerceAtLeast(0f)
+    }.graphicsLayer { translationY = -overflow }
 }

@@ -45,7 +45,6 @@ ksp = "2.3.11"
 leakcanary = "3.0-alpha-8"
 lifecycle = "2.9.4"
 lifecycleNavigation3 = "2.10.0"
-markwon = "4.6.2"
 material = "1.14.0-alpha05"
 moshi = "1.15.2"
 nicehttp = "0.4.18"
@@ -82,6 +81,11 @@ ksoupCloudstream = "0.2.6"
 # Cloudstream plugins (YouTube ones) link against the copy the official app bundles; keep the same tag.
 newpipeExtractor = "v0.26.3"
 ktor = "3.5.0"
+# Community (Nostr) event signing, ids and key generation in core-net.
+# 0.15.0 is the last release whose JVM JNI artifact targets Java 11; 0.16.0 needs 17 and 0.17+ need 21.
+secp256k1 = "0.15.0"
+kotlincryptoSha2 = "0.8.0"
+kotlincryptoRandom = "0.6.0"
 kotlinxDatetime = "0.8.0"
 kotlinxIo = "0.9.1"
 libarchive = "1.1.6"
@@ -119,12 +123,13 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 # Phase D: M3 1.5 expressive theme/motion APIs. The Compose BOM still pins material3 1.4.0,
 # so this override pulls the newer library; revert the override once a BOM pins 1.5.x.
-androidx-compose-material3-expressive = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha26" }
+androidx-compose-material3-expressive = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-rc01" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-# Shared (core-ui) Material3 for Android/desktop. CMP decoupled Material3 from the plugin after 1.9.0; 1.12.0-alpha03
-# builds on CMP foundation/runtime 1.12.0-beta01 (same line as the 1.12.x plugin) and tracks androidx material3
-# 1.5.0-alpha22, close to the 1.5.0-alpha26 the app pins above.
-jetbrains-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version = "1.12.0-alpha03" }
+# Shared (core-ui) Material3 for Android/desktop. CMP decoupled Material3 from the plugin after 1.9.0; 1.13.0-beta02
+# builds on CMP foundation/runtime 1.13.0-beta02 (same line as the 1.13.x plugin) and tracks androidx material3
+# 1.5.0-beta02, which has the same public API as the 1.5.0-rc01 the app pins above. Move the two together: the
+# 1.5 alphas and betas changed Slider and ToggleButtonDefaults in ways shared code cannot bridge.
+jetbrains-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version = "1.13.0-beta02" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
@@ -208,7 +213,6 @@ leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", ve
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
 lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
-markwon = { module = "io.noties.markwon:core", version.ref = "markwon" }
 mihon-image-decoder = { module = "com.github.mihonapp:image-decoder", version.ref = "mihonImageDecoder" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
@@ -247,6 +251,11 @@ ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "kto
 ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+secp256k1-kmp = { module = "fr.acinq.secp256k1:secp256k1-kmp", version.ref = "secp256k1" }
+secp256k1-kmp-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "secp256k1" }
+secp256k1-kmp-jni-android = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-android", version.ref = "secp256k1" }
+kotlincrypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "kotlincryptoSha2" }
+kotlincrypto-random = { module = "org.kotlincrypto.random:crypto-rand", version.ref = "kotlincryptoRandom" }
 rhino = { module = "org.mozilla:rhino", version.ref = "rhino" }
 libarchive = { module = "me.zhanghai.android.libarchive:library", version.ref = "libarchive" }
 quickjsAndroid = { module = "com.github.seven332:quickjs-android", version.ref = "quickjsAndroid" }

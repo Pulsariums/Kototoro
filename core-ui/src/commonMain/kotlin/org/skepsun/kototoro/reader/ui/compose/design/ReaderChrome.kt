@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -69,6 +68,7 @@ import com.kyant.shapes.RoundedRectangle
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
 import kotlin.math.roundToInt
+import org.skepsun.kototoro.core.ui.buttons.IconButton
 
 /**
  * The surfaces of the reader's floating chrome (top capsules, title chip, floating buttons, progress dock). Android
@@ -370,23 +370,9 @@ fun ReaderProgressBar(
     val popupHalfWidthPx = with(density) { 28.dp.roundToPx() }
     val effectiveMax = max.coerceAtLeast(1f)
     val displayedValue = (dragValue ?: value).coerceIn(0f, effectiveMax)
-    // Hold the SliderState here instead of using the value/valueRange Slider overload. Against the
-    // JetBrains Material3 this module compiles with, that overload (with thumb/track) binds to a
-    // signature that Android's newer androidx Material3 keeps only as a hidden forwarder, and the
-    // forwarder drops valueRange: the track was stuck at 0..1, so only the first two pages could be
-    // picked (#571). The state overload has the same signature and behavior in both versions.
-    val sliderState = remember(effectiveMax) {
-        SliderState(value = displayedValue, valueRange = 0f..effectiveMax)
-    }
+    // Material 3 1.5 keeps the thumb/track slots only on the state overload; the range lives in the state.
+    val sliderState = remember(effectiveMax) { SliderState(displayedValue, 0, 0f..effectiveMax) }
     sliderState.value = displayedValue
-    sliderState.onValueChange = {
-        dragValue = it
-        onValueChange(it)
-    }
-    sliderState.onValueChangeFinished = {
-        dragValue = null
-        onValueChangeFinished()
-    }
     val isTv = LocalUiPresentationConfig.current.isTv
     val previousRequester = remember { FocusRequester() }
     val nextRequester = remember { FocusRequester() }
@@ -473,6 +459,14 @@ fun ReaderProgressBar(
                     ) {
                         Slider(
                             state = sliderState,
+                            onValueChange = {
+                                dragValue = it
+                                onValueChange(it)
+                            },
+                            onValueChangeFinished = {
+                                dragValue = null
+                                onValueChangeFinished()
+                            },
                             thumb = {
                                 Box(
                                     modifier = Modifier

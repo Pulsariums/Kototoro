@@ -1,5 +1,7 @@
 package org.skepsun.kototoro.list.ui.compose
 
+import org.skepsun.kototoro.list.ui.ListDisplaySection
+import org.skepsun.kototoro.core.ui.chips.CompactChoicePill
 import coil3.compose.AsyncImage
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -23,9 +25,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import org.skepsun.kototoro.core.ui.adaptive.TvTextButton
+import org.skepsun.kototoro.core.ui.buttons.Button
 import org.skepsun.kototoro.core.ui.theme.popupMenuContainerColor
 import androidx.compose.material3.Surface
 import androidx.compose.material3.DropdownMenuItem
@@ -114,7 +116,6 @@ private const val TvInitialFocusAttempts = 20
 /** TV grid scale multiplier; [compactPosterCardStyle] clamps the result at 1.4x. */
 private const val TvGridScaleBoost = 1.4f
 private const val MaxGridScale = 1.4f
-private val QuickFilterChipHeight = 32.dp
 private val QuickFilterChipIconSize = 16.dp
 
 /** Ring shape for the quick-filter dropdown rows; M3 menu items are full-width rectangles. */
@@ -160,6 +161,8 @@ fun KototoroContentListScreen(
     hasMoreItems: Boolean = true,
     loadMoreVisibleThreshold: Int = LoadMoreVisibleThreshold,
     gridScale: Float,
+    // The page this list belongs to; its extra-card-info switch is stored per page.
+    displaySection: ListDisplaySection? = null,
     selectedItemsIds: Set<Long>,
     onPrepareItemTransition: (ContentListModel, Rect?) -> Unit = { _, _ -> },
     onItemClick: (ContentListModel) -> Unit,
@@ -279,7 +282,7 @@ fun KototoroContentListScreen(
         AppSettings.KEY_BADGES_TOP_RIGHT,
         AppSettings.KEY_BADGES_BOTTOM_LEFT,
         AppSettings.KEY_BADGES_BOTTOM_RIGHT,
-        AppSettings.KEY_SHOW_EXTRA_INFO_ON_CARDS,
+        *AppSettings.extraInfoKeysOf(displaySection).toTypedArray(),
         AppSettings.KEY_CARD_PROGRESS_STYLE,
     ) {
         ContentListScreenPrefs(
@@ -289,7 +292,7 @@ fun KototoroContentListScreen(
                 badgesTopRight = badgesTopRight,
                 badgesBottomLeft = badgesBottomLeft,
                 badgesBottomRight = badgesBottomRight,
-                showExtraInfo = showExtraInfoOnCards,
+                showExtraInfo = showExtraInfoOf(displaySection),
                 cardProgressStyle = cardProgressStyle,
             ),
         )
@@ -768,11 +771,11 @@ fun QuickFilterSection(
     onQuickFilterOptionClick: (ListFilterOption) -> Unit,
     leadingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
+    appliedOnly: Boolean = false,
+    verticalPadding: androidx.compose.ui.unit.Dp = 4.dp,
 ) {
     val context = LocalContext.current
-    val isIosStyle = LocalInterfaceStyle.current == InterfaceStyle.IOS
     val isTvPresentation = LocalUiPresentationConfig.current.isTv
-    val usesArtworkBackdrop = LocalBackgroundStyle.current.usesArtworkBackdrop
     val listState = rememberLazyListState()
     val entryPoint = remember(context.applicationContext) {
         runCatching {
@@ -785,9 +788,15 @@ fun QuickFilterSection(
     // Applied chips lead the rail, ahead of the group dropdowns: an applied filter that
     // sat off-screen (e.g. Downloaded, applied automatically while offline) left the page
     // looking empty with no visible reason.
-    val railEntries: List<Any> = remember(quickFilter.items, quickFilter.groups) {
-        val (checked, unchecked) = quickFilter.items.partition { chip -> chip.isChecked }
-        checked + quickFilter.groups + unchecked
+    val railEntries: List<Any> = remember(quickFilter.items, quickFilter.groups, appliedOnly) {
+        if (appliedOnly) {
+            // The full pickers remain in the filter panel. Surface every selected item here, including
+            // selections inside a group, so the reason for a narrowed or empty shelf stays visible.
+            (quickFilter.items + quickFilter.groups.flatMap { it.items }).filter { it.isChecked }
+        } else {
+            val (checked, unchecked) = quickFilter.items.partition { chip -> chip.isChecked }
+            checked + quickFilter.groups + unchecked
+        }
     }
     // Applying a quick filter re-queries the list, and the rail is rebuilt from the new model: the
     // focus node under the pressed chip no longer exists, so Compose drops the focus to the nearest
@@ -811,7 +820,7 @@ fun QuickFilterSection(
     }
     LazyRow(
         state = listState,
-        contentPadding = PaddingValues(horizontal = AppLayoutTokens.sectionHorizontalPadding, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = AppLayoutTokens.sectionHorizontalPadding, vertical = verticalPadding),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
@@ -844,7 +853,6 @@ fun QuickFilterSection(
             if (entry is QuickFilterGroup) {
                 QuickFilterGroupChip(
                     group = entry,
-                    isIosStyle = isIosStyle,
                     context = context,
                     entryPoint = entryPoint,
                     onQuickFilterOptionClick = applyQuickFilter,
@@ -853,79 +861,13 @@ fun QuickFilterSection(
             }
             val chip = entry as ChipModel
             val option = chip.data as? ListFilterOption
-            val contentColor = when {
-                isIosStyle && chip.isChecked -> MaterialTheme.colorScheme.inverseOnSurface
-                chip.isChecked -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
-            val chipShape = RoundedCornerShape(999.dp)
-            // MD3 keeps its filter chips as plain text on plain backgrounds;
-            // over the artwork backdrop they need a light pill so the label
-            // stays readable on any image without changing the MD3 chip
-            // language (no border, tonal container only).
-            val chipBackgroundModifier = when {
-                isIosStyle -> Modifier
-                    .background(
-                        color = if (chip.isChecked) {
-                            MaterialTheme.colorScheme.inverseSurface
-                        } else {
-                            Color.Transparent
-                        },
-                        shape = chipShape,
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (chip.isChecked) {
-                            MaterialTheme.colorScheme.inverseSurface
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = chipShape,
-                    )
-
-                usesArtworkBackdrop -> Modifier.background(
-                    color = if (chip.isChecked) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
-                    } else {
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
-                    },
-                    shape = chipShape,
-                )
-
-                else -> Modifier
-            }
-            CompositionLocalProvider(LocalContentColor provides contentColor) {
-                Row(
-                    modifier = Modifier
-                        .then(chipBackgroundModifier)
-                        .then(
-                            if (option != null) {
-                                Modifier
-                                    .tvFocusable(shape = chipShape, addFocusTarget = false)
-                                    .clickable { applyQuickFilter(option) }
-                            } else {
-                                Modifier
-                            },
-                        )
-                        .height(QuickFilterChipHeight)
-                        .padding(horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                        chipIcon(chip)?.invoke()
-                        Text(
-                            text = buildChipLabel(context, chip, entryPoint),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = contentColor,
-                            fontWeight = if (chip.isChecked) {
-                                androidx.compose.ui.text.font.FontWeight.SemiBold
-                            } else {
-                                androidx.compose.ui.text.font.FontWeight.Normal
-                            },
-                            maxLines = 1,
-                        )
-                }
-            }
+            CompactChoicePill(
+                selected = chip.isChecked,
+                onClick = { option?.let(applyQuickFilter) },
+                label = buildChipLabel(context, chip, entryPoint),
+                enabled = option != null,
+                leadingIcon = chipIcon(chip),
+            )
         }
     }
 }
@@ -933,99 +875,30 @@ fun QuickFilterSection(
 @Composable
 private fun QuickFilterGroupChip(
     group: QuickFilterGroup,
-    isIosStyle: Boolean,
     context: android.content.Context,
     entryPoint: BaseApp.BaseAppEntryPoint?,
     onQuickFilterOptionClick: (ListFilterOption) -> Unit,
 ) {
     var expanded by remember(group.key) { mutableStateOf(false) }
-    val isTvPresentation = LocalUiPresentationConfig.current.isTv
-    val usesArtworkBackdrop = LocalBackgroundStyle.current.usesArtworkBackdrop
     val selectedItems = group.items.filter(ChipModel::isChecked)
     val isSelected = selectedItems.isNotEmpty()
-    val contentColor = when {
-        isIosStyle && isSelected -> MaterialTheme.colorScheme.inverseOnSurface
-        isSelected -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val chipShape = RoundedCornerShape(999.dp)
-    // Same pill rule as the plain filter chips: MD3 keeps text-only chips on
-    // plain backgrounds and gains a light container only over the artwork
-    // backdrop, while iOS always draws its outline/tonal container.
-    val chipBackgroundModifier = when {
-        isIosStyle -> Modifier
-            .background(
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.inverseSurface
-                } else {
-                    Color.Transparent
-                },
-                shape = chipShape,
-            )
-            .border(
-                width = 1.dp,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.inverseSurface
-                } else {
-                    MaterialTheme.colorScheme.outlineVariant
-                },
-                shape = chipShape,
-            )
-
-        usesArtworkBackdrop -> Modifier.background(
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
-            } else {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
-            },
-            shape = chipShape,
-        )
-
-        else -> Modifier
-    }
     Box {
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
-            Row(
-                modifier = Modifier
-                    .then(chipBackgroundModifier)
-                    .tvFocusable(shape = chipShape, enabled = true, addFocusTarget = false)
-                    .clickable { expanded = true }
-                    .height(QuickFilterChipHeight)
-                    .padding(horizontal = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(group.iconResId),
-                    contentDescription = null,
-                    modifier = Modifier.size(QuickFilterChipIconSize),
-                )
-                Text(
-                    text = when (selectedItems.size) {
-                        0 -> stringResource(group.titleResId)
-                        1 -> buildChipLabel(context, selectedItems.single(), entryPoint)
-                        else -> stringResource(
-                            R.string.filter_group_selected_count,
-                            stringResource(group.titleResId),
-                            selectedItems.size,
-                        )
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = contentColor,
-                    fontWeight = if (isSelected) {
-                        androidx.compose.ui.text.font.FontWeight.SemiBold
-                    } else {
-                        androidx.compose.ui.text.font.FontWeight.Normal
-                    },
-                    maxLines = 1,
-                )
-                Icon(
-                    painter = painterResource(R.drawable.ic_expand_more),
-                    contentDescription = null,
-                    modifier = Modifier.size(QuickFilterChipIconSize),
-                )
-            }
-        }
+        CompactChoicePill(
+            selected = isSelected,
+            onClick = { expanded = true },
+            label = when (selectedItems.size) {
+                0 -> stringResource(group.titleResId)
+                1 -> buildChipLabel(context, selectedItems.single(), entryPoint)
+                else -> stringResource(R.string.filter_group_selected_count,
+                    stringResource(group.titleResId), selectedItems.size)
+            },
+            leadingIcon = {
+                Icon(painterResource(group.iconResId), null, Modifier.size(QuickFilterChipIconSize))
+            },
+            trailingIcon = {
+                Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.size(QuickFilterChipIconSize))
+            },
+        )
         DropdownMenu(
             containerColor = MaterialTheme.colorScheme.popupMenuContainerColor(),
             expanded = expanded,

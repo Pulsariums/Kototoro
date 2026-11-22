@@ -1,5 +1,7 @@
 package org.skepsun.kototoro.settings.compose
 
+import org.skepsun.kototoro.core.ui.settings.SettingsSearchLazyReveal
+import androidx.compose.foundation.lazy.rememberLazyListState
 import com.kyant.backdrop.isRenderEffectSupported
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -390,6 +392,7 @@ fun AppearanceSettingsScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -473,42 +476,51 @@ fun AppearanceSettingsScreen(
                             )
                         }
                     }
-                    item {
-                        SettingsSliderPreference(
-                            title = stringResource(R.string.background_artwork_opacity),
-                            iconRes = R.drawable.ic_eye,
-                            value = state.backgroundArtworkOpacity,
-                            valueRange = 0..100,
-                            step = 5,
-                            summary = stringResource(R.string.background_artwork_opacity_summary),
-                            valueText = { "$it%" },
-                            onValueChange = onBackgroundArtworkOpacityChange,
-                        )
-                    }
-                    item {
-                        SettingsSliderPreference(
-                            title = stringResource(R.string.background_artwork_overlay_strength),
-                            iconRes = R.drawable.ic_palette,
-                            value = state.backgroundArtworkOverlayStrength,
-                            valueRange = 0..100,
-                            step = 5,
-                            summary = stringResource(R.string.background_artwork_overlay_strength_summary),
-                            valueText = { "$it%" },
-                            onValueChange = onBackgroundArtworkOverlayStrengthChange,
-                        )
-                    }
-                    item {
-                        SettingsSliderPreference(
-                            title = stringResource(R.string.background_artwork_blur),
-                            iconRes = R.drawable.ic_auto_fix,
-                            value = state.backgroundArtworkBlur,
-                            valueRange = 0..100,
-                            step = 5,
-                            summary = stringResource(R.string.background_artwork_blur_summary),
-                            valueText = { "$it%" },
-                            onValueChange = onBackgroundArtworkBlurChange,
-                        )
-                    }
+
+                }
+            }
+        }
+
+        item(key = "appearance_text_and_language") {
+            SettingsPreferenceGroup(
+                title = stringResource(R.string.appearance_group_text_and_language),
+            ) {
+                item {
+                    SettingsChoicePreference(
+                        title = stringResource(R.string.pref_app_font_preset),
+                        iconRes = R.drawable.ic_read,
+                        value = if (usesExpressiveTypography) {
+                            state.expressiveAppFontPreset
+                        } else {
+                            state.appFontPreset
+                        },
+                        options = options.fontPresets,
+                        summary = stringResource(R.string.pref_app_font_preset_summary),
+                        styleHint = if (state.interfaceStyle == InterfaceStyle.IOS) {
+                            stringResource(
+                                R.string.appearance_ios_font_note,
+                                options.fontPresets.firstOrNull {
+                                    it.value == state.expressiveAppFontPreset
+                                }?.label.orEmpty(),
+                            )
+                        } else {
+                            null
+                        },
+                        onValueChange = if (usesExpressiveTypography) {
+                            onExpressiveAppFontPresetChange
+                        } else {
+                            onAppFontPresetChange
+                        },
+                    )
+                }
+                item {
+                    SettingsChoicePreference(
+                        title = stringResource(R.string.language),
+                        iconRes = R.drawable.ic_language,
+                        value = state.appLocale,
+                        options = options.appLocales,
+                        onValueChange = onAppLocaleChange,
+                    )
                 }
             }
         }
@@ -550,7 +562,7 @@ fun AppearanceSettingsScreen(
                 item {
                     SettingsActionPreference(
                         title = stringResource(R.string.appearance_group_interface_and_behavior),
-                        summary = stringResource(R.string.appearance_interface_behavior_summary),
+                        summary = stringResource(R.string.appearance_interface_advanced_summary),
                         iconRes = R.drawable.ic_appearance,
                         onClick = onInterfaceSettingsClick,
                     )
@@ -873,46 +885,58 @@ fun AppearanceSettingsScreen(
         }
 
         if (page == AppearanceSettingsPage.INTERFACE) {
-        item(key = "appearance_text_and_language") {
-            SettingsPreferenceGroup(
-                title = stringResource(R.string.appearance_group_text_and_language),
-            ) {
-                item {
-                    SettingsChoicePreference(
-                        title = stringResource(R.string.pref_app_font_preset),
-                        iconRes = R.drawable.ic_read,
-                        value = if (usesExpressiveTypography) {
-                            state.expressiveAppFontPreset
-                        } else {
-                            state.appFontPreset
-                        },
-                        options = options.fontPresets,
-                        summary = stringResource(R.string.pref_app_font_preset_summary),
-                        styleHint = if (state.interfaceStyle == InterfaceStyle.IOS) {
-                            stringResource(
-                                R.string.appearance_ios_font_note,
-                                options.fontPresets.firstOrNull {
-                                    it.value == state.expressiveAppFontPreset
-                                }?.label.orEmpty(),
-                            )
-                        } else {
-                            null
-                        },
-                        onValueChange = if (usesExpressiveTypography) {
-                            onExpressiveAppFontPresetChange
-                        } else {
-                            onAppFontPresetChange
-                        },
-                    )
+        if (state.backgroundStyle.usesArtworkBackdrop) {
+            item(key = "appearance_background_tuning") {
+                SettingsPreferenceGroup(title = stringResource(R.string.appearance_background_tuning)) {
+                    item {
+                        SettingsSliderPreference(
+                            title = stringResource(R.string.background_artwork_opacity),
+                            iconRes = R.drawable.ic_eye,
+                            value = state.backgroundArtworkOpacity,
+                            valueRange = 0..100,
+                            step = 5,
+                            summary = stringResource(R.string.background_artwork_opacity_summary),
+                            valueText = { "$it%" },
+                            onValueChange = onBackgroundArtworkOpacityChange,
+                        )
+                    }
+                    item {
+                        SettingsSliderPreference(
+                            title = stringResource(R.string.background_artwork_overlay_strength),
+                            iconRes = R.drawable.ic_palette,
+                            value = state.backgroundArtworkOverlayStrength,
+                            valueRange = 0..100,
+                            step = 5,
+                            summary = stringResource(R.string.background_artwork_overlay_strength_summary),
+                            valueText = { "$it%" },
+                            onValueChange = onBackgroundArtworkOverlayStrengthChange,
+                        )
+                    }
+                    item {
+                        SettingsSliderPreference(
+                            title = stringResource(R.string.background_artwork_blur),
+                            iconRes = R.drawable.ic_auto_fix,
+                            value = state.backgroundArtworkBlur,
+                            valueRange = 0..100,
+                            step = 5,
+                            summary = stringResource(R.string.background_artwork_blur_summary),
+                            valueText = { "$it%" },
+                            onValueChange = onBackgroundArtworkBlurChange,
+                        )
+                    }
                 }
-                item {
-                    SettingsChoicePreference(
-                        title = stringResource(R.string.language),
-                        iconRes = R.drawable.ic_language,
-                        value = state.appLocale,
-                        options = options.appLocales,
-                        onValueChange = onAppLocaleChange,
-                    )
+            }
+        } else {
+            item(key = "appearance_background_tuning") {
+                SettingsPreferenceGroup(title = stringResource(R.string.appearance_background_tuning)) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.appearance_background_tuning_unavailable),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
                 }
             }
         }
@@ -1088,7 +1112,10 @@ private fun AppearanceImmersiveSettingsScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
+        val listState = rememberLazyListState()
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = SettingsContentHorizontalPadding,
@@ -1167,7 +1194,10 @@ private fun AppearanceGlassSettingsScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
+        val listState = rememberLazyListState()
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = SettingsContentHorizontalPadding,
@@ -1213,7 +1243,10 @@ private fun AppearanceSubpage(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
+        val listState = rememberLazyListState()
+        SettingsSearchLazyReveal(listState)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = SettingsContentHorizontalPadding,

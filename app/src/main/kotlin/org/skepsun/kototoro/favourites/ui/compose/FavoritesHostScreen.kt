@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -52,8 +52,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.TextButton
 import org.skepsun.kototoro.core.ui.adaptive.LocalUiPresentationConfig
+import org.skepsun.kototoro.core.ui.buttons.TextButton
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
 import org.skepsun.kototoro.explore.ui.model.BrowseGroupTab
 import org.skepsun.kototoro.explore.ui.model.SourceTag
 import org.skepsun.kototoro.favourites.ui.container.FavouriteTabModel
@@ -293,11 +294,15 @@ fun KototoroFavoritesHostRoute(
         )
     }
 
+    // The broken-sources card floats over the bottom of the list. Its height joins the list's bottom
+    // padding so the last row can scroll clear of it instead of staying hidden underneath.
+    var healthBannerHeightPx by remember { mutableIntStateOf(0) }
+    val healthBannerHeight = with(androidx.compose.ui.platform.LocalDensity.current) { healthBannerHeightPx.toDp() }
     val innerPadding = PaddingValues(
         start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
         end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
         top = contentPadding.calculateTopPadding(),
-        bottom = contentPadding.calculateBottomPadding(),
+        bottom = contentPadding.calculateBottomPadding() + healthBannerHeight,
     )
 
     LaunchedEffect(uiState.isLoading, favoritesTopBarOverrideState) {
@@ -396,7 +401,8 @@ fun KototoroFavoritesHostRoute(
             onOpen = appRouter::openMigrationSources,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = contentPadding.calculateBottomPadding()),
+                .padding(bottom = contentPadding.calculateBottomPadding())
+                .onSizeChanged { healthBannerHeightPx = it.height },
         )
         }
     }

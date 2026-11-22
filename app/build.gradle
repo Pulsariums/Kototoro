@@ -67,8 +67,8 @@ android {
 		// Phase E: targetSdk 37. Large-screen orientation locks are skipped in
 		// ScreenOrientationHelper to match Android 17 behavior.
 		targetSdk = 37
-		versionCode = 1262
-		versionName = '2.4.5'
+		versionCode = 1270
+		versionName = '2.4.13'
 		manifestPlaceholders = [
 			appClassName: 'org.skepsun.kototoro.KototoroApp'
 		]
@@ -483,8 +483,17 @@ dependencies {
 	// Explicit ui 1.13.0-rc01 wins over the BOM-pinned 1.12.x: BlurRadiusSpec drives the immersive edge blur.
 	implementation libs.androidx.compose.ui.progressive.blur
 	implementation libs.androidx.compose.ui.text.google.fonts
-	// Phase D: explicit 1.5.0-alpha26 wins over the BOM-pinned material3 1.4.0 for the whole app.
+	// Phase D: explicit 1.5.0-rc01 wins over the BOM-pinned material3 1.4.0 for the whole app.
 	implementation libs.androidx.compose.material3.expressive
+	// core-ui's Compose Multiplatform 1.13 beta asks for foundation/animation 1.13.0-beta02; keep them on the same
+	// release candidate as ui and runtime above.
+	constraints {
+		implementation 'androidx.compose.foundation:foundation:1.13.0-rc01'
+		implementation 'androidx.compose.foundation:foundation-layout:1.13.0-rc01'
+		implementation 'androidx.compose.animation:animation:1.13.0-rc01'
+		implementation 'androidx.compose.animation:animation-core:1.13.0-rc01'
+		implementation 'androidx.compose.material:material-ripple:1.13.0-rc01'
+	}
 	implementation libs.androidx.compose.material.icons.extended
 	implementation libs.androidx.glance.appwidget
 	implementation libs.androidx.navigation3.runtime
@@ -597,7 +606,6 @@ dependencies {
 	implementation libs.telephoto.subsampling
 	implementation libs.telephoto.zoomable.image.coil3
 	implementation libs.disk.lru.cache
-	implementation libs.markwon
 	implementation(libs.usagi.rpc) {
 		exclude group: 'org.json', module: 'json'
 	}

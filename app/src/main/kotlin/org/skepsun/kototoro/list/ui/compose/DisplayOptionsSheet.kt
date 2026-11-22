@@ -61,6 +61,7 @@ import org.skepsun.kototoro.core.ui.adaptive.tvSliderDpad
 import org.skepsun.kototoro.core.ui.adaptive.tvTakeInitialFocus
 import org.skepsun.kototoro.core.ui.compose.KototoroSlider
 import org.skepsun.kototoro.list.domain.ListSortOrder
+import org.skepsun.kototoro.list.ui.ListDisplaySection
 
 private const val DISPLAY_OPTIONS_SHEET_TAG = "DisplayOptionsSheet"
 
@@ -81,6 +82,7 @@ fun DisplayOptionsSheet(
     // Off for surfaces whose grid does not span the window (search's wide
     // split layout would make a window-width estimate visibly wrong).
     supportsGridColumnsHint: Boolean = true,
+    gridSizeIsSectionLocal: Boolean = false,
     sortOrders: List<ListSortOrder> = emptyList(),
     selectedSortOrder: ListSortOrder? = null,
     onSortOrderSelected: (ListSortOrder) -> Unit = {},
@@ -92,6 +94,8 @@ fun DisplayOptionsSheet(
     // (non-home sections don't page their rails).
     railRows: Int? = null,
     onRailRowsChange: ((Int) -> Unit)? = null,
+    // The page these options belong to; null edits the general ones. Extra card info is stored per page.
+    section: ListDisplaySection? = null,
     extraContent: (@Composable () -> Unit)? = null,
     onDismissRequest: () -> Unit,
 ) {
@@ -101,8 +105,8 @@ fun DisplayOptionsSheet(
         org.skepsun.kototoro.core.prefs.AppSettings(context.applicationContext)
     }
     val showExtraInfo by settings.observeAsState(
-        org.skepsun.kototoro.core.prefs.AppSettings.KEY_SHOW_EXTRA_INFO_ON_CARDS,
-    ) { showExtraInfoOnCards }
+        *AppSettings.extraInfoKeysOf(section).toTypedArray(),
+    ) { showExtraInfoOf(section) }
     val showSourceHealth by settings.observeAsState(
         org.skepsun.kototoro.core.prefs.AppSettings.KEY_SOURCE_HEALTH_BANNER,
     ) { isSourceHealthBannerEnabled }
@@ -164,17 +168,10 @@ fun DisplayOptionsSheet(
                         )
                         // The extra-info toggle rides on the title row instead of taking a line of its own;
                         // the cards behind the sheet show what it does.
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                        DisplayOptionsHeader(
+                            title = stringResource(R.string.display_options),
+                            summary = stringResource(R.string.display_options_live_summary),
                         ) {
-                            Text(
-                                text = stringResource(R.string.display_options),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f),
-                            )
                             if (supportsSourceHealthToggle) {
                                 FilterChip(
                                     selected = showSourceHealth,
@@ -191,7 +188,7 @@ fun DisplayOptionsSheet(
                             }
                             FilterChip(
                                 selected = showExtraInfo,
-                                onClick = { settings.showExtraInfoOnCards = !showExtraInfo },
+                                onClick = { settings.setShowExtraInfoOf(section, !showExtraInfo) },
                                 label = {
                                     Text(
                                         text = stringResource(R.string.show_extra_info_on_cards),
@@ -231,6 +228,14 @@ fun DisplayOptionsSheet(
                                     listMode = currentListMode,
                                     gridSize = gridSize,
                                 ),
+                            )
+                        }
+
+                        if (supportsGridSizeSlider && !gridSizeIsSectionLocal && section == null) {
+                            Text(
+                                text = stringResource(R.string.display_options_shared_size_summary),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 

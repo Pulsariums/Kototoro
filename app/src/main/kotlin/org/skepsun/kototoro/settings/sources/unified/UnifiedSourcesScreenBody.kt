@@ -36,8 +36,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.pager.PagerState
@@ -59,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.skepsun.kototoro.core.ui.adaptive.tvChipRing
 import org.skepsun.kototoro.core.ui.adaptive.tvIconButtonRing
+import org.skepsun.kototoro.core.ui.buttons.IconButton
 import org.skepsun.kototoro.core.ui.compose.rememberSafePainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +66,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import org.skepsun.kototoro.R
 import org.skepsun.kototoro.core.model.titleResId
 import org.skepsun.kototoro.core.ui.compose.KototoroPullToRefreshBox
+import org.skepsun.kototoro.core.ui.progress.LinearProgressIndicator
 import org.skepsun.kototoro.settings.compose.SettingsContentHorizontalPadding
 import org.skepsun.kototoro.settings.compose.settingsContentTopInset
 import org.skepsun.kototoro.parsers.model.ContentType
@@ -117,6 +117,7 @@ fun UnifiedSourcesScreen(
     onAddRecommendedRepository: (UnifiedRecommendedRepository) -> Unit,
     onPullRefresh: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onResetFilters: () -> Unit = {},
     pagerState: PagerState = rememberPagerState(pageCount = { UNIFIED_SOURCES_TAB_COUNT }),
     tabReselectTrigger: Pair<Int, Long>? = null,
 ) {
@@ -254,6 +255,9 @@ fun UnifiedSourcesScreen(
                                     selectedSourceIds = activeSelectedSourceIds,
                                     onSourceSelectionChange = onSourceSelectionChange,
                                     onSourcePinnedChange = onSourcePinnedChange,
+                                    hasAnySources = state.allSources.isNotEmpty(),
+                                    onAddSource = { onAddRepository(null) },
+                                    onResetFilters = onResetFilters,
                                 )
                                 UNIFIED_SOURCES_TAB_REPOSITORIES -> UnifiedRepositoryList(
                                     modifier = pageModifier,
@@ -642,42 +646,14 @@ internal fun CompactFilterChip(
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingBadge: (@Composable () -> Unit)? = null,
 ) {
-    val style = rememberUnifiedSourcesVisualStyle()
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
-        FilterChip(
-            selected = selected,
-            onClick = onClick,
-            modifier = modifier.defaultMinSize(minHeight = 32.dp).tvChipRing(style.chipShape),
-            shape = style.chipShape,
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingBadge,
-            colors = FilterChipDefaults.filterChipColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-            ),
-            border = FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = selected,
-                borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                borderWidth = 1.dp,
-                selectedBorderWidth = 1.dp,
-            ),
-            label = {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-        )
-    }
+    org.skepsun.kototoro.core.ui.chips.CompactChoicePill(
+        selected = selected,
+        onClick = onClick,
+        label = text,
+        modifier = modifier,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingBadge,
+    )
 }
 
 @Composable

@@ -17,12 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.skepsun.kototoro.core.ui.adaptive.tvFocusable
+import org.skepsun.kototoro.core.ui.buttons.FilledTonalButton
+import org.skepsun.kototoro.core.ui.buttons.TextButton
 import org.skepsun.kototoro.core.ui.text.uiString
 import org.skepsun.kototoro.reader.ui.compose.design.ReaderPanelIcons
 
@@ -178,6 +183,42 @@ fun WizardSectionCard(
     }
 }
 
+/** Content-first entry; platform hosts supply only the actions they can actually perform. */
+@Composable
+fun WizardStartPage(
+    step: Int,
+    totalSteps: Int,
+    onAddSources: () -> Unit,
+    onRestoreBackup: () -> Unit,
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier,
+    onImportLocal: (() -> Unit)? = null,
+    enabled: Boolean = true,
+) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        WizardPageHeader(
+            step = step,
+            totalSteps = totalSteps,
+            title = uiString("welcome_intro_app_title"),
+            summary = uiString("welcome_start_summary"),
+            iconVector = ReaderPanelIcons.Welcome,
+            prominent = true,
+        )
+        WizardJumpButton(uiString("welcome_start_sources"), ReaderPanelIcons.Web,
+            "wizard-open-extensions", onAddSources, enabled)
+        onImportLocal?.let { importLocal ->
+            WizardJumpButton(uiString("welcome_start_local"), ReaderPanelIcons.Import,
+                "wizard-import-local", importLocal, enabled)
+        }
+        WizardJumpButton(uiString("restore_backup"), ReaderPanelIcons.BackupRestore,
+            "wizard-restore-backup", onRestoreBackup, enabled)
+        WizardJumpButton(uiString("welcome_start_browse"), ReaderPanelIcons.ArrowForward,
+            "wizard-start", onStart, enabled)
+        Text(uiString("welcome_start_later"), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
 /**
  * Android's `WelcomeIntroStep`: what a repository, an extension and a source are, then the disclaimer Android shows in
  * its error container. Nothing here is platform-specific, so the phone and a desktop host read the same page.
@@ -287,23 +328,39 @@ fun WizardDonePage(
                 onClick = onRestoreBackup,
             )
         }
+        // The troubleshooting steps matter only once a source misbehaves. Printed in full they were
+        // the longest thing on a page whose message is "you are done", so they open on request.
+        var adviceExpanded by remember { mutableStateOf(false) }
         WizardSectionCard(
             title = uiString("welcome_done_advice_title"),
             summary = uiString("welcome_done_advice_summary"),
+            actions = {
+                TextButton(
+                    onClick = { adviceExpanded = !adviceExpanded },
+                    modifier = Modifier.testTag("wizard-advice-toggle"),
+                ) {
+                    Text(uiString(if (adviceExpanded) "show_less" else "show_more"))
+                }
+            },
         ) {
-            Text(
-                text = uiString("welcome_done_advice_body"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (adviceExpanded) {
+                Text(
+                    text = uiString("welcome_done_advice_body"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun WizardJumpButton(text: String, icon: ImageVector, tag: String, onClick: () -> Unit) {
+private fun WizardJumpButton(
+    text: String, icon: ImageVector, tag: String, onClick: () -> Unit, enabled: Boolean = true,
+) {
     FilledTonalButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .testTag(tag)

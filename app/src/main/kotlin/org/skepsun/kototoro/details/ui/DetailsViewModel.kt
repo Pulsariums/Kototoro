@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
+import androidx.room.withTransaction
 import androidx.core.text.parseAsHtml
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -379,6 +380,7 @@ class DetailsViewModel @Inject constructor(
     private val spaceBrowseScope: SpaceBrowseScope,
     private val categoryDisplayPreferences: FavouriteCategoryDisplayPreferences,
     chapterTranslationStore: org.skepsun.kototoro.reader.translate.data.ChapterTranslationStore,
+    videoQualitySizeProber: org.skepsun.kototoro.video.player.VideoQualitySizeProber,
 ) : ChaptersPagesViewModel(
     settings = settings,
     interactor = interactor,
@@ -389,6 +391,7 @@ class DetailsViewModel @Inject constructor(
     mangaRepositoryFactory = mangaRepositoryFactory,
     localStorageChanges = localStorageChanges,
     chapterTranslationStore = chapterTranslationStore,
+    videoQualitySizeProber = videoQualitySizeProber,
 ) {
 
     private val intent = ContentIntent(savedStateHandle)
@@ -540,6 +543,8 @@ class DetailsViewModel @Inject constructor(
     val readingSearchHasSearched = MutableStateFlow(false)
     val readingSearchState = MutableStateFlow<LocalSearchState?>(null)
     private val readingSearchFilterState = MutableStateFlow(ReadingSearchFilterState())
+    /** The content kinds last chosen for the reading search by the work's kind rather than by hand. */
+    private var appliedDefaultReadingSearchKinds: Set<SearchContentKind>? = null
     private val readingSearchScopeFilters = MutableStateFlow(
         // Shares the remembered choice with the search screen, so "hide empty sources" does not have to be
         // ticked again in every source search.
@@ -829,8 +834,19 @@ class DetailsViewModel @Inject constructor(
     private fun currentMetadataContentType(): ContentType? {
         return when (selectedMetadataSource.safeValueOrNull() ?: MetadataSourceSelection.Base) {
             MetadataSourceSelection.Base -> currentBaseContentType()
-            is MetadataSourceSelection.Tracking -> currentTrackingMetadataDetails()?.contentType ?: currentBaseContentType()
+            // Local files are what gets read, and the reader picked their kind on import: a tracker that lists the
+            // novel as its manga adaptation must not turn the page into the manga layout.
+            is MetadataSourceSelection.Tracking -> currentBaseContentType()?.takeIf { isBaseContentLocal() }
+                ?: currentTrackingMetadataDetails()?.contentType
+                ?: currentBaseContentType()
         }
+    }
+
+    private fun isBaseContentLocal(): Boolean {
+        val base = baseLoadedDetails?.toContent()
+            ?: mangaDetails.safeValueOrNull()?.toContent()
+            ?: originContent
+        return base?.isLocal == true
     }
 
     private fun currentDetailsContentType(): ContentType? {
@@ -941,16 +957,23 @@ class DetailsViewModel @Inject constructor(
         }
         }
         readingSearchSources.value = filtered
+        // The work's kind is often learnt after the first search began (a tracking entry's details arrive later),
+        // so the default follows it for as long as the kinds were not picked by hand, and a search already run
+        // with the old kinds runs again: a show must not keep the comic sources it was first searched in.
+        val defaultKinds = defaultReadingSearchContentKinds()
+        val previousKinds = readingSearchScopeFilters.value.contentKinds
         readingSearchScopeFilters.update { current ->
-            if (current.sourceTypes == ALL_SOURCE_TYPES &&
-                current.contentKinds == ALL_SEARCH_CONTENT_KINDS &&
-                !current.pinnedOnly &&
-                !current.hideEmpty
-            ) {
-                current.copy(contentKinds = defaultReadingSearchContentKinds())
+            if (current.contentKinds == (appliedDefaultReadingSearchKinds ?: ALL_SEARCH_CONTENT_KINDS)) {
+                current.copy(contentKinds = defaultKinds)
             } else {
                 current
             }
+        }
+        appliedDefaultReadingSearchKinds = defaultKinds
+        if (readingSearchScopeFilters.value.contentKinds != previousKinds &&
+            (readingSearchHasSearched.value || readingSearchLoading.value)
+        ) {
+            searchReadingBindings()
         }
         if (selectedReadingSearchSource.value !in filtered.map { it.mangaSource.name }.toSet()) {
             selectedReadingSearchSource.value = null
@@ -1485,7 +1508,7 @@ class DetailsViewModel @Inject constructor(
             -> entityType == EntityType.PERSON || entityType == EntityType.CHARACTER
 
             ScrobblerService.MANGAUPDATES -> entityType == EntityType.PERSON
-            ScrobblerService.SIMKL, ScrobblerService.MANGABAKA -> false
+            ScrobblerService.SIMKL, ScrobblerService.MANGABAKA, ScrobblerService.TMDB -> false
         }
     }
 
@@ -2505,17 +2528,19 @@ class DetailsViewModel @Inject constructor(
         observedTrackingLinks,
         scrobblingInfo,
     ) { links, scrobblingItems ->
-        links.mapNotNull { link ->
-            val service = org.skepsun.kototoro.scrobbling.common.domain.model.ScrobblerService.entries
-                .firstOrNull { it.id == link.service }
+        val targets = (links.map { it.service to it.remoteId } +
+            scrobblingItems.map { it.scrobbler.id to it.targetId }).distinct()
+        targets.mapNotNull { (serviceId, remoteId) ->
+            val service = ScrobblerService.entries
+                .firstOrNull { it.id == serviceId }
                 ?: return@mapNotNull null
-            val cached = trackingSiteCacheRepository.readDetails(service, link.remoteId)
+            val cached = trackingSiteCacheRepository.readDetails(service, remoteId)
             val scrobbling = scrobblingItems.firstOrNull {
-                it.scrobbler == service && it.targetId == link.remoteId
+                it.scrobbler == service && it.targetId == remoteId
             }
             LinkedTrackingItemUiModel(
                 service = service,
-                remoteId = link.remoteId,
+                remoteId = remoteId,
                 title = cached?.title ?: scrobbling?.title ?: contentTitleFallback(service),
                 coverUrl = cached?.coverUrl.normalizedImageUrl() ?: scrobbling?.coverUrl.normalizedImageUrl(),
                 summary = cached?.description ?: scrobbling?.description?.toString(),
@@ -2524,6 +2549,8 @@ class DetailsViewModel @Inject constructor(
                 rating = scrobbling?.rating,
                 hasScrobblingBinding = scrobbling != null,
                 isPreferred = service == settings.preferredTrackingSite,
+                communityScore = cached?.score,
+                progress = scrobbling?.chapter ?: 0,
             )
         }
     }.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, emptyList())
@@ -2855,6 +2882,7 @@ class DetailsViewModel @Inject constructor(
                     return
                 }
                 selectedMetadataSource.value = nextSelection
+                trackingMetadataCandidates.value = mergeTrackingMetadataCandidates(trackingMetadataCandidates.value)
                 selectedMetadataSearchService.value = option.trackingService
                 syncDisplayedState()
                 launchJob(Dispatchers.IO) {
@@ -2895,26 +2923,34 @@ class DetailsViewModel @Inject constructor(
     fun removeMetadataSourceBinding(option: DetailsSourceOption) {
         val service = option.trackingService ?: return
         val remoteId = option.remoteId ?: return
+        if (!trackingEditBusy.compareAndSet(false, true)) return
         launchJob(Dispatchers.IO) {
-            val activeLocalMangaId = resolveCurrentMetadataPersistenceMangaId()
-            if (activeLocalMangaId != null) {
-                trackingSiteMatcher.removeMatch(service, activeLocalMangaId)
+            try {
+                val activeLocalMangaId = resolveCurrentMetadataPersistenceMangaId()
+                if (activeLocalMangaId != null) {
+                    db.withTransaction {
+                        db.getScrobblingDao().detachLocalBindings(service.id, activeLocalMangaId)
+                        trackingSiteMatcher.removeMatch(service, activeLocalMangaId)
+                    }
+                }
+                trackingMetadataCandidates.value = trackingMetadataCandidates.value.filterNot { candidate ->
+                    candidate.service == service && candidate.remoteId == remoteId
+                }
+                val selection = selectedMetadataSource.value
+                if (
+                    selection is MetadataSourceSelection.Tracking &&
+                    selection.service == service &&
+                    selection.remoteId == remoteId
+                ) {
+                    selectedMetadataSource.value = MetadataSourceSelection.Base
+                    persistMetadataSourceSelectionForCurrentEntity()
+                    refreshContextualEntityRelations()
+                }
+                updateSourceOptions()
+                syncDisplayedState()
+            } finally {
+                trackingEditBusy.value = false
             }
-            trackingMetadataCandidates.value = trackingMetadataCandidates.value.filterNot { candidate ->
-                candidate.service == service && candidate.remoteId == remoteId
-            }
-            val selection = selectedMetadataSource.value
-            if (
-                selection is MetadataSourceSelection.Tracking &&
-                selection.service == service &&
-                selection.remoteId == remoteId
-            ) {
-                selectedMetadataSource.value = MetadataSourceSelection.Base
-                persistMetadataSourceSelectionForCurrentEntity()
-                refreshContextualEntityRelations()
-            }
-            updateSourceOptions()
-            syncDisplayedState()
         }
     }
 
@@ -2929,8 +2965,11 @@ class DetailsViewModel @Inject constructor(
         metadataSearchQuery.value = query
     }
 
+    private var metadataSearchJob: Job? = null
+
     fun searchMetadataBindings() {
-        val services = metadataSearchServices.value
+        metadataSearchJob?.cancel()
+        val services = metadataSearchServices.value.filter { it == selectedMetadataSearchService.value }
         if (services.isEmpty()) {
             metadataSearchResults.value = emptyList()
             metadataSearchSections.value = emptyList()
@@ -2943,7 +2982,7 @@ class DetailsViewModel @Inject constructor(
         if (query != metadataSearchQuery.value) {
             metadataSearchQuery.value = query
         }
-        launchJob(Dispatchers.IO) {
+        metadataSearchJob = launchJob(Dispatchers.IO) {
             metadataSearchLoading.value = true
             metadataSearchHasSearched.value = false
             metadataSearchError.value = null
@@ -2995,39 +3034,62 @@ class DetailsViewModel @Inject constructor(
         }
     }
 
-    fun bindMetadataSource(item: TrackingSiteItem) {
+    val trackingEditBusy = MutableStateFlow(false)
+
+    fun bindTrackingSource(item: TrackingSiteItem) {
+        if (!trackingEditBusy.compareAndSet(false, true)) return
         launchJob(Dispatchers.IO) {
-            trackingMetadataCandidates.value = mergeTrackingMetadataCandidates(
-                trackingMetadataCandidates.value + TrackingMetadataCandidate(
-                    service = item.service,
-                    remoteId = item.remoteId,
-                    url = item.url,
-                ),
-            )
-            selectedMetadataSource.value = MetadataSourceSelection.Tracking(
-                service = item.service,
-                remoteId = item.remoteId,
-                url = item.url,
-            )
-            val details = runCatchingCancellable {
-                trackingSiteDiscoveryService.getDetails(item.service, item.remoteId, item.url)
-            }.getOrNull()
-            if (details != null) {
+            try {
+                val localMangaId = ensureCurrentWorkContent() ?: return@launchJob
+                val details = trackingSiteDiscoveryService.getDetails(item.service, item.remoteId, item.url)
                 cacheTrackingDetails(details)
                 trackingSiteCacheRepository.saveDetails(details)
-            }
-            val localMangaId = resolveCurrentLocalMangaId()
-            if (localMangaId != null) {
-                trackingSiteMatcher.confirmMatch(item.service, localMangaId, item.remoteId)
-                persistMetadataSourceSelectionForCurrentEntity()
+                // Linking must preserve the remote entry's existing status, score and progress.
+                scrobblers.firstOrNull { it.scrobblerService == item.service && it.isEnabled }?.let { scrobbler ->
+                    scrobbler.linkContent(
+                        localMangaId,
+                        item.toScrobblerContent().copy(mediaType = details.contentType.toScrobblerMediaType()),
+                    )
+                }
+                db.withTransaction {
+                    db.getScrobblingDao().detachLocalBindings(item.service.id, localMangaId, item.remoteId)
+                    trackingSiteMatcher.confirmMatch(item.service, localMangaId, item.remoteId)
+                }
+                trackingMetadataCandidates.value = trackingMetadataCandidates.value
+                    .filterNot { it.service == item.service } + TrackingMetadataCandidate(
+                    service = item.service, remoteId = item.remoteId, url = item.url,
+                )
+                // Replacing a metadata provider returns to the original until explicitly selected again.
+                val selection = selectedMetadataSource.value
+                if (selection is MetadataSourceSelection.Tracking && selection.service == item.service &&
+                    selection.remoteId != item.remoteId) {
+                    selectedMetadataSource.value = MetadataSourceSelection.Base
+                    persistMetadataSourceSelectionForCurrentEntity()
+                }
                 dataRepository.setIgnoredTrackingSuggestion(localMangaId, null)
-                        autoLinkTrackingServiceIfAuthorized(
-                            mangaId = localMangaId,
-                            item = item,
-                            contentType = details?.contentType ?: resolvedMetadataContentType.value,
-                        )
-                    }
-            syncDisplayedState()
+                syncDisplayedState()
+            } finally {
+                trackingEditBusy.value = false
+            }
+        }
+    }
+
+    fun saveTrackingProgress(linked: LinkedTrackingItemUiModel, progress: Int, rating: Float, status: ScrobblingStatus?) {
+        require(progress >= 0 && rating.isFinite() && rating in 0f..1f)
+        val scrobbler = getScrobbler(linked.service.id) ?: return
+        if (!trackingEditBusy.compareAndSet(false, true)) return
+        launchJob(Dispatchers.IO) {
+            try {
+                val mangaId = resolveCurrentLocalMangaId() ?: return@launchJob
+                val current = scrobbler.getScrobblingInfoOrNull(mangaId) ?: return@launchJob
+                check(current.targetId == linked.remoteId)
+                if (current.chapter != progress) scrobbler.updateProgress(mangaId, progress)
+                if (current.rating != rating || current.status != status) {
+                    scrobbler.updateScrobblingInfo(mangaId, rating, status, current.comment)
+                }
+            } finally {
+                trackingEditBusy.value = false
+            }
         }
     }
 
@@ -3450,7 +3512,8 @@ class DetailsViewModel @Inject constructor(
         return when (currentDetailsContentType()) {
             ContentType.VIDEO, ContentType.HENTAI_VIDEO -> setOf(SearchContentKind.VIDEO)
             ContentType.NOVEL, ContentType.HENTAI_NOVEL -> setOf(SearchContentKind.NOVEL)
-            null -> ALL_SEARCH_CONTENT_KINDS
+            // Unknown (e.g. a tracking-site entry that lists several kinds): searching only comics would miss it.
+            null, ContentType.OTHER -> ALL_SEARCH_CONTENT_KINDS
             else -> setOf(SearchContentKind.MANGA)
         }
     }
@@ -3701,23 +3764,10 @@ class DetailsViewModel @Inject constructor(
     }
 
     fun bindTrackingMatch(match: TrackingSiteMatchResult) {
-        launchJob(Dispatchers.Default) {
-            val content = resolveCurrentLocalContent() ?: return@launchJob
-            trackingSiteMatcher.confirmMatch(match.service, content.id, match.remoteId)
-            dataRepository.setIgnoredTrackingSuggestion(content.id, null)
-                autoLinkTrackingServiceIfAuthorized(
-                    mangaId = content.id,
-                    item = org.skepsun.kototoro.tracking.discovery.domain.TrackingSiteItem(
-                        service = match.service,
-                        remoteId = match.remoteId,
-                        title = match.title,
-                        url = match.url,
-                    ),
-                    contentType = match.contentType ?: content.source.contentType,
-                )
-                refreshTrackingMatchSuggestion()
-            }
-        }
+        bindTrackingSource(TrackingSiteItem(
+            service = match.service, remoteId = match.remoteId, title = match.title, url = match.url,
+        ))
+    }
 
     fun ignoreTrackingSuggestion(match: TrackingSiteMatchResult) {
         launchJob(Dispatchers.Default) {
@@ -3734,11 +3784,10 @@ class DetailsViewModel @Inject constructor(
     }
 
     fun removeTrackingMatch(match: TrackingSiteMatchResult) {
-        launchJob(Dispatchers.Default) {
-            val content = resolveCurrentLocalContent() ?: return@launchJob
-            trackingSiteMatcher.removeMatch(match.service, content.id)
-            refreshTrackingMatchSuggestion()
-        }
+        removeMetadataSourceBinding(DetailsSourceOption(
+            key = trackingMetadataKey(match.service, match.remoteId),
+            trackingService = match.service, remoteId = match.remoteId,
+        ))
     }
 
     fun removeFromHistory() {

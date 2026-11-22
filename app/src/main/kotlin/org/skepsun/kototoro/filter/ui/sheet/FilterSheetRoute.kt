@@ -21,13 +21,10 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,6 +49,8 @@ import org.skepsun.kototoro.core.ui.adaptive.tvChipRing
 import org.skepsun.kototoro.core.ui.adaptive.tvIconButtonRing
 import org.skepsun.kototoro.core.ui.adaptive.tvSliderDpad
 import org.skepsun.kototoro.core.ui.adaptive.tvTextInputFocusEscape
+import org.skepsun.kototoro.core.ui.buttons.IconButton
+import org.skepsun.kototoro.core.ui.buttons.OutlinedButton
 import org.skepsun.kototoro.core.ui.chips.ChoiceChip
 import org.skepsun.kototoro.core.ui.chips.ChoiceChipFlow
 import org.skepsun.kototoro.core.ui.compose.KototoroRangeSlider
@@ -59,6 +58,7 @@ import org.skepsun.kototoro.core.ui.compose.KototoroSlider
 import org.skepsun.kototoro.core.model.titleResId
 import org.skepsun.kototoro.core.ui.compose.TvDropdownMenuItem
 import org.skepsun.kototoro.core.ui.model.titleRes
+import org.skepsun.kototoro.core.ui.progress.CircularProgressIndicator
 import org.skepsun.kototoro.core.util.AlphanumComparator
 import org.skepsun.kototoro.core.util.ext.getDisplayMessage
 import org.skepsun.kototoro.core.util.ext.getDisplayName
@@ -67,6 +67,8 @@ import org.skepsun.kototoro.filter.data.PersistableFilter.Companion.MAX_TITLE_LE
 import org.skepsun.kototoro.filter.ui.FilterCoordinator
 import org.skepsun.kototoro.filter.ui.model.FilterProperty
 import org.skepsun.kototoro.filter.ui.model.UiTagGroup
+import org.skepsun.kototoro.filter.ui.model.tagGroupNeedsExpand
+import org.skepsun.kototoro.filter.ui.model.tagGroupPreviewLimit
 import org.skepsun.kototoro.parsers.model.ContentRating
 import org.skepsun.kototoro.parsers.model.ContentState
 import org.skepsun.kototoro.parsers.model.ContentTag
@@ -1101,8 +1103,8 @@ private fun TagGroupBlock(
         val unselectedTags = group.tags.filterNot { it.key in selectedKeys }.sortedBy { it.title }
         (selectedTags + unselectedTags).distinctBy { it.key }
     }
-    val visibleTags = remember(sortedTags) { sortedTags.take(12) }
-    val canExpand = sortedTags.size > visibleTags.size
+    val visibleTags = remember(sortedTags) { sortedTags.take(tagGroupPreviewLimit(sortedTags.size)) }
+    val canExpand = tagGroupNeedsExpand(sortedTags.size)
 
     Column(
         modifier = Modifier.fillMaxWidth(),

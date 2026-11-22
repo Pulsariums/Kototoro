@@ -39,6 +39,7 @@ import org.skepsun.kototoro.core.ui.glass.GlassTuning
 import org.skepsun.kototoro.core.ui.glass.GlassTuningScope
 import org.skepsun.kototoro.explore.data.SourcesSortOrder
 import org.skepsun.kototoro.list.domain.ListSortOrder
+import org.skepsun.kototoro.list.ui.ListDisplaySection
 import org.skepsun.kototoro.core.prefs.VideoSuperResolutionMode
 import org.skepsun.kototoro.core.prefs.VideoSuperResolutionShader
 import org.skepsun.kototoro.explore.ui.model.BrowseGroupTab
@@ -778,6 +779,52 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     var favoritesListMode: ListMode
         get() = prefs.getEnumValue(KEY_LIST_MODE_FAVORITES, listMode)
         set(value) = prefs.edit { putEnumValue(KEY_LIST_MODE_FAVORITES, value) }
+
+    var updatedListMode: ListMode
+        get() = prefs.getEnumValue(KEY_LIST_MODE_UPDATED, listMode)
+        set(value) = prefs.edit { putEnumValue(KEY_LIST_MODE_UPDATED, value) }
+
+    /** List layout of one page; [section] null is the general value. */
+    fun listModeOf(section: ListDisplaySection?): ListMode = when (section) {
+        ListDisplaySection.FAVORITES -> favoritesListMode
+        ListDisplaySection.HISTORY -> historyListMode
+        ListDisplaySection.SUGGESTIONS -> suggestionsListMode
+        ListDisplaySection.UPDATED -> updatedListMode
+        ListDisplaySection.BROWSE -> browseListMode
+        ListDisplaySection.SEARCH -> prefs.getEnumValue(KEY_LIST_MODE_SEARCH, listMode)
+        ListDisplaySection.LOCAL, ListDisplaySection.FEED -> prefs.getEnumValue(listModeKeyOf(section), listMode)
+        null -> listMode
+    }
+
+    fun setListModeOf(section: ListDisplaySection?, value: ListMode) {
+        when (section) {
+            ListDisplaySection.FAVORITES -> favoritesListMode = value
+            ListDisplaySection.HISTORY -> historyListMode = value
+            ListDisplaySection.SUGGESTIONS -> suggestionsListMode = value
+            ListDisplaySection.UPDATED -> updatedListMode = value
+            ListDisplaySection.BROWSE -> browseListMode = value
+            ListDisplaySection.SEARCH -> prefs.edit { putEnumValue(KEY_LIST_MODE_SEARCH, value) }
+            ListDisplaySection.LOCAL, ListDisplaySection.FEED ->
+                prefs.edit { putEnumValue(listModeKeyOf(section), value) }
+            null -> listMode = value
+        }
+    }
+
+    /** Grid size of one page; follows the general size until the page's own is set. */
+    fun gridSizeOf(section: ListDisplaySection?): Int =
+        if (section == null) gridSize else prefs.getSafeInt(gridSizeKeyOf(section), gridSize).coerceIn(GridSizeRange)
+
+    fun setGridSizeOf(section: ListDisplaySection?, value: Int) {
+        if (section == null) gridSize = value else prefs.edit { putInt(gridSizeKeyOf(section), value.coerceIn(GridSizeRange)) }
+    }
+
+    /** Extra info on cards of one page; follows the general switch until the page's own is set. */
+    fun showExtraInfoOf(section: ListDisplaySection?): Boolean =
+        if (section == null) showExtraInfoOnCards else prefs.getBoolean(extraInfoKeyOf(section), showExtraInfoOnCards)
+
+    fun setShowExtraInfoOf(section: ListDisplaySection?, value: Boolean) {
+        if (section == null) showExtraInfoOnCards = value else prefs.edit { putBoolean(extraInfoKeyOf(section), value) }
+    }
 
     var isTagsWarningsEnabled: Boolean
         get() = prefs.getBoolean(KEY_TAGS_WARNINGS, true)
@@ -1571,12 +1618,12 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
 
         companion object {
             fun fromValue(value: String?): LoadingCircleStyle =
-                entries.find { it.value == value } ?: THICK_STRAIGHT
+                entries.find { it.value == value } ?: THICK_WAVY
         }
     }
 
     var loadingCircleStyle: LoadingCircleStyle
-        get() = LoadingCircleStyle.fromValue(prefs.getString(KEY_LOADING_CIRCLE_STYLE, LoadingCircleStyle.THICK_STRAIGHT.value))
+        get() = LoadingCircleStyle.fromValue(prefs.getString(KEY_LOADING_CIRCLE_STYLE, LoadingCircleStyle.THICK_WAVY.value))
         set(value) = prefs.edit { putString(KEY_LOADING_CIRCLE_STYLE, value.value) }
 
     var railAnimationIntensityPercent: Int
@@ -2343,6 +2390,20 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_SUGGESTIONS_NOTIFICATIONS, false)
 
     // Tag lists are parsed with the rule shared with the Windows settings (core-domain SuggestionRules).
+    var suggestionsLanguage: org.skepsun.kototoro.suggestions.domain.SuggestionLanguage
+        get() = org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.of(
+            prefs.getString(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.PREFERENCE_KEY, null),
+        )
+        set(value) = prefs.edit {
+            putString(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.PREFERENCE_KEY, value.name)
+        }
+
+    var suggestionsLanguageOnly: Boolean
+        get() = prefs.getBoolean(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ONLY_PREFERENCE_KEY, false)
+        set(value) = prefs.edit {
+            putBoolean(org.skepsun.kototoro.suggestions.domain.SuggestionLanguage.ONLY_PREFERENCE_KEY, value)
+        }
+
     val suggestionsTagsBlacklist: Set<String>
         get() = org.skepsun.kototoro.suggestions.domain.parseSuggestionTags(
             prefs.getString(KEY_SUGGESTIONS_EXCLUDE_TAGS, null),
@@ -2352,6 +2413,25 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = org.skepsun.kototoro.suggestions.domain.parseSuggestionTags(
             prefs.getString(KEY_SUGGESTIONS_PREFERRED_TAGS, null),
         )
+
+    /** Puts the sources on the EverythingMoe rankings first (default on), beside the reader's own picks. */
+    var isSuggestionsPopularSourcesFirst: Boolean
+        get() = prefs.getBoolean(KEY_SUGGESTIONS_POPULAR_SOURCES, true)
+        set(value) = prefs.edit { putBoolean(KEY_SUGGESTIONS_POPULAR_SOURCES, value) }
+
+    /** Puts the sources the reader's saved works come from first (default on). */
+    var isSuggestionsFavouriteSourcesFirst: Boolean
+        get() = prefs.getBoolean(KEY_SUGGESTIONS_FAVOURITE_SOURCES, true)
+        set(value) = prefs.edit { putBoolean(KEY_SUGGESTIONS_FAVOURITE_SOURCES, value) }
+
+    /** Per-source page cursors of incremental suggestion loading, see [org.skepsun.kototoro.suggestions.domain.SuggestionCursors]. */
+    var suggestionsCursors: Set<String>
+        get() = prefs.getStringSet(KEY_SUGGESTIONS_CURSORS, emptySet()).orEmpty()
+        set(value) = prefs.edit { putStringSet(KEY_SUGGESTIONS_CURSORS, value) }
+
+    var suggestionsRotationSeed: Long
+        get() = prefs.getLong(KEY_SUGGESTIONS_ROTATION_SEED, 0L)
+        set(value) = prefs.edit { putLong(KEY_SUGGESTIONS_ROTATION_SEED, value) }
 
     val suggestionsPreferredSources: Set<String>
         get() = prefs.getStringSet(KEY_SUGGESTIONS_PREFERRED_SOURCES, emptySet()).orEmpty()
@@ -2375,6 +2455,10 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     val isReaderChapterToastEnabled: Boolean
         get() = prefs.getBoolean(KEY_READER_CHAPTER_TOAST, true)
 
+    /** 连续滚动时在章节之间显示分隔卡片（漫画条漫与小说滚动模式共用），默认关闭以保持原有的无缝拼接。 */
+    val isReaderChapterBreakEnabled: Boolean
+        get() = prefs.getBoolean(KEY_READER_CHAPTER_BREAK, false)
+
     /**
      * 章节标题（作品名 + 章节名）放在底部进度条上方，而不是顶部栏中间。
      * 顶部那颗标题药丸只有「看」的作用，单手够不到；想要它顺手就打开这个（issue #509）。
@@ -2382,6 +2466,14 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
     var isReaderChapterTitleAtBottom: Boolean
         get() = prefs.getBoolean(KEY_READER_CHAPTER_TITLE_BOTTOM, false)
         set(value) = prefs.edit { putBoolean(KEY_READER_CHAPTER_TITLE_BOTTOM, value) }
+
+    /**
+     * 右侧那列悬浮按钮不跟着其他控件一起隐藏，而是一直留在屏幕上。
+     * 默认关（点一下屏幕才弹出）；想少点一次就打开这个（issue #683）。
+     */
+    var isReaderFloatingControlsPinned: Boolean
+        get() = prefs.getBoolean(KEY_READER_FLOATING_CONTROLS_PINNED, false)
+        set(value) = prefs.edit { putBoolean(KEY_READER_FLOATING_CONTROLS_PINNED, value) }
 
     var isReaderSuperResolutionEnabled: Boolean
         get() = prefs.getBoolean(KEY_READER_SUPER_RESOLUTION_ENABLED, false)
@@ -2741,6 +2833,21 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         get() = prefs.getBoolean(KEY_STATS_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_STATS_ENABLED, value) }
 
+    /** Community ratings and comments; off until the reader opts in, since everything they publish is public. */
+    var isCommunityEnabled: Boolean
+        get() = prefs.getBoolean(KEY_COMMUNITY_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_COMMUNITY_ENABLED, value) }
+
+    /** Whether ratings of adult works may be published; off by default (community plan §8). */
+    var isCommunityNsfwRatingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_COMMUNITY_NSFW, false)
+        set(value) = prefs.edit { putBoolean(KEY_COMMUNITY_NSFW, value) }
+
+    /** Whether ratings and comments name the source they were made on (community plan §10.3); on by default. */
+    var isCommunityShareSourcesEnabled: Boolean
+        get() = prefs.getBoolean(KEY_COMMUNITY_SHARE_SOURCES, true)
+        set(value) = prefs.edit { putBoolean(KEY_COMMUNITY_SHARE_SOURCES, value) }
+
     val isAutoLocalChaptersCleanupEnabled: Boolean
         get() = prefs.getBoolean(KEY_CHAPTERS_CLEAR_AUTO, false)
 
@@ -3062,6 +3169,8 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_HOME_HERO_CONTENT_LAYOUT = "home_hero_content_layout"
         const val KEY_LIST_MODE_HISTORY = "list_mode_history"
         const val KEY_LIST_MODE_FAVORITES = "list_mode_favorites"
+        const val KEY_LIST_MODE_UPDATED = "list_mode_updated"
+        const val KEY_LIST_MODE_SEARCH = "list_mode_search"
         const val KEY_LIST_MODE_SUGGESTIONS = "list_mode_suggestions"
         const val KEY_THEME = "theme"
         const val KEY_COLOR_THEME = "color_theme"
@@ -3270,6 +3379,10 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_SUGGESTIONS_PREFERRED_TAGS = "suggestions_preferred_tags"
         const val KEY_SUGGESTIONS_PREFERRED_SOURCES = "suggestions_preferred_sources"
         const val KEY_SUGGESTIONS_EXCLUDED_SOURCES = "suggestions_excluded_sources"
+        const val KEY_SUGGESTIONS_FAVOURITE_SOURCES = "suggestions_favourite_sources"
+        const val KEY_SUGGESTIONS_CURSORS = "suggestions_cursors"
+        const val KEY_SUGGESTIONS_ROTATION_SEED = "suggestions_rotation_seed"
+        const val KEY_SUGGESTIONS_POPULAR_SOURCES = "suggestions_popular_sources"
         const val KEY_SUGGESTIONS_DISABLED_SOURCES = "suggestions_disabled_sources"
         const val KEY_SUGGESTIONS_NOTIFICATIONS = "suggestions_notifications"
         const val KEY_SHIKIMORI = "shikimori"
@@ -3306,7 +3419,9 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_READER_BAR_LAYOUT = "reader_bar_layout"
         const val KEY_READER_BAR_CUTOUT_AVOIDANCE = "reader_bar_cutout_avoidance"
         const val KEY_READER_CHAPTER_TOAST = "reader_chapter_toast"
+        const val KEY_READER_CHAPTER_BREAK = "reader_chapter_break"
         const val KEY_READER_CHAPTER_TITLE_BOTTOM = "reader_chapter_title_bottom"
+        const val KEY_READER_FLOATING_CONTROLS_PINNED = "reader_floating_controls_pinned"
         const val KEY_READER_SUPER_RESOLUTION_ENABLED = "reader_super_resolution_enabled"
         const val KEY_READER_SUPER_RESOLUTION_ENGINE = "reader_super_resolution_engine"
         const val KEY_READER_SUPER_RESOLUTION_ANIME4K_MODE = "reader_super_resolution_anime4k_mode"
@@ -3422,6 +3537,32 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_APP_UPDATE_SOURCE = "app_update_source"
         const val KEY_SOURCE_HEALTH_BANNER = "source_health_banner"
         const val KEY_SHOW_EXTRA_INFO_ON_CARDS = "show_extra_info_on_cards"
+
+        private fun listModeKeyOf(section: ListDisplaySection) = "list_mode_${section.id}"
+
+        fun gridSizeKeyOf(section: ListDisplaySection) = "grid_size_${section.id}"
+        fun extraInfoKeyOf(section: ListDisplaySection) = "show_extra_info_${section.id}"
+
+        /** Keys that change what [listModeOf] returns: the page's own one and the general fallback. */
+        fun listModeKeysOf(section: ListDisplaySection?): Set<String> = setOfNotNull(
+            KEY_LIST_MODE,
+            when (section) {
+                ListDisplaySection.FAVORITES -> KEY_LIST_MODE_FAVORITES
+                ListDisplaySection.HISTORY -> KEY_LIST_MODE_HISTORY
+                ListDisplaySection.SUGGESTIONS -> KEY_LIST_MODE_SUGGESTIONS
+                ListDisplaySection.UPDATED -> KEY_LIST_MODE_UPDATED
+                ListDisplaySection.BROWSE -> KEY_LIST_MODE_BROWSE
+                ListDisplaySection.SEARCH -> KEY_LIST_MODE_SEARCH
+                ListDisplaySection.LOCAL, ListDisplaySection.FEED -> listModeKeyOf(section)
+                null -> null
+            },
+        )
+
+        fun gridSizeKeysOf(section: ListDisplaySection?): Set<String> =
+            setOfNotNull(KEY_GRID_SIZE, section?.let(::gridSizeKeyOf))
+
+        fun extraInfoKeysOf(section: ListDisplaySection?): Set<String> =
+            setOfNotNull(KEY_SHOW_EXTRA_INFO_ON_CARDS, section?.let(::extraInfoKeyOf))
         const val KEY_HUGGINGFACE_MIRROR = "huggingface_mirror"
         const val KEY_BANGUMI_MIRROR = "bangumi_mirror"
         const val KEY_BANGUMI_MIRROR_CUSTOM_BASE = "bangumi_mirror_custom_base"
@@ -3514,6 +3655,9 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val PAGES_SAVE_MANGA_TITLE_LENGTH_MIN = 12
         const val PAGES_SAVE_MANGA_TITLE_LENGTH_MAX = 64
         const val KEY_STATS_ENABLED = "stats_on"
+        const val KEY_COMMUNITY_ENABLED = "community_enabled"
+        const val KEY_COMMUNITY_NSFW = "community_nsfw_ratings"
+        const val KEY_COMMUNITY_SHARE_SOURCES = "community_share_sources"
         const val KEY_FEED_HEADER = "feed_header"
         const val KEY_FEED_LIMIT = "feed_limit"
         const val KEY_FEED_LAST_OPEN_TIME = "feed_last_open_time"

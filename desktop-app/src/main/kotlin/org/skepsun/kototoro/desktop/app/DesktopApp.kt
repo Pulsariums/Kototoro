@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.skepsun.kototoro.core.source.*
 import org.skepsun.kototoro.desktop.runtime.DesktopNsfwTarget
@@ -107,7 +108,7 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                 val headerPage = !reading && listState.screen !in OwnChromeScreens
                 // The progress line is not part of the bar: a load must not move the page's own bar and rows.
                 val rootBar = headerPage || challenge != null || (blockedSites.isNotEmpty() && !reading) ||
-                    state.error != null || state.message != null
+                    state.error != null
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                 FloatingTopBarScaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -150,7 +151,6 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                             onVerify = controller::verifyBlockedSite, onDismiss = { challenges?.dismissBlocked(it) })
                     }
                     state.error?.let { Notice(it, true) }
-                    state.message?.let { Notice(it, false) }
                     } },
                 ) { inner ->
                     // Pages with their own floating bar start it at this inset and scroll beneath it themselves; the
@@ -218,6 +218,19 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                 }
                 // The vertical bar sits on the window's right edge, like Android's tablet bar.
                 if (!reading) DesktopNavigationRail(controller, listState, !closing)
+            }
+            // Transient notes used to live in the top bar and never cleared, so one removed repository kept
+            // ~70dp of the window and every list below it lost that height. They float over the page now and
+            // retire themselves; errors stay in the top bar, where they can be read and copied.
+            state.message?.let { message ->
+                DesktopTransientMessage(message, controller::dismissMessage,
+                    Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
+            }
+            LaunchedEffect(state.message) {
+                if (state.message != null) {
+                    delay(5_000)
+                    controller.dismissMessage()
+                }
             }
             // Android asks inside its reader; the question belongs to the window, not to one screen, so it overlays
             // whichever list or details page started the read.
@@ -383,6 +396,24 @@ private fun BlockedSitesNotice(sites: List<String>, enabled: Boolean, onVerify: 
             if (sites.size > 3) Text(desktopText("challenge.blockedMore", sites.size - 3),
                 color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
         }
+    }
+}
+
+/**
+ * A floating note under the page: Android's transient message, dismissed by a tap or after a few seconds.
+ * Errors keep [Notice], which stays in the top bar because a failure has to be readable and copyable.
+ */
+@Composable
+private fun DesktopTransientMessage(message: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.clickable(onClick = onDismiss).testTag("notice-message"),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(20.dp),
+        shadowElevation = 6.dp,
+    ) {
+        Text(message, color = MaterialTheme.colorScheme.onSurface, maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
     }
 }
 

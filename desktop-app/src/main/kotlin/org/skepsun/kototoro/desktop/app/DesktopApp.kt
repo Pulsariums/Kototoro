@@ -105,10 +105,9 @@ fun DesktopApp(controller: DesktopController, closing: Boolean = false, fullscre
                 // Android's floating top chrome: the page draws under it and scrolls beneath it; the bar (the generic
                 // header, the challenge and failure notices, the progress line) floats over the page.
                 val pagePadding = if (reading || listState.screen == DesktopScreen.HOME) 0.dp else 24.dp
-                // The right rail already owns its edge gap; keeping the full page inset here left a wide band of
-                // background between the rows and the bar. The header and the page share the smaller end inset so
-                // the two stay aligned.
-                val pageEndPadding = if (pagePadding == 0.dp) 0.dp else 8.dp
+                // The right rail is a full-height sidebar now, so the page can end on its edge: an extra end inset
+                // only reopened the band of background between the rows and the bar.
+                val pageEndPadding = 0.dp
                 val headerPage = !reading && listState.screen !in OwnChromeScreens
                 // The progress line is not part of the bar: a load must not move the page's own bar and rows.
                 val rootBar = headerPage || challenge != null || (blockedSites.isNotEmpty() && !reading) ||

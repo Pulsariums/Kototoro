@@ -85,7 +85,12 @@ internal fun DesktopNavigationRail(controller: DesktopController, state: Desktop
     }
     // Android's tablet bar (iPhone Duo's vertical bar): destinations grouped in one capsule along the window's right
     // edge. Windows keeps the labels on, since a desktop window has the height and "更多" reads better named.
-    Box(Modifier.fillMaxHeight().testTag("tablet-navigation")) {
+    // The capsule gets a full-height sidebar surface behind it: the column it reserves must read as a panel, not as
+    // an invisible strip that stops the page short of the window edge.
+    Box(Modifier.fillMaxHeight()
+        .width(DesktopVerticalBarEdgeGap * 2 + TabletVerticalBarControlWidth)
+        .background(MaterialTheme.colorScheme.surfaceContainer)
+        .testTag("tablet-navigation")) {
         TabletVerticalBar(destinations, selected, navigate, reselect,
             icon = { id, isSelected ->
                 val resource = when (id) {

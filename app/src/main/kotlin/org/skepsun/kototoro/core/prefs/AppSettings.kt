@@ -939,6 +939,17 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
             .ifBlank { GitHubMirror.NATIVE.value }
         set(value) = prefs.edit { putString(KEY_GITHUB_MIRROR, value) }
 
+    /**
+     * The GitHub mirror used only for the in-app update download. Kept apart from
+     * [gitHubMirrorId]: picking a mirror to fetch one APK must not reroute the
+     * extension repository refresh, where a dead mirror surfaces as a 403 on every row.
+     */
+    var appUpdateMirrorId: String
+        get() = prefs.getString(KEY_APP_UPDATE_MIRROR, GitHubMirror.NATIVE.value)
+            .orEmpty()
+            .ifBlank { GitHubMirror.NATIVE.value }
+        set(value) = prefs.edit { putString(KEY_APP_UPDATE_MIRROR, value) }
+
     /** Optional remote mirror-manifest URL; falls back to the built-in default when null/blank. */
     var githubMirrorSyncUrl: String?
         get() = prefs.getString(KEY_GITHUB_MIRROR_SYNC_URL, null)?.takeIf(String::isNotBlank)
@@ -3533,6 +3544,7 @@ class AppSettings @Inject constructor(@ApplicationContext private val context: C
         const val KEY_EXTENSION_INSTALL_POLICIES = "extension_install_policies"
         const val KEY_LOCAL_APK_HOT_RELOAD = "local_apk_hot_reload"
         const val KEY_GITHUB_MIRROR = "github_mirror"
+        const val KEY_APP_UPDATE_MIRROR = "app_update_mirror"
         const val KEY_GITHUB_MIRROR_SYNC_URL = "github_mirror_sync_url"
         const val KEY_APP_UPDATE_SOURCE = "app_update_source"
         const val KEY_SOURCE_HEALTH_BANNER = "source_health_banner"

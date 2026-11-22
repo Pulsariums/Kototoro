@@ -49,7 +49,7 @@ class AppUpdateViewModel @Inject constructor(
         repository.defaultSource.takeIf { it != AppUpdateSource.GITCODE } ?: AppUpdateSource.GITHUB,
     )
     val sourceProbes = MutableStateFlow<Map<AppUpdateSource, AppUpdateSourceProbe>>(emptyMap())
-    val selectedMirror = MutableStateFlow(settings.gitHubMirrorId)
+    val selectedMirror = MutableStateFlow(settings.appUpdateMirrorId)
 
     val mirrorEntries: StateFlow<List<GitHubMirrorEntry>> = mirrorRepository.entries
     val mirrorProbeState: StateFlow<GitHubMirrorProbeState> = mirrorRepository.probeState
@@ -134,7 +134,9 @@ class AppUpdateViewModel @Inject constructor(
     }
 
     fun setMirror(mirror: String) {
-        settings.gitHubMirrorId = mirror
+        // App updates only: the update download mirror must not touch settings.gitHubMirrorId,
+        // which routes extension repository refreshes as well.
+        settings.appUpdateMirrorId = mirror
         selectedMirror.value = mirror
     }
 

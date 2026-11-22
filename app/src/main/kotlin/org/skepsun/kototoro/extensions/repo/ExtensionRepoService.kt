@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Response
 import org.skepsun.kototoro.core.github.GitHubMirrorCatalogRepository
 import org.skepsun.kototoro.core.prefs.AppSettings
 import org.skepsun.kototoro.core.network.ContentHttpClient
@@ -49,6 +50,26 @@ class ExtensionRepoService @Inject constructor(
     private fun applyMirror(url: String): String {
         val entry = mirrorRepository.entry(settings.gitHubMirrorId) ?: GitHubMirrorCatalog.NATIVE
         return applyGitHubMirror(url, entry)
+    }
+
+    /**
+     * Fetches [url] through the selected mirror, retrying the direct URL when the mirror
+     * fails. A dead proxy otherwise turns every repository row into "HTTP error 403".
+     */
+    private suspend fun <T> fetchWithMirrorFallback(url: String, read: (Response) -> T): T {
+        val entry = mirrorRepository.entry(settings.gitHubMirrorId) ?: GitHubMirrorCatalog.NATIVE
+        var lastError: Throwable? = null
+        for (candidate in gitHubFetchCandidates(url, entry)) {
+            try {
+                return httpClient.newCall(GET(candidate)).awaitSuccess().use(read)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                lastError = error
+                Log.w(TAG, "fetchWithMirrorFallback:failed url=$candidate message=${error.message}")
+            }
+        }
+        throw lastError ?: IllegalStateException("Cannot fetch $url")
     }
 
     private fun deriveRepoName(baseUrl: String, defaultName: String): String {
@@ -179,14 +200,12 @@ class ExtensionRepoService @Inject constructor(
             )
         }
 
-        val repoJsonUrl = applyMirror("$baseUrl/repo.json")
+        val repoJsonUrl = "$baseUrl/repo.json"
         val startedAt = System.currentTimeMillis()
         Log.d(TAG, "fetchRepoDetails:start type=$type url=$repoJsonUrl")
         return withTimeout(REPO_DETAILS_TIMEOUT_MS) {
             val body = runCatching {
-                httpClient.newCall(GET(repoJsonUrl)).awaitSuccess().use { response ->
-                    response.body.string()
-                }
+                fetchWithMirrorFallback(repoJsonUrl) { response -> response.body.string() }
             }.getOrElse { error ->
                 if (
                     type == ExternalExtensionType.MIHON ||
@@ -253,15 +272,13 @@ class ExtensionRepoService @Inject constructor(
         } else {
             listOf("${repo.baseUrl}/index.min.json")
         }
-        val requestUrls = indexUrls.map(::applyMirror)
+        val requestUrls = indexUrls
         val startedAt = System.currentTimeMillis()
         Log.d(TAG, "fetchAvailableExtensions:start type=${repo.type} urls=$requestUrls")
         return try {
             val extensions = withTimeout(CATALOG_TIMEOUT_MS) {
                 requestUrls.flatMap { requestUrl ->
-                    val body = httpClient.newCall(GET(requestUrl)).awaitSuccess().use { response ->
-                        response.body.string()
-                    }
+                    val body = fetchWithMirrorFallback(requestUrl) { response -> response.body.string() }
                     when (repo.type) {
                         ExternalExtensionType.IREADER -> {
                             val dto = json.decodeFromString<List<IReaderExtensionIndexDto>>(body)
@@ -463,16 +480,12 @@ class ExtensionRepoService @Inject constructor(
      * The shared decoder handles both Mihon/NovelSourcery and Aniyomi field layouts.
      */
     private suspend fun fetchExtensionStoreIndex(indexUrl: String): ExtensionStoreIndex {
-        val bytes = httpClient.newCall(GET(applyMirror(indexUrl))).awaitSuccess().use { response ->
-            response.body.bytes()
-        }
+        val bytes = fetchWithMirrorFallback(indexUrl) { response -> response.body.bytes() }
         return decodeExtensionStoreIndex(bytes, protobuf = true)
     }
 
     private suspend fun fetchExtensionList(listUrl: String): ExtensionStoreIndex.ExtensionList {
-        val bytes = httpClient.newCall(GET(applyMirror(listUrl))).awaitSuccess().use { response ->
-            response.body.bytes()
-        }
+        val bytes = fetchWithMirrorFallback(listUrl) { response -> response.body.bytes() }
         return decodeExtensionStoreList(bytes, protobuf = true)
     }
 

@@ -793,7 +793,7 @@ RELEASE_KEY_PASSWORD=***
 - 固定术语：source=Kaynak、repository=Depo、extension/plugin=Eklenti、mirror=Ayna、library=Kitaplık、backup=Yedek、chapter=Bölüm、reader=Okuyucu、settings=Ayarlar、filter=Filtre。
 - 品牌与技术名不翻译：Kototoro、Mihon、Aniyomi、Cloudstream、Tsundoku、IReader、LNReader、Legado、TVBox、JAR、WebDAV、TMDB、Shikimori、Simkl、MangaUpdates、AniList、Venera。
 - 占位符（`%1$s`、`%2$d` 等）、转义（`\'`、`\"`、`&amp;`）和 `\n` 原样保留，占位符顺序不可改。
-- 桌面端文案不要手改 `desktop-app/src/main/resources/i18n/desktop-strings_*.properties`：源头是 `app/src/main/res/values-*`，由 `prepareDesktopStrings` 生成。
+- 文案来源分两类：Android 与桌面共享的文案改 `app/src/main/res/values-*`（桌面由 `prepareDesktopStrings` 导出成 `android-strings_*.properties`）；仅桌面使用的文案（如 `extensions.repositoryRemoved`）改 `desktop-app/src/main/resources/i18n/desktop-strings.properties`，并同步 `desktop-strings_tr.properties`。
 - 提交前检查缺 key（改动涉及的文件结果必须为空）：
   ```bash
   comm -23 <(grep -oE 'name="[^"]+"' app/src/main/res/values/strings.xml | sort -u) \

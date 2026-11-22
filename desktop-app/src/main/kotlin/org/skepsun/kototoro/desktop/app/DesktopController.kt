@@ -1935,6 +1935,11 @@ class DesktopController(
     private fun SourceContent.asSearchCandidate() = SearchCandidate(
         title = title, altTitle = altTitles.firstOrNull(), authors = authors, tags = tags.map { it.title })
 
+    /** Clears the transient message bar shown by the window (DesktopApp's DesktopTransientMessage). */
+    fun dismissMessage() {
+        mutableState.update { it.copy(message = null) }
+    }
+
     /** Android's home: hero, history and updates rows over the shared history/tracker tables. */
     fun home() = navigate {
         val history = session.library.snapshot(history = true)

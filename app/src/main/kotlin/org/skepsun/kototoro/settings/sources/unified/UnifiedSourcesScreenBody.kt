@@ -258,6 +258,7 @@ fun UnifiedSourcesScreen(
                                     hasAnySources = state.allSources.isNotEmpty(),
                                     onAddSource = { onAddRepository(null) },
                                     onResetFilters = onResetFilters,
+                                    packageNames = remember(state.allPackages) { state.allPackages.associate { it.id to it.name } },
                                 )
                                 UNIFIED_SOURCES_TAB_REPOSITORIES -> UnifiedRepositoryList(
                                     modifier = pageModifier,

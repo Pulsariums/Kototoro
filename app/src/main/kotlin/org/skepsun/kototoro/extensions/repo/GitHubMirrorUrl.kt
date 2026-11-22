@@ -27,6 +27,20 @@ fun applyGitHubMirror(url: String, mirror: AppSettings.GitHubMirror): String {
 fun applyGitHubMirror(url: String, entry: GitHubMirrorEntry): String = GitHubMirrorCatalog.apply(url, entry)
 
 /**
+ * URLs to try for a plain GitHub file fetch (repository index, metadata JSON), in order:
+ * the selected mirror first, the direct GitHub URL as the final resort.
+ *
+ * A mirror can start answering `403` for proxied content while its own landing page still
+ * looks healthy (gh-proxy.com did exactly that), and the repository refresh pipes that
+ * failure straight into every row. Retrying the original URL keeps a dead mirror from
+ * hiding all repositories behind one broken proxy.
+ */
+fun gitHubFetchCandidates(url: String, selected: GitHubMirrorEntry): List<String> {
+    val mirrored = applyGitHubMirror(url, selected)
+    return if (mirrored == url) listOf(url) else listOf(mirrored, url)
+}
+
+/**
  * Download URLs to try for a GitHub-hosted archive, in order.
  *
  * Two cases where a jsDelivr-style CDN cannot deliver the file:

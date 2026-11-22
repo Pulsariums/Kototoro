@@ -39,6 +39,19 @@ class GitHubMirrorUrlTest {
     }
 
     @Test
+    fun `fetch candidates end with the direct url when the mirror rewrites it`() {
+        gitHubFetchCandidates(rawUrl, prefix("gh-proxy.com")) shouldBe
+            listOf("https://gh-proxy.com/$rawUrl", rawUrl)
+    }
+
+    @Test
+    fun `fetch candidates keep one entry for native and non-github urls`() {
+        gitHubFetchCandidates(rawUrl, GitHubMirrorCatalog.NATIVE) shouldBe listOf(rawUrl)
+        gitHubFetchCandidates("https://example.com/index.json", prefix("gh-proxy.com")) shouldBe
+            listOf("https://example.com/index.json")
+    }
+
+    @Test
     fun `host replace rewrites raw and web hosts`() {
         val entry = GitHubMirrorEntry(
             id = "hr_test",

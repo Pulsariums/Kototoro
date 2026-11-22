@@ -16,13 +16,14 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
+import java.security.MessageDigest
 import java.util.Random
 import java.util.TreeMap
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.zip.ZipEntry
@@ -66,9 +67,26 @@ object DexJarConverter {
      * may need (`META-INF/services`, and the APK's `assets/`) are carried over, compiled Android resources are not;
      * [extraEntries] adds files such as the text manifest synthesised from an APK.
      */
-    fun convert(source: Path, target: Path, extraEntries: Map<String, ByteArray> = emptyMap()): DexConversionReport {
+    fun convert(source: Path, target: Path, extraEntries: Map<String, ByteArray> = emptyMap()): DexConversionReport =
+        synchronized(conversionLock) {
+            try {
+                convertLocked(source, target, extraEntries)
+            } catch (error: OutOfMemoryError) {
+                throw DexConversionException(DexConversionFailure.TRANSLATION_FAILED, error)
+            }
+        }
+
+    private val conversionLock = Any()
+
+    private fun convertLocked(source: Path, target: Path, extraEntries: Map<String, ByteArray>): DexConversionReport {
+        val directory = target.toAbsolutePath().parent ?: Path.of(".")
+        val cached = directory.resolve("converted-${cacheKey(source)}.jar")
+        if (hasContent(cached)) {
+            copyAtomically(cached, target)
+            return DexConversionReport(dexEntries(source).count, classFilesIn(cached), emptyList())
+        }
         val dexSources = dexEntries(source)
-        val temporary = Files.createTempFile(target.toAbsolutePath().parent ?: Path.of("."), ".convert-", ".tmp")
+        val temporary = Files.createTempFile(directory, ".convert-", ".tmp")
         try {
             val broken = mutableListOf<String>()
             var classes = 0
@@ -91,10 +109,44 @@ object DexJarConverter {
                 }
             }
             if (classes == 0) throw DexConversionException(DexConversionFailure.NO_DEX)
-            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING)
+            runCatching { copyAtomically(temporary, cached) }
+            moveAtomically(temporary, target)
             return DexConversionReport(dexSources.count, classes, broken, repaired)
         } finally {
             Files.deleteIfExists(temporary)
+        }
+    }
+
+    private fun cacheKey(source: Path): String {
+        val attributes = Files.readAttributes(source, BasicFileAttributes::class.java)
+        val identity = "$VERSION|${source.toAbsolutePath()}|${attributes.size()}|${attributes.lastModifiedTime().toMillis()}"
+        return MessageDigest.getInstance("SHA-256").digest(identity.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+            .take(32)
+    }
+
+    private fun hasContent(path: Path): Boolean = Files.isRegularFile(path) && Files.size(path) > 0L
+
+    private fun classFilesIn(jar: Path): Int = ZipFile(jar.toFile()).use { zip ->
+        zip.entries().asSequence().count { !it.isDirectory && it.name.endsWith(".class") }
+    }
+
+    private fun copyAtomically(from: Path, to: Path) {
+        val directory = to.toAbsolutePath().parent ?: Path.of(".")
+        val temporary = Files.createTempFile(directory, ".convert-", ".tmp")
+        try {
+            Files.copy(from, temporary, StandardCopyOption.REPLACE_EXISTING)
+            moveAtomically(temporary, to)
+        } finally {
+            Files.deleteIfExists(temporary)
+        }
+    }
+
+    private fun moveAtomically(from: Path, to: Path) {
+        try {
+            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING)
         }
     }
 
@@ -194,6 +246,8 @@ object DexJarConverter {
      * names, no register reuse or synchronized optimisation), except that [LinearRemoveLocalFromSSA] replaces the
      * cubic stock pass, the already parsed and repaired classes are translated, and class files are handed over in
      * memory: Mobile OpenJDK omits jdk.zipfs, and the former temporary directory only cost interpreter time on iOS.
+     * One class translates at a time, whatever the core count: the passes below need memory per method, and workers
+     * sharing the heap are what failed large APKs.
      */
     private fun translateClasses(fileNode: DexFileNode, handler: DexExceptionHandler, sink: (String, ByteArray) -> Unit) {
         // The helper method prefix for long hex strings comes from this shared generator: reset it so a conversion
@@ -223,34 +277,11 @@ object DexJarConverter {
         }
         val clzs = fileNode.clzs ?: return
         val info = Translator.classInfo(fileNode)
-        // Classes translate independently (dex2jar's transformers keep no state), and the iOS JVM only interprets:
-        // a few threads cut the wait for large plugins roughly by the number of cores used.
-        val workers = if (clzs.size < PARALLEL_MINIMUM_CLASSES) 1 else Runtime.getRuntime().availableProcessors().coerceIn(1, MAXIMUM_WORKERS)
-        val next = AtomicInteger()
-        val failure = AtomicReference<Throwable>()
-        val methods = ReentrantReadWriteLock()
-        fun work() {
-            val translator = Translator(handler, methods)
-            while (failure.get() == null) {
-                val index = next.getAndIncrement()
-                if (index >= clzs.size) return
-                try {
-                    translator.convertClass(fileNode, clzs[index], factory, info)
-                } catch (error: Throwable) {
-                    failure.compareAndSet(null, error)
-                }
-            }
+        val translator = Translator(handler, ReentrantReadWriteLock())
+        for (clz in clzs) {
+            translator.convertClass(fileNode, clz, factory, info)
         }
-        if (workers == 1) work() else {
-            val threads = List(workers - 1) { Thread(::work, "dex-convert-${it + 1}").apply { start() } }
-            work()
-            threads.forEach(Thread::join)
-        }
-        failure.get()?.let { throw it }
     }
-
-    private const val PARALLEL_MINIMUM_CLASSES = 64
-    private const val MAXIMUM_WORKERS = 4
 
     /**
      * Statements past which a method translates alone. dex2jar's passes over one method need memory that grows with its

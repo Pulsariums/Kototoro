@@ -42,7 +42,7 @@ internal fun DesktopSourcePreferences(controller: DesktopController, state: Desk
         modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = LocalDesktopTopInset.current),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        OutlinedButton({ controller.browse() }, enabled = enabled) { Text(desktopText("browse.backToBrowse")) }
+        OutlinedButton({ controller.explore() }, enabled = enabled) { Text(desktopText("browse.backToBrowse")) }
         SourcePreferencesContent(
             sections = sections,
             active = enabled,

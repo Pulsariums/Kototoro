@@ -94,6 +94,7 @@ internal fun DesktopExtensionsPanel(controller: DesktopController, closing: Bool
                     ExtensionManagementTab(
                         AndroidStrings.format("packages_tab_title", state.installedEntries.size), state.installedEntries.size,
                         state.extensionUpdates.size),
+                    ExtensionManagementTab("Groups", 0),
                 ),
                 selectedTab = tab,
                 onTabClick = { tab = it },
@@ -140,6 +141,7 @@ internal fun DesktopExtensionsPanel(controller: DesktopController, closing: Bool
                         Modifier.weight(1f))
                 }
             }
+            3 -> DesktopSourceGroupsTab(controller)
         }
     }
     state.installPrompt?.let { request ->
@@ -259,7 +261,8 @@ private fun ExtensionCatalog(
                         SettingsActionRow(
                             title = "${extension.name} · ${extension.versionName} · $ecosystem",
                             summary = extension.sources.takeIf { it.isNotEmpty() }
-                                ?.joinToString { "${it.name} (${it.language})" }
+                                ?.let { all -> all.take(6).joinToString { "${it.name} (${it.language})" } +
+                                    if (all.size > 6) " +${all.size - 6}" else "" }
                                 ?: desktopText("extensions.sourcesAfterInstall"),
                             verticalPadding = 10.dp,
                         ) {

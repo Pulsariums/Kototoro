@@ -1,6 +1,5 @@
 package org.skepsun.kototoro.desktop.app
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,10 +10,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.skepsun.kototoro.core.ui.text.LocalUiStrings
 import org.skepsun.kototoro.core.ui.theme.*
+import java.util.concurrent.TimeUnit
 
 /** The label is resolved per access, so a language switch relabels the buttons without a restart. */
 enum class DesktopAppearance {
@@ -51,17 +52,50 @@ internal val Muted: Color @Composable get() = MaterialTheme.colorScheme.onSurfac
 /** Android's `R.color.warning` (#E65100), lifted for dark surfaces so the warn-list tint stays readable. */
 internal val Warn: Color @Composable get() = if (LocalDesktopDark.current) Color(0xFFFFB74D) else Color(0xFFE65100)
 
-/** Shared Android colour scheme, typography and shapes, so desktop screens and core-ui components agree. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-internal fun DesktopTheme(appearance: DesktopAppearance = DesktopAppearance.SYSTEM,
-    interfaceStyle: DesktopInterfaceStyle = DesktopInterfaceStyle.MATERIAL, content: @Composable () -> Unit) {
-    val dark = when (appearance) {
-        DesktopAppearance.SYSTEM -> isSystemInDarkTheme()
-        DesktopAppearance.LIGHT -> false
-        DesktopAppearance.DARK -> true
+private const val PersonalizeKey = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
+private const val AccentKey = "HKCU\\Software\\Microsoft\\Windows\\DWM"
+
+private val RegistryHexValue = Regex("0x([0-9a-fA-F]+)")
+
+/**
+ * Reads a REG_DWORD from the registry through `reg query`, because jna-platform is not a desktop dependency.
+ * Any failure, timeout or unparseable output yields null, so callers fall back to their defaults.
+ */
+private fun registryInt(path: String, name: String): Int? = runCatching {
+    val process = ProcessBuilder("reg", "query", path, "/v", name)
+        .redirectErrorStream(true)
+        .start()
+    val finished = process.waitFor(3, TimeUnit.SECONDS)
+    if (!finished) {
+        process.destroyForcibly()
+        return@runCatching null
     }
-    val colorScheme = if (dark) darkColorScheme(
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    if (process.exitValue() != 0) return@runCatching null
+    RegistryHexValue.find(output)?.groupValues?.get(1)?.toLongOrNull(16)?.toInt()
+}.getOrNull()
+
+internal fun resolveDark(mode: DesktopAppearance): Boolean = when (mode) {
+    DesktopAppearance.SYSTEM -> registryInt(PersonalizeKey, "AppsUseLightTheme") == 0
+    DesktopAppearance.LIGHT -> false
+    DesktopAppearance.DARK -> true
+}
+
+internal fun systemAccentColor(): Color? {
+    val value = registryInt(AccentKey, "AccentColor") ?: return null
+    val red = value and 0xFF
+    val green = (value shr 8) and 0xFF
+    val blue = (value shr 16) and 0xFF
+    return Color(0xFF000000.toInt() or (red shl 16) or (green shl 8) or blue)
+}
+
+@Composable
+internal fun DesktopAppearance.isDark(): Boolean = resolveDark(this)
+
+/** The window frame (DesktopWindowChrome) resolves the scheme outside the theme's own composition. */
+@Composable
+internal fun desktopColorScheme(dark: Boolean, dynamicColor: Boolean = false): ColorScheme {
+    val scheme = if (dark) darkColorScheme(
         primary = Color(0xFFA9C7FF), onPrimary = Color(0xFF003062),
         secondary = Color(0xFF82D3EB), onSecondary = Color(0xFF003441),
         background = Color(0xFF10131B), onBackground = Color(0xFFE8E6EF),
@@ -73,6 +107,20 @@ internal fun DesktopTheme(appearance: DesktopAppearance = DesktopAppearance.SYST
         background = Color(0xFFFFF8FF), onBackground = Color(0xFF1C1B20),
         surface = Color(0xFFFCF9FF), onSurface = Color(0xFF1C1B20),
     )
+    val accent = if (dynamicColor) systemAccentColor() else null
+    return if (accent == null) scheme else scheme.copy(
+        primary = accent,
+        onPrimary = if (accent.luminance() > .5f) Color.Black else Color.White,
+    )
+}
+
+/** Shared Android colour scheme, typography and shapes, so desktop screens and core-ui components agree. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun DesktopTheme(appearance: DesktopAppearance = DesktopAppearance.SYSTEM,
+    interfaceStyle: DesktopInterfaceStyle = DesktopInterfaceStyle.MATERIAL, content: @Composable () -> Unit) {
+    val dark = resolveDark(appearance)
+    val colorScheme = desktopColorScheme(dark, dynamicColor = appearance == DesktopAppearance.SYSTEM)
     val typography = kototoroTypography(isExpressiveStyle = true, defaultFontFamily = null)
     val tokens = if (interfaceStyle == DesktopInterfaceStyle.IOS) InterfaceStyleTokens.Ios
         else InterfaceStyleTokens.Material3Expressive

@@ -16,9 +16,9 @@ on:
         default: 'nightly'
         type: string
       trim_jre:
-        description: 'Bundle a jlink-trimmed JRE (size experiment)'
+        description: 'Bundle a jlink-trimmed JRE (set false to ship the full JRE)'
         required: false
-        default: 'false'
+        default: 'true'
         type: string
   workflow_call:
     secrets:
@@ -184,7 +184,7 @@ jobs:
             if (!$wixBin) { throw 'WiX 3 build tools are missing.' }
             $arguments += @("-PwindowsWixDirectory=$wixBin", ':desktop-app:windowsMsiContentsCheck')
           }
-          if ($env:TRIM_JRE -eq 'true') {
+          if ($env:TRIM_JRE -ne 'false') {
             $trimInitLines = @(
               "allprojects { p ->"
               "    if (p.path == ':desktop-app') {"
@@ -261,6 +261,24 @@ jobs:
           $lines | ForEach-Object { Write-Output $_ }
           $lines | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
 
+      - name: Report zip composition
+        if: always()
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = Get-ChildItem -Path 'desktop-app/build/compose/binaries/main/portable/*.zip' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($zip) {
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
+            $entries = $archive.Entries | Where-Object { $_.Length -gt 0 }
+            $lines = @('zip composition (compressed MB / raw MB)')
+            $lines += $entries | Group-Object { ($_.FullName -split '/')[0..([Math]::Min(3, ($_.FullName -split '/').Count - 2))] -join '/' } | ForEach-Object { [pscustomobject]@{ Name = $_.Name; C = ($_.Group | Measure-Object CompressedLength -Sum).Sum; R = ($_.Group | Measure-Object Length -Sum).Sum } } | Sort-Object C -Descending | Select-Object -First 25 | ForEach-Object { ('{0,8:N1} / {1,8:N1}  {2}' -f ($_.C / 1MB), ($_.R / 1MB), $_.Name) }
+            $lines += 'largest entries:'
+            $lines += $entries | Sort-Object CompressedLength -Descending | Select-Object -First 15 | ForEach-Object { ('{0,8:N1} / {1,8:N1}  {2}' -f ($_.CompressedLength / 1MB), ($_.Length / 1MB), $_.FullName) }
+            $archive.Dispose()
+            $lines | ForEach-Object { Write-Output $_ }
+            $lines | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          }
+
       - name: Upload Windows package
         uses: actions/upload-artifact@v6
         with:
@@ -269,6 +287,13 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
+
+      - name: Print packaging diagnostics
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path 'desktop-app/build/reports/windows-distribution' -Filter '*.log' -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "=== $($_.Name)"; Get-Content -LiteralPath $_.FullName -Tail 40 }
+          Get-ChildItem -Path 'desktop-app/build/test-results/windowsDistributionTest' -Filter '*.xml' -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "=== $($_.Name)"; Select-String -Path $_.FullName -Pattern 'AssertionFailedError|expected|but was|timed out|Exception' | Select-Object -First 12 | ForEach-Object { $_.Line.Trim() } }
 
       - name: Upload packaging diagnostics
         if: failure()

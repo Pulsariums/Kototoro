@@ -241,7 +241,9 @@ internal fun ReaderImage(page: DesktopReaderImage?, pageIndex: Int, modifier: Mo
     val style = LocalDesktopReaderPageStyle.current
     Box(modifier, contentAlignment = Alignment.Center) {
         val image = bitmap
-        if (image == null) Text(failure ?: desktopText("reader.pagePreparing", pageIndex + 1), color = style.text)
+        var waited by remember(path) { mutableStateOf(false) }
+        LaunchedEffect(path) { kotlinx.coroutines.delay(300); waited = true }
+        if (image == null) { if (failure != null || waited) Text(failure ?: desktopText("reader.pagePreparing", pageIndex + 1), color = style.text) }
         else {
             // A cropped page shows only its content bounds; the decode may be downscaled, so scale them to it.
             val crop = page?.crop?.takeIf { page.width > 0 && page.height > 0 }

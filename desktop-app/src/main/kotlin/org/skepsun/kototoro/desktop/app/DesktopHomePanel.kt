@@ -127,6 +127,9 @@ internal fun DesktopHomePanel(controller: DesktopController, state: DesktopAppSt
             initialized = true,
             tabletLayoutEnabled = true,
             modifier = Modifier.fillMaxSize(),
+            // Windows already narrows the pane with the right rail; Android's 1200dp reading cap only left a
+            // band of background between the home page and that rail.
+            contentMaxWidth = null,
             estimatedHeroHeight = HomeHeroCardHeight + 8.dp + barTop,
             // Without a hero the list itself starts below the bar; with one, the hero's own padding does.
             contentPadding = PaddingValues(top = if (hero.isEmpty()) barTop else 0.dp, bottom = 12.dp),

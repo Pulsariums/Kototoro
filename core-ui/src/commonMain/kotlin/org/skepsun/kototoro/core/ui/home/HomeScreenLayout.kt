@@ -57,18 +57,25 @@ fun HomeScreenLayout(
     heroInsideList: Boolean = false,
     greeting: @Composable () -> Unit = {},
     loading: @Composable () -> Unit = {},
+    /**
+     * Android caps the home pane for readability. A desktop host that already narrows the pane with its
+     * navigation rail passes null so the page uses the whole pane instead of stopping 1200dp in.
+     */
+    contentMaxWidth: Dp? = HomeContentMaxWidth,
 ) {
     val density = LocalDensity.current
     var heroPx by rememberSaveable { mutableIntStateOf(with(density) { estimatedHeroHeight.roundToPx() }) }
     val heroHeight by remember(density) { derivedStateOf { with(density) { heroPx.toDp() } } }
-    val contentMaxWidth = HomeContentMaxWidth + HomeScreenHorizontalPadding * 2
+    val contentWidth = contentMaxWidth?.let { it + HomeScreenHorizontalPadding * 2 }
     BoxWithConstraints(modifier.fillMaxSize().clipToBounds()) {
         // The navigation rail is outside this pane; resolve the breakpoint from the pane itself.
         val layoutClass = tabletLayoutClass(maxWidth.value.toInt(), tabletLayoutEnabled)
         val expanded = layoutClass == TabletLayoutClass.EXPANDED
         LazyColumn(
             state = listState,
-            modifier = Modifier.align(Alignment.TopCenter).widthIn(max = contentMaxWidth).fillMaxSize()
+            modifier = Modifier.align(Alignment.TopCenter)
+                .then(if (contentWidth != null) Modifier.widthIn(max = contentWidth) else Modifier)
+                .fillMaxSize()
                 .then(listModifier).padding(horizontalPadding)
                 .mouseDragScroll(listState, Orientation.Vertical).testTag("home-scroll"),
             contentPadding = contentPadding,
@@ -93,7 +100,8 @@ fun HomeScreenLayout(
         }
         if (hasHero && !heroInsideList) {
             hero(
-                Modifier.align(Alignment.TopCenter).widthIn(max = contentMaxWidth)
+                Modifier.align(Alignment.TopCenter)
+                    .then(if (contentWidth != null) Modifier.widthIn(max = contentWidth) else Modifier)
                     // Move layout coordinates too, so cover shared-element bounds track scrolling.
                     .offset {
                         val scroll = if (listState.firstVisibleItemIndex == 0) listState.firstVisibleItemScrollOffset
